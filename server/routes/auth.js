@@ -1,10 +1,11 @@
 import express from 'express';
-
 const router = express.Router();
 
-// Add any auth-related routes here
-router.get('/callback', (req, res) => {
-  res.send('Auth callback reached');
+// ✅ This route will confirm the backend is connected properly
+router.get('/', (req, res) => {
+  res.send('✅ Auth route reached successfully!');
 });
+
+// You can later add POST /auth or Shopify OAuth logic here
 
 export default router;
