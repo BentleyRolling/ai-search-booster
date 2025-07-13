@@ -1,13 +1,15 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import { AppProvider } from '@shopify/polaris'
-import '@shopify/polaris/build/esm/styles.css'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <AppProvider>
+const root = document.getElementById('root');
+if (!root) {
+  document.body.innerHTML = "<h1>❌ Root div not found. Check index.html</h1>";
+} else {
+  ReactDOM.createRoot(root).render(
+    <React.StrictMode>
       <App />
-    </AppProvider>
-  </React.StrictMode>,
-)
+    </React.StrictMode>
+  );
+}
+
