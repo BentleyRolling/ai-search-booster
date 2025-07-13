@@ -1,0 +1,31 @@
+{
+  "name": "ai-search-booster",
+  "version": "1.0.0",
+  "description": "AI Search Booster - Shopify app to optimize product listings for AI-generated answers",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "node server/index.js",
+    "install-all": "npm install && cd client && npm install",
+    "postinstall": "cd client && npm install"
+  },
+  "dependencies": {
+    "@shopify/shopify-api": "^7.7.0",
+    "@shopify/shopify-app-express": "^2.1.0",
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "openai": "^4.20.1",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2"
+  },
+  "keywords": ["shopify", "app", "ai", "seo", "optimization"],
+  "author": "Devin AI",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
