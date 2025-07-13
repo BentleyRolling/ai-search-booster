@@ -1,3 +1,4 @@
+import '@shopify/shopify-api/adapters/node';
 import express from 'express';
 import { shopifyApi } from '@shopify/shopify-api';
 
