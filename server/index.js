@@ -7,8 +7,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://admin.shopify.com',
+    'https://*.myshopify.com',
+    'https://ai-search-booster-frontend.onrender.com'
+  ],
+  credentials: true
+}));
 app.use(express.json());
+
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'ALLOWALL');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://*.shopify.com https://admin.shopify.com https://*.myshopify.com");
+  next();
+});
 
 app.get('/', (req, res) => {
   res.send('AI Search Booster backend is running!');

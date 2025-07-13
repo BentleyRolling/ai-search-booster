@@ -5,25 +5,13 @@ import { AppProvider } from '@shopify/polaris'
 import Dashboard from './pages/Dashboard'
 
 const config = {
-  apiKey: import.meta.env.VITE_SHOPIFY_API_KEY || '4509cf5ef854ceac54c93cceda14987d',
-  host: new URLSearchParams(location.search).get('host') || window.location.origin,
+  apiKey: import.meta.env.VITE_SHOPIFY_API_KEY,
+  host: new URLSearchParams(location.search).get('host') || 
+        new URLSearchParams(window.parent?.location?.search || '').get('host') ||
+        window.btoa(window.location.origin).replace(/=/g, ''),
 }
 
 function App() {
-  const isLocalDev = window.location.hostname === 'localhost'
-  
-  if (isLocalDev) {
-    return (
-      <AppProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-          </Routes>
-        </Router>
-      </AppProvider>
-    )
-  }
-
   return (
     <Provider config={config}>
       <AppProvider>

@@ -11,7 +11,7 @@ scopes = "read_products,write_products,read_product_listings,write_product_listi
 
 [auth]
 redirect_urls = [
-  "https://aisearch-dev.myshopify.com/api/auth/callback"
+  "https://ai-search-booster.onrender.com/api/auth/callback"
 ]
 
 [webhooks]
