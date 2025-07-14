@@ -7,8 +7,8 @@ import Dashboard from './pages/Dashboard'
 const config = {
   apiKey: import.meta.env.VITE_SHOPIFY_API_KEY,
   host: new URLSearchParams(location.search).get('host') || 
-        new URLSearchParams(window.parent?.location?.search || '').get('host') ||
-        window.btoa(window.location.origin).replace(/=/g, ''),
+        new URLSearchParams(window.parent?.location?.search || '').get('host'),
+  forceRedirect: true
 }
 
 function App() {
