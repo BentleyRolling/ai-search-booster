@@ -2,6 +2,7 @@ import '@shopify/shopify-api/adapters/node';
 import express from 'express';
 import { shopifyApi } from '@shopify/shopify-api';
 import OpenAI from 'openai';
+import { verifyRequest } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -24,8 +25,24 @@ let usageData = {
   plan: 'Pro'
 };
 
-router.get('/', async (req, res) => {
+router.get('/', verifyRequest(shopify), async (req, res) => {
   try {
+    const session = res.locals.shopify.session;
+    
+    if (!session || !session.accessToken) {
+      return res.status(401).json({ error: 'No valid session found' });
+    }
+
+    const client = new shopify.clients.Rest({ session });
+    const products = await client.get({
+      path: 'products',
+      query: { limit: 50 }
+    });
+
+    res.json(products.body.products || []);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    
     const mockProducts = [
       {
         id: 1,
@@ -46,33 +63,40 @@ router.get('/', async (req, res) => {
         handle: 'test-product-3'
       }
     ];
-
+    
     res.json(mockProducts);
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    res.status(500).json({ error: 'Failed to fetch products' });
   }
 });
 
-router.post('/:id/optimize', async (req, res) => {
+router.post('/:id/optimize', verifyRequest(shopify), async (req, res) => {
   try {
     const { id } = req.params;
-    const { shop } = req.query;
+    const session = res.locals.shopify.session;
 
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter required' });
+    if (!session || !session.accessToken) {
+      return res.status(401).json({ error: 'No valid session found' });
     }
 
     if (usageData.used >= usageData.limit) {
       return res.status(429).json({ error: 'Usage limit exceeded' });
     }
 
-    const productData = {
-      id: id,
-      title: 'Sample Product for Optimization',
-      body_html: 'This is a sample product that needs optimization for AI search visibility and better discoverability.',
-      description: 'Sample product description'
-    };
+    const client = new shopify.clients.Rest({ session });
+    
+    let productData;
+    try {
+      const product = await client.get({
+        path: `products/${id}`
+      });
+      productData = product.body.product;
+    } catch (shopifyError) {
+      productData = {
+        id: id,
+        title: 'Sample Product for Optimization',
+        body_html: 'This is a sample product that needs optimization for AI search visibility and better discoverability.',
+        description: 'Sample product description'
+      };
+    }
 
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
@@ -112,20 +136,15 @@ Return a JSON object with optimized "title" and "description" fields.`
   }
 });
 
-router.post('/:id/apply', async (req, res) => {
+router.post('/:id/apply', verifyRequest(shopify), async (req, res) => {
   try {
     const { id } = req.params;
-    const { shop } = req.query;
     const { optimizedContent } = req.body;
+    const session = res.locals.shopify.session;
 
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter required' });
+    if (!session || !session.accessToken) {
+      return res.status(401).json({ error: 'No valid session found' });
     }
-
-    const session = {
-      shop: shop.toString(),
-      accessToken: 'temp_token',
-    };
 
     const client = new shopify.clients.Rest({ session });
 
@@ -164,19 +183,14 @@ router.post('/:id/apply', async (req, res) => {
   }
 });
 
-router.post('/:id/restore', async (req, res) => {
+router.post('/:id/restore', verifyRequest(shopify), async (req, res) => {
   try {
     const { id } = req.params;
-    const { shop } = req.query;
+    const session = res.locals.shopify.session;
 
-    if (!shop) {
-      return res.status(400).json({ error: 'Shop parameter required' });
+    if (!session || !session.accessToken) {
+      return res.status(401).json({ error: 'No valid session found' });
     }
-
-    const session = {
-      shop: shop.toString(),
-      accessToken: 'temp_token',
-    };
 
     const client = new shopify.clients.Rest({ session });
 
