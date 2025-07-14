@@ -1,8 +1,8 @@
 services:
   - type: static_site
     name: ai-search-booster-frontend
-    buildCommand: cd client && npm install && npm run build
-    staticPublishPath: ./client/dist
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
     envVars:
       - key: NODE_ENV
         value: production
