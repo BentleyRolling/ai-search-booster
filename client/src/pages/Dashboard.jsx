@@ -21,6 +21,8 @@ import {
 import { InfoIcon, CheckCircleIcon } from '@shopify/polaris-icons'
 import axios from 'axios'
 
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || ''
+
 function Dashboard() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -49,7 +51,7 @@ function Dashboard() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('/api/products')
+      const response = await axios.get(`${API_BASE_URL}/api/products`)
       setProducts(response.data || [])
     } catch (error) {
       console.error('Error fetching products:', error)
@@ -60,7 +62,7 @@ function Dashboard() {
 
   const fetchUsage = async () => {
     try {
-      const response = await axios.get('/api/usage')
+      const response = await axios.get(`${API_BASE_URL}/api/usage`)
       setUsage(response.data)
     } catch (error) {
       console.error('Error fetching usage:', error)
@@ -70,7 +72,7 @@ function Dashboard() {
   const optimizeProduct = async (productId) => {
     setOptimizing(true)
     try {
-      const response = await axios.post(`/api/products/${productId}/optimize`)
+      const response = await axios.post(`${API_BASE_URL}/api/products/${productId}/optimize`)
       setOptimizedContent(response.data.optimizedContent)
       setOptimizedProducts(prev => new Set([...prev, productId]))
       setToastMessage('Product optimized successfully!')
@@ -92,7 +94,7 @@ function Dashboard() {
 
   const applyAIVersion = async (productId) => {
     try {
-      await axios.post(`/api/products/${productId}/apply`)
+      await axios.post(`${API_BASE_URL}/api/products/${productId}/apply`)
       setToastMessage('AI version applied successfully!')
       setToastActive(true)
       setPreviewModal(false)
@@ -106,7 +108,7 @@ function Dashboard() {
 
   const restoreOriginal = async (productId) => {
     try {
-      await axios.post(`/api/products/${productId}/restore`)
+      await axios.post(`${API_BASE_URL}/api/products/${productId}/restore`)
       setOptimizedProducts(prev => {
         const newSet = new Set(prev)
         newSet.delete(productId)
