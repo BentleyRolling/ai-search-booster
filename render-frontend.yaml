@@ -6,3 +6,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: VITE_SHOPIFY_API_KEY
+        value: 4509cf5ef854ceac54c93cceda14987d
+      - key: VITE_BACKEND_URL
+        value: https://ai-search-booster.onrender.com

@@ -31,6 +31,17 @@ app.get('/', (req, res) => {
 import authRoutes from './routes/auth.js';
 app.use('/api/auth', authRoutes);
 
+import productRoutes from './routes/products.js';
+app.use('/api/products', productRoutes);
+
+app.get('/api/usage', (req, res) => {
+  res.json({
+    used: 0,
+    limit: 500,
+    plan: 'Pro'
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
