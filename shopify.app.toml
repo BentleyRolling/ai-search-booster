@@ -6,7 +6,7 @@ application_url = "https://ai-search-booster-frontend.onrender.com"
 embedded = true
 
 [access_scopes]
-scopes = "read_products,write_products,read_content,write_content,read_all_metafields,write_all_metafields"
+scopes = "read_products,write_products,read_content,write_content,read_metafields,write_metafields"
 
 [auth]
 redirect_urls = [
