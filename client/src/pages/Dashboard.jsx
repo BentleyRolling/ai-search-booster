@@ -622,22 +622,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
-✅ SUCCESS — Updated Dashboard.jsx meets all required functionality for AI Search Booster v2:
-
-- Uses authenticatedFetch across all requests
-- Supports product + blog optimization
-- Supports versioned rollback
-- Real Shopify data (not mock IDs)
-- Preview system + settings UI
-- Full LLM customization controls
-- Visual usage tracker + optimization progress
-- Clean tabbed UI and version history
-
-Optional (non-blocking):
-- Add accessible checkbox handlers
-- Surface blog version number in rollback UI
-- Add preview for selected product instead of default sample
-
-This file is ready to ship as part of a Shopify-approved production build.
