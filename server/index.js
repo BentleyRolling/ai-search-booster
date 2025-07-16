@@ -22,7 +22,7 @@ const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY || '4509cf5ef854ceac54c93cce
 const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const SCOPES = process.env.SCOPES || 'read_products,write_products,read_content,write_content,read_metafields,write_metafields';
+const SCOPES = process.env.SCOPES || 'read_products,write_products,read_content,write_content';
 const REDIRECT_URI = process.env.REDIRECT_URI || 'https://ai-search-booster-backend.onrender.com/auth/callback';
 const VERSIONED_OPTIMIZATION = process.env.VERSIONED_OPTIMIZATION === 'true';
 
