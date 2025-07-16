@@ -294,56 +294,47 @@ const optimizeContent = async (content, type, settings = {}) => {
     Return as JSON with keys: summary, faqs, jsonLd, llmDescription
   `;
   
+  // Use fallback method for demo - no AI API calls
   try {
-    if (ANTHROPIC_API_KEY) {
-      const response = await axios.post('https://api.anthropic.com/v1/messages', {
-        model: 'claude-3-sonnet-20240229',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1000
-      }, {
-        headers: {
-          'x-api-key': ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json'
-        }
-      });
-      
-      return JSON.parse(response.data.content[0].text);
-    } else if (OPENAI_API_KEY) {
-      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7
-      }, {
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      return JSON.parse(response.data.choices[0].message.content);
-    } else {
-      // Fallback: Simple optimization without AI
-      return {
-        summary: `${content.title || content.name} - A quality product available in our store.`,
-        faqs: [
-          {
-            question: `What is ${content.title || content.name}?`,
-            answer: content.description || 'A premium product from our collection.'
-          }
-        ],
-        jsonLd: {
-          "@context": "https://schema.org",
-          "@type": type === 'product' ? "Product" : "Article",
-          "name": content.title || content.name,
-          "description": content.description || ''
+    return {
+      summary: `${content.title || content.name} - A quality product available in our store.`,
+      faqs: [
+        {
+          question: `What is ${content.title || content.name}?`,
+          answer: content.description || content.body_html || content.content || 'A premium product from our collection.'
         },
-        llmDescription: content.description || `Learn about ${content.title || content.name}`
-      };
-    }
+        {
+          question: `What are the benefits of ${content.title || content.name}?`,
+          answer: `${content.title || content.name} offers exceptional quality and value for our customers.`
+        }
+      ],
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": type === 'product' ? "Product" : "Article",
+        "name": content.title || content.name,
+        "description": content.description || content.body_html || content.content || ''
+      },
+      llmDescription: content.description || content.body_html || content.content || `Learn about ${content.title || content.name}`
+    };
   } catch (error) {
-    console.error('AI optimization error:', error);
-    throw error;
+    console.error('Content optimization error:', error);
+    // Return basic fallback even on error
+    return {
+      summary: "Quality product available in our store.",
+      faqs: [
+        {
+          question: "What is this product?",
+          answer: "A premium product from our collection."
+        }
+      ],
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": type === 'product' ? "Product" : "Article",
+        "name": "Product",
+        "description": "Quality product"
+      },
+      llmDescription: "Learn about our quality products"
+    };
   }
 };
 
