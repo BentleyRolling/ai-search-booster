@@ -348,7 +348,7 @@ const optimizeContent = async (content, type, settings = {}) => {
 };
 
 // API: Preview optimization
-app.post('/api/optimize/preview', verifyShop, async (req, res) => {
+app.post('/api/optimize/preview', simpleVerifyShop, async (req, res) => {
   try {
     const { content, type, settings } = req.body;
     
@@ -389,7 +389,7 @@ app.post('/api/optimize/preview', verifyShop, async (req, res) => {
 });
 
 // API: Optimize products
-app.post('/api/optimize/products', verifyShop, optimizationLimiter, async (req, res) => {
+app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async (req, res) => {
   try {
     const { productIds, settings } = req.body;
     const { shop, accessToken } = req.shopInfo;
@@ -476,7 +476,7 @@ app.post('/api/optimize/products', verifyShop, optimizationLimiter, async (req, 
 });
 
 // API: Optimize blogs
-app.post('/api/optimize/blogs', verifyShop, optimizationLimiter, async (req, res) => {
+app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (req, res) => {
   try {
     const { blogIds, articleIds, settings } = req.body;
     const { shop, accessToken } = req.shopInfo;
@@ -650,7 +650,7 @@ app.post('/api/optimize/blogs', verifyShop, optimizationLimiter, async (req, res
 });
 
 // API: Get optimization status for specific item
-app.get('/api/optimize/status/:type/:id', verifyShop, async (req, res) => {
+app.get('/api/optimize/status/:type/:id', simpleVerifyShop, async (req, res) => {
   try {
     const { type, id } = req.params;
     const { shop, accessToken } = req.shopInfo;
@@ -705,7 +705,7 @@ app.get('/api/optimize/status/:type/:id', verifyShop, async (req, res) => {
 });
 
 // API: Rollback optimization
-app.post('/api/rollback/:type/:id', verifyShop, async (req, res) => {
+app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
   try {
     const { type, id } = req.params;
     const { version = 'original' } = req.body;
@@ -768,7 +768,7 @@ app.post('/api/rollback/:type/:id', verifyShop, async (req, res) => {
 });
 
 // API: Get metafields for a resource
-app.get('/api/metafields/:type/:id', verifyShop, async (req, res) => {
+app.get('/api/metafields/:type/:id', simpleVerifyShop, async (req, res) => {
   try {
     const { type, id } = req.params;
     const { shop, accessToken } = req.shopInfo;
