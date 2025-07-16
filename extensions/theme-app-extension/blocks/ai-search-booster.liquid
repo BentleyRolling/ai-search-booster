@@ -1,0 +1,171 @@
+{% comment %}
+  AI Search Booster - Theme Extension
+  Injects AI-optimized content for better LLM visibility
+{% endcomment %}
+
+{% assign namespace = section.settings.custom_namespace | default: 'ai_search_booster' %}
+{% assign enable_structured = section.settings.enable_structured_data | default: true %}
+{% assign enable_llm = section.settings.enable_llm_blocks | default: true %}
+
+{% if product %}
+  {% assign ai_content = product.metafields[namespace].current_version.value %}
+  {% assign version_num = product.metafields[namespace].current_version.value | default: 0 %}
+  
+  {% if version_num > 0 %}
+    {% assign version_key = 'optimized_v' | append: version_num %}
+    {% assign ai_content = product.metafields[namespace][version_key].value %}
+  {% endif %}
+  
+  {% if ai_content and enable_structured %}
+    {% comment %} JSON-LD Structured Data for Search Engines and LLMs {% endcomment %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": "{{ product.title | escape }}",
+      "description": "{{ ai_content.summary | escape }}",
+      "brand": {
+        "@type": "Brand",
+        "name": "{{ shop.name | escape }}"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "{{ product.price | money_without_currency }}",
+        "priceCurrency": "{{ shop.currency }}",
+        "availability": "{% if product.available %}InStock{% else %}OutOfStock{% endif %}"
+      },
+      "mainEntity": {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {% for faq in ai_content.faqs %}
+          {
+            "@type": "Question",
+            "name": "{{ faq.question | escape }}",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "{{ faq.answer | escape }}"
+            }
+          }{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        ]
+      }
+    }
+    </script>
+  {% endif %}
+
+  {% if ai_content and enable_llm %}
+    {% comment %} Hidden content specifically for LLM parsing {% endcomment %}
+    <div data-llm="product-context" data-version="{{ version_num }}" style="display: none; visibility: hidden;" aria-hidden="true">
+      <div data-llm-product-id="{{ product.id }}">
+        <h2>{{ product.title }}</h2>
+        <p>{{ ai_content.llmDescription }}</p>
+        
+        {% comment %} Keywords for LLM context {% endcomment %}
+        <div data-llm-keywords>
+          {% for tag in product.tags %}
+            <span>{{ tag }}</span>
+          {% endfor %}
+        </div>
+        
+        {% comment %} Additional context {% endcomment %}
+        <div data-llm-details>
+          <span data-price>{{ product.price | money }}</span>
+          <span data-availability>{% if product.available %}In Stock{% else %}Out of Stock{% endif %}</span>
+          <span data-vendor>{{ product.vendor }}</span>
+          <span data-optimization-version>v{{ version_num }}</span>
+        </div>
+      </div>
+    </div>
+
+    {% comment %} Microdata for additional SEO/AI benefit {% endcomment %}
+    <meta itemprop="description" content="{{ ai_content.summary | escape }}">
+    {% for faq in ai_content.faqs %}
+      <meta itemprop="faq-question-{{ forloop.index }}" content="{{ faq.question | escape }}">
+      <meta itemprop="faq-answer-{{ forloop.index }}" content="{{ faq.answer | escape }}">
+    {% endfor %}
+  {% endif %}
+{% endif %}
+
+{% if article %}
+  {% assign ai_blog_content = article.metafields[namespace].current_version.value %}
+  {% assign blog_version_num = article.metafields[namespace].current_version.value | default: 0 %}
+  
+  {% if blog_version_num > 0 %}
+    {% assign blog_version_key = 'optimized_v' | append: blog_version_num %}
+    {% assign ai_blog_content = article.metafields[namespace][blog_version_key].value %}
+  {% endif %}
+  
+  {% if ai_blog_content and enable_structured %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "{{ article.title | escape }}",
+      "description": "{{ ai_blog_content.summary | escape }}",
+      "author": {
+        "@type": "Organization",
+        "name": "{{ shop.name | escape }}"
+      },
+      "datePublished": "{{ article.created_at | date: '%Y-%m-%d' }}",
+      "mainEntity": {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {% for faq in ai_blog_content.faqs %}
+          {
+            "@type": "Question",
+            "name": "{{ faq.question | escape }}",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "{{ faq.answer | escape }}"
+            }
+          }{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        ]
+      }
+    }
+    </script>
+  {% endif %}
+
+  {% if ai_blog_content and enable_llm %}
+    <div data-llm="blog-context" data-version="{{ blog_version_num }}" style="display: none; visibility: hidden;" aria-hidden="true">
+      <div data-llm-article-id="{{ article.id }}">
+        <h2>{{ article.title }}</h2>
+        <p>{{ ai_blog_content.llmDescription }}</p>
+        <span data-optimization-version>v{{ blog_version_num }}</span>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% schema %}
+{
+  "name": "AI Search Booster",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["product", "collection", "blog", "article"]
+  },
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_structured_data",
+      "label": "Enable Structured Data",
+      "default": true,
+      "info": "Injects JSON-LD structured data for search engines"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_llm_blocks",
+      "label": "Enable LLM Content Blocks",
+      "default": true,
+      "info": "Adds hidden content blocks optimized for AI/LLM parsing"
+    },
+    {
+      "type": "text",
+      "id": "custom_namespace",
+      "label": "Metafield Namespace",
+      "default": "ai_search_booster",
+      "info": "Advanced: Change if using custom metafield namespace"
+    }
+  ]
+}
+{% endschema %}

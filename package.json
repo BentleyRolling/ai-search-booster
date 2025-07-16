@@ -1,0 +1,19 @@
+{
+  "name": "ai-search-booster",
+  "version": "2.0.0",
+  "description": "AI Search Booster - Optimize Shopify stores for AI/LLM visibility",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js"
+  },
+  "keywords": [
+    "shopify",
+    "ai",
+    "seo",
+    "optimization",
+    "llm"
+  ],
+  "author": "AI Search Booster Team",
+  "license": "MIT"
+}
