@@ -802,158 +802,6 @@ app.get('/api/metafields/:type/:id', verifyShop, async (req, res) => {
   }
 });
 
-// API: Get optimization history
-app.get('/api/history/:shop', verifyShop, async (req, res) => {
-  try {
-    const { shop } = req.params;
-    const { accessToken } = req.shopInfo;
-    
-    const history = [];
-    
-    // Get recent products with our metafields
-    const productsResponse = await axios.get(
-      `https://${shop}/admin/api/2024-01/products.json?limit=50&fields=id,title`,
-      {
-        headers: { 'X-Shopify-Access-Token': accessToken }
-      }
-    );
-    
-    for (const product of productsResponse.data.products) {
-      const metafieldsResponse = await axios.get(
-        `https://${shop}/admin/api/2024-01/products/${product.id}/metafields.json?namespace=ai_search_booster`,
-        {
-          headers: { 'X-Shopify-Access-Token': accessToken }
-        }
-      );
-      
-      if (metafieldsResponse.data.metafields.length > 0) {
-        const versions = metafieldsResponse.data.metafields
-          .filter(mf => mf.key.match(/optimized_v\d+_timestamp$/))
-          .map(mf => ({
-            version: mf.key.replace('_timestamp', ''),
-            timestamp: mf.value
-          }));
-          
-        if (versions.length > 0) {
-          history.push({
-            type: 'product',
-            id: product.id,
-            title: product.title,
-            versions: versions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-          });
-        }
-      }
-    }
-    
-    res.json({
-      shop,
-      history: history.sort((a, b) => {
-        const aLatest = a.versions[0]?.timestamp || '0';
-        const bLatest = b.versions[0]?.timestamp || '0';
-        return new Date(bLatest) - new Date(aLatest);
-      })
-    });
-  } catch (error) {
-    console.error('History error:', error);
-    res.status(500).json({ error: 'Failed to fetch history' });
-  }
-});
-
-// API: Get usage statistics
-app.get('/api/usage', verifyShop, async (req, res) => {
-  try {
-    const { shop, accessToken } = req.shopInfo;
-    
-    // This is a stub - in production, track usage in database
-    const usage = {
-      shop,
-      optimizations: {
-        products: 0,
-        blogs: 0,
-        total: 0
-      },
-      aiCalls: {
-        today: 0,
-        thisMonth: 0,
-        total: 0
-      },
-      limits: {
-        monthlyOptimizations: 1000,
-        dailyAICalls: 100
-      }
-    };
-    
-    // Count actual optimizations
-    const productsResponse = await axios.get(
-      `https://${shop}/admin/api/2024-01/products.json?limit=250&fields=id`,
-      {
-        headers: { 'X-Shopify-Access-Token': accessToken }
-      }
-    );
-    
-    for (const product of productsResponse.data.products) {
-      const metafieldsResponse = await axios.get(
-        `https://${shop}/admin/api/2024-01/products/${product.id}/metafields.json?namespace=ai_search_booster&limit=1`,
-        {
-          headers: { 'X-Shopify-Access-Token': accessToken }
-        }
-      );
-      
-      if (metafieldsResponse.data.metafields.length > 0) {
-        usage.optimizations.products++;
-        usage.optimizations.total++;
-      }
-    }
-    
-    res.json(usage);
-  } catch (error) {
-    console.error('Usage error:', error);
-    res.status(500).json({ error: 'Failed to fetch usage' });
-  }
-});
-
-// API: Get status
-app.get('/api/status', verifyShop, async (req, res) => {
-  try {
-    const { shop, accessToken } = req.shopInfo;
-    
-    // Count products
-    const productsResponse = await axios.get(
-      `https://${shop}/admin/api/2024-01/products/count.json`,
-      {
-        headers: { 'X-Shopify-Access-Token': accessToken }
-      }
-    );
-    
-    // Count blogs
-    const blogsResponse = await axios.get(
-      `https://${shop}/admin/api/2024-01/blogs/count.json`,
-      {
-        headers: { 'X-Shopify-Access-Token': accessToken }
-      }
-    );
-    
-    res.json({
-      shop,
-      totalProducts: productsResponse.data.count,
-      totalBlogs: blogsResponse.data.count,
-      optimizedProducts: 0, // Would need to iterate through all products
-      optimizedBlogs: 0, // Would need to iterate through all articles
-      aiProvider: ANTHROPIC_API_KEY ? 'Claude' : OPENAI_API_KEY ? 'OpenAI' : 'Basic',
-      features: {
-        productsOptimization: true,
-        blogsOptimization: true,
-        rollback: true,
-        preview: true,
-        versioning: VERSIONED_OPTIMIZATION
-      }
-    });
-  } catch (error) {
-    console.error('Status error:', error);
-    res.status(500).json({ error: 'Failed to fetch status' });
-  }
-});
-
 // Simplified auth middleware for mock endpoints
 const simpleVerifyShop = (req, res, next) => {
   const shop = req.query.shop || req.body.shop || req.params.shop || req.headers['x-shopify-shop-domain'];
@@ -973,6 +821,82 @@ const simpleVerifyShop = (req, res, next) => {
   req.shop = shop;
   next();
 };
+
+// API: Get optimization history
+app.get('/api/history/:shop', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req.params;
+    
+    // Return mock history data - no Shopify API calls
+    const history = [];
+    
+    res.json({
+      shop,
+      history
+    });
+  } catch (error) {
+    console.error('History error:', error);
+    res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
+
+// API: Get usage statistics
+app.get('/api/usage', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req;
+    
+    // Return mock usage data - no Shopify API calls
+    const usage = {
+      shop,
+      optimizations: {
+        products: 0,
+        blogs: 0,
+        total: 0
+      },
+      aiCalls: {
+        today: 0,
+        thisMonth: 0,
+        total: 0
+      },
+      limits: {
+        monthlyOptimizations: 1000,
+        dailyAICalls: 100
+      }
+    };
+    
+    res.json(usage);
+  } catch (error) {
+    console.error('Usage error:', error);
+    res.status(500).json({ error: 'Failed to fetch usage' });
+  }
+});
+
+// API: Get status
+app.get('/api/status', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req;
+    
+    // Return mock data - no Shopify API calls
+    res.json({
+      shop,
+      totalProducts: 25,
+      totalBlogs: 3,
+      optimizedProducts: 0,
+      optimizedBlogs: 0,
+      aiProvider: ANTHROPIC_API_KEY ? 'Claude' : OPENAI_API_KEY ? 'OpenAI' : 'Basic',
+      features: {
+        productsOptimization: true,
+        blogsOptimization: true,
+        rollback: true,
+        preview: true,
+        versioning: VERSIONED_OPTIMIZATION
+      }
+    });
+  } catch (error) {
+    console.error('Status error:', error);
+    res.status(500).json({ error: 'Failed to fetch status' });
+  }
+});
 
 // API: Get products
 app.get('/api/products', simpleVerifyShop, async (req, res) => {
