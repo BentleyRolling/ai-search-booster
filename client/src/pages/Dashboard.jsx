@@ -34,25 +34,63 @@ const Dashboard = () => {
     // Get shop from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const shopParam = urlParams.get('shop');
+    console.log('Dashboard: Shop parameter:', shopParam);
+    
     if (shopParam) {
       setShop(shopParam);
-      fetchStatus(shopParam);
-      fetchHistory(shopParam);
-      fetchProducts(shopParam);
-      fetchBlogs(shopParam);
-      fetchUsage(shopParam);
+      
+      // Set loading to false after a timeout to prevent endless loading
+      const loadingTimeout = setTimeout(() => {
+        console.log('Dashboard: Setting loading to false after timeout');
+        setLoading(false);
+      }, 5000);
+      
+      // Fetch data with individual error handling
+      Promise.allSettled([
+        fetchStatus(shopParam),
+        fetchHistory(shopParam),
+        fetchProducts(shopParam),
+        fetchBlogs(shopParam),
+        fetchUsage(shopParam)
+      ]).then(() => {
+        clearTimeout(loadingTimeout);
+        setLoading(false);
+        console.log('Dashboard: All data fetched, loading complete');
+      });
+    } else {
+      console.log('Dashboard: No shop parameter found');
+      setLoading(false);
     }
   }, []);
 
   const fetchStatus = async (shopName) => {
     try {
+      console.log('Dashboard: Fetching status for shop:', shopName);
       const response = await authFetch(`${API_BASE}/api/status?shop=${shopName}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
+      console.log('Dashboard: Status data received:', data);
       setStatus(data);
     } catch (error) {
       console.error('Failed to fetch status:', error);
-    } finally {
-      setLoading(false);
+      // Set fallback status to prevent blocking
+      setStatus({
+        shop: shopName,
+        totalProducts: 0,
+        totalBlogs: 0,
+        optimizedProducts: 0,
+        optimizedBlogs: 0,
+        aiProvider: 'Unknown',
+        features: {
+          productsOptimization: true,
+          blogsOptimization: true,
+          rollback: true,
+          preview: true,
+          versioning: false
+        }
+      });
     }
   };
 
@@ -68,31 +106,54 @@ const Dashboard = () => {
 
   const fetchProducts = async (shopName) => {
     try {
+      console.log('Dashboard: Fetching products for shop:', shopName);
       const response = await authFetch(`${API_BASE}/api/products?shop=${shopName}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
+      console.log('Dashboard: Products data received:', data);
       setProducts(data.products || []);
     } catch (error) {
       console.error('Failed to fetch products:', error);
+      setProducts([]); // Set empty array as fallback
     }
   };
 
   const fetchBlogs = async (shopName) => {
     try {
+      console.log('Dashboard: Fetching blogs for shop:', shopName);
       const response = await authFetch(`${API_BASE}/api/blogs?shop=${shopName}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
+      console.log('Dashboard: Blogs data received:', data);
       setBlogs(data.blogs || []);
     } catch (error) {
       console.error('Failed to fetch blogs:', error);
+      setBlogs([]); // Set empty array as fallback
     }
   };
 
   const fetchUsage = async (shopName) => {
     try {
-      const response = await authFetch(`${API_BASE}/api/usage/${shopName}?shop=${shopName}`);
+      console.log('Dashboard: Fetching usage for shop:', shopName);
+      const response = await authFetch(`${API_BASE}/api/usage?shop=${shopName}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
+      console.log('Dashboard: Usage data received:', data);
       setUsage(data);
     } catch (error) {
       console.error('Failed to fetch usage:', error);
+      setUsage({
+        shop: shopName,
+        optimizations: { products: 0, blogs: 0, total: 0 },
+        aiCalls: { today: 0, thisMonth: 0, total: 0 },
+        limits: { monthlyOptimizations: 1000, dailyAICalls: 100 }
+      });
     }
   };
 

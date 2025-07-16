@@ -55,34 +55,60 @@ function AuthenticatedApp() {
   const host = urlParams.get('host');
   const shop = urlParams.get('shop');
   const error = urlParams.get('error');
+  const code = urlParams.get('code');
   
+  // Log all URL parameters for debugging
   React.useEffect(() => {
-    console.log('AuthenticatedApp loaded with params:', { host, shop, error });
-    
-    if (!host) {
-      console.log('No host parameter, redirecting to apps');
-      const redirect = Redirect.create(app);
-      redirect.dispatch(Redirect.Action.ADMIN_PATH, '/apps');
-    }
-  }, [app, host]);
+    console.log('=== FRONTEND DEBUG INFO ===');
+    console.log('Current URL:', window.location.href);
+    console.log('URL Search:', window.location.search);
+    console.log('All URL params:', Object.fromEntries(urlParams.entries()));
+    console.log('Parsed params:', { host, shop, error, code });
+    console.log('=== END DEBUG INFO ===');
+  }, []);
 
   // Create authenticated fetch and make it globally available
   React.useEffect(() => {
-    window.authenticatedFetch = authenticatedFetch(app);
+    if (app) {
+      window.authenticatedFetch = authenticatedFetch(app);
+    }
   }, [app]);
 
+  // Show error if present
   if (error) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
         <h1>Authentication Error</h1>
         <p>Error: {error}</p>
         <p>Please try installing the app again.</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }
 
-  if (!host) {
+  // If we have shop but no host, create a host parameter
+  if (shop && !host) {
+    console.log('Creating host parameter from shop:', shop);
+    const generatedHost = btoa(`${shop}/admin`); // Use browser's btoa instead of Buffer
+    const newUrl = `${window.location.pathname}?shop=${shop}&host=${generatedHost}`;
+    console.log('Redirecting to:', newUrl);
+    window.location.replace(newUrl);
     return <Loading />;
+  }
+
+  // If we have neither shop nor host, show a fallback
+  if (!host && !shop) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h1>AI Search Booster</h1>
+        <p>Loading app...</p>
+        <p>If this page doesn't load, please install the app from your Shopify admin.</p>
+        <div style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
+          URL: {window.location.href}<br/>
+          Params: {window.location.search || 'none'}
+        </div>
+      </div>
+    );
   }
 
   return (
