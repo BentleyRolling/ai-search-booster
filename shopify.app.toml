@@ -1,6 +1,6 @@
 # This file stores configurations for your Shopify app.
 
-scopes = "read_products,write_products,read_content,write_content"
+scopes = "read_products,write_products,read_content,write_content,read_metafields,write_metafields"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
