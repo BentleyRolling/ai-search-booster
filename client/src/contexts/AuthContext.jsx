@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (app) {
-      console.log('AuthProvider: Creating authenticated fetch with app bridge');
+      console.log('[ASB-DEBUG] AuthProvider: Creating authenticated fetch with app bridge');
       const fetch = authenticatedFetch(app);
       setAuthFetch(() => fetch);
       
@@ -27,8 +27,9 @@ export const AuthProvider = ({ children }) => {
       window.authenticatedFetch = fetch;
       
       setIsReady(true);
-      console.log('AuthProvider: Authenticated fetch is ready');
-      console.log('AuthProvider: window.authenticatedFetch type:', typeof window.authenticatedFetch);
+      console.log('[ASB-DEBUG] AuthProvider: Authenticated fetch is ready');
+      console.log('[ASB-DEBUG] AuthProvider: window.authenticatedFetch type:', typeof window.authenticatedFetch);
+      console.log('[ASB-DEBUG] AuthProvider: Testing fetch function:', typeof fetch);
     }
   }, [app]);
 

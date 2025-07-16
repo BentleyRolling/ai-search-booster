@@ -960,45 +960,85 @@ app.get('/api/status', simpleVerifyShop, async (req, res) => {
 });
 
 // API: Get products
-app.get('/api/products', simpleVerifyShop, async (req, res) => {
+app.get('/api/products', async (req, res) => {
   try {
-    const { shop } = req;
+    const shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
     const { limit = 50, page = 1 } = req.query;
     
-    // For now, return mock data since we don't have OAuth token
-    // In production, this would fetch from Shopify API
-    const products = [
+    if (!shop) {
+      return res.status(400).json({ error: 'Missing shop parameter' });
+    }
+    
+    // Check if shop has valid access token from OAuth flow
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      console.log('No valid OAuth token, returning mock data for shop:', shop);
+      // Return mock data when no OAuth token
+      const products = [
+        {
+          id: 1,
+          title: 'Sample Product 1',
+          handle: 'sample-product-1',
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          optimized: false
+        },
+        {
+          id: 2,
+          title: 'Sample Product 2', 
+          handle: 'sample-product-2',
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          optimized: false
+        }
+      ];
+      
+      return res.json({
+        products,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: products.length
+        }
+      });
+    }
+    
+    // Fetch real products from Shopify API
+    console.log('Fetching real products from Shopify for shop:', shop);
+    const { accessToken } = shopInfo;
+    
+    const response = await axios.get(
+      `https://${shop}/admin/api/2024-01/products.json?limit=${limit}&page=${page}&fields=id,title,handle,status,created_at,updated_at`,
       {
-        id: 1,
-        title: 'Sample Product 1',
-        handle: 'sample-product-1',
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        optimized: false
-      },
-      {
-        id: 2,
-        title: 'Sample Product 2', 
-        handle: 'sample-product-2',
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        optimized: false
+        headers: { 'X-Shopify-Access-Token': accessToken }
       }
-    ];
+    );
+    
+    const shopifyProducts = response.data.products.map(product => ({
+      id: product.id,
+      title: product.title,
+      handle: product.handle,
+      status: product.status,
+      created_at: product.created_at,
+      updated_at: product.updated_at,
+      optimized: false // TODO: Check if product has optimization metafields
+    }));
+    
+    console.log(`Fetched ${shopifyProducts.length} real products from Shopify`);
     
     res.json({
-      products,
+      products: shopifyProducts,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        total: products.length
+        total: shopifyProducts.length
       }
     });
   } catch (error) {
     console.error('Products error:', error);
-    res.status(500).json({ error: 'Failed to fetch products' });
+    res.status(500).json({ error: 'Failed to fetch products: ' + error.message });
   }
 });
 

@@ -25,6 +25,7 @@ const Dashboard = () => {
   });
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
+  const [testResults, setTestResults] = useState(null);
 
   const API_BASE = import.meta.env.VITE_BACKEND_URL || 'https://ai-search-booster-backend.onrender.com';
 
@@ -32,17 +33,17 @@ const Dashboard = () => {
     // Get shop from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const shopParam = urlParams.get('shop');
-    console.log('Dashboard: Shop parameter:', shopParam);
-    console.log('Dashboard: Auth fetch ready:', isReady);
-    console.log('Dashboard: Auth fetch function:', typeof authFetch);
-    console.log('Dashboard: window.authenticatedFetch type:', typeof window.authenticatedFetch);
+    console.log('[ASB-DEBUG] Dashboard: Shop parameter:', shopParam);
+    console.log('[ASB-DEBUG] Dashboard: Auth fetch ready:', isReady);
+    console.log('[ASB-DEBUG] Dashboard: Auth fetch function:', typeof authFetch);
+    console.log('[ASB-DEBUG] Dashboard: window.authenticatedFetch type:', typeof window.authenticatedFetch);
     
     if (shopParam) {
       setShop(shopParam);
       
       // Wait for authFetch to be ready before making API calls
       if (isReady && authFetch) {
-        console.log('Dashboard: Starting API calls with authenticated fetch');
+        console.log('[ASB-DEBUG] Dashboard: Starting API calls with authenticated fetch');
         
         // Set loading to false after a timeout to prevent endless loading
         const loadingTimeout = setTimeout(() => {
@@ -73,13 +74,13 @@ const Dashboard = () => {
 
   const fetchStatus = async (shopName) => {
     try {
-      console.log('Dashboard: Fetching status for shop:', shopName);
+      console.log('[ASB-DEBUG] Dashboard: Fetching status for shop:', shopName);
       const response = await authFetch(`${API_BASE}/api/status?shop=${shopName}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const data = await response.json();
-      console.log('Dashboard: Status data received:', data);
+      console.log('[ASB-DEBUG] Dashboard: Status data received:', data);
       setStatus(data);
     } catch (error) {
       console.error('Failed to fetch status:', error);
@@ -114,13 +115,13 @@ const Dashboard = () => {
 
   const fetchProducts = async (shopName) => {
     try {
-      console.log('Dashboard: Fetching products for shop:', shopName);
+      console.log('[ASB-DEBUG] Dashboard: Fetching products for shop:', shopName);
       const response = await authFetch(`${API_BASE}/api/products?shop=${shopName}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const data = await response.json();
-      console.log('Dashboard: Products data received:', data);
+      console.log('[ASB-DEBUG] Dashboard: Products data received:', data);
       setProducts(data.products || []);
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -300,6 +301,120 @@ const Dashboard = () => {
     );
   };
 
+  // Test function for end-to-end optimization
+  const runEndToEndTest = async () => {
+    console.log('[ASB-DEBUG] Starting end-to-end optimization test');
+    const results = { steps: [], errors: [], startTime: Date.now() };
+    
+    try {
+      // Step 1: Verify authenticated fetch
+      results.steps.push('Step 1: Verify authenticated fetch');
+      console.log('[ASB-DEBUG] Step 1: typeof window.authenticatedFetch =', typeof window.authenticatedFetch);
+      console.log('[ASB-DEBUG] Step 1: typeof authFetch =', typeof authFetch);
+      
+      if (typeof window.authenticatedFetch !== 'function') {
+        throw new Error('window.authenticatedFetch is not a function');
+      }
+      
+      // Step 2: Test all API endpoints
+      results.steps.push('Step 2: Test API endpoints');
+      
+      // Test /api/status
+      console.log('[ASB-DEBUG] Step 2a: Testing /api/status');
+      const statusRes = await authFetch(`${API_BASE}/api/status?shop=${shop}`);
+      console.log('[ASB-DEBUG] Step 2a: Status response:', statusRes.status, statusRes.statusText);
+      
+      if (!statusRes.ok) throw new Error(`/api/status failed: ${statusRes.status}`);
+      const statusData = await statusRes.json();
+      console.log('[ASB-DEBUG] Step 2a: Status data:', statusData);
+      
+      // Test /api/products  
+      console.log('[ASB-DEBUG] Step 2b: Testing /api/products');
+      const productsRes = await authFetch(`${API_BASE}/api/products?shop=${shop}`);
+      console.log('[ASB-DEBUG] Step 2b: Products response:', productsRes.status, productsRes.statusText);
+      
+      if (!productsRes.ok) throw new Error(`/api/products failed: ${productsRes.status}`);
+      const productsData = await productsRes.json();
+      console.log('[ASB-DEBUG] Step 2b: Products data:', productsData);
+      
+      // Get first real product ID
+      const realProducts = productsData.products || [];
+      if (realProducts.length === 0) {
+        throw new Error('No products found in store');
+      }
+      
+      const testProduct = realProducts[0];
+      const productId = testProduct.id;
+      console.log('[ASB-DEBUG] Step 2b: Selected test product ID:', productId, 'Title:', testProduct.title);
+      
+      // Step 3: Run real optimization
+      results.steps.push('Step 3: Run real optimization');
+      console.log('[ASB-DEBUG] Step 3: Running optimization on product ID:', productId);
+      
+      const optimizePayload = {
+        productIds: [productId],
+        settings: {
+          targetLLM: 'general',
+          keywords: ['premium', 'quality', 'organic'],
+          tone: 'professional'
+        }
+      };
+      
+      console.log('[ASB-DEBUG] Step 3: Optimization payload:', optimizePayload);
+      
+      const optimizeRes = await authFetch(`${API_BASE}/api/optimize/products?shop=${shop}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(optimizePayload)
+      });
+      
+      console.log('[ASB-DEBUG] Step 3: Optimization response:', optimizeRes.status, optimizeRes.statusText);
+      
+      if (!optimizeRes.ok) throw new Error(`Optimization failed: ${optimizeRes.status}`);
+      const optimizeData = await optimizeRes.json();
+      console.log('[ASB-DEBUG] Step 3: Optimization result:', optimizeData);
+      
+      // Step 4: Test rollback
+      results.steps.push('Step 4: Test rollback');
+      console.log('[ASB-DEBUG] Step 4: Testing rollback for product ID:', productId);
+      
+      const rollbackRes = await authFetch(`${API_BASE}/api/rollback/product/${productId}?shop=${shop}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ version: 'original' })
+      });
+      
+      console.log('[ASB-DEBUG] Step 4: Rollback response:', rollbackRes.status, rollbackRes.statusText);
+      
+      if (!rollbackRes.ok) throw new Error(`Rollback failed: ${rollbackRes.status}`);
+      const rollbackData = await rollbackRes.json();
+      console.log('[ASB-DEBUG] Step 4: Rollback result:', rollbackData);
+      
+      // Success!
+      results.success = true;
+      results.endTime = Date.now();
+      results.duration = results.endTime - results.startTime;
+      
+      console.log('[ASB-DEBUG] END-TO-END TEST SUCCESS!');
+      console.log('[ASB-DEBUG] Total duration:', results.duration + 'ms');
+      console.log('[ASB-DEBUG] Steps completed:', results.steps);
+      
+      setTestResults(results);
+      
+    } catch (error) {
+      results.errors.push(error.message);
+      results.success = false;
+      results.endTime = Date.now();
+      results.duration = results.endTime - results.startTime;
+      
+      console.error('[ASB-DEBUG] END-TO-END TEST FAILED:', error);
+      console.error('[ASB-DEBUG] Steps completed:', results.steps);
+      console.error('[ASB-DEBUG] Errors:', results.errors);
+      
+      setTestResults(results);
+    }
+  };
+
   if (loading || !isReady) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -332,12 +447,24 @@ const Dashboard = () => {
                 <p className="text-sm text-gray-500">Optimize your store for AI visibility</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <Settings className="w-6 h-6 text-gray-600" />
-            </button>
+            <div className="flex items-center space-x-2">
+              {/* Hidden test button - only visible in dev */}
+              {window.location.hostname === 'localhost' || window.location.search.includes('debug=true') ? (
+                <button
+                  onClick={runEndToEndTest}
+                  className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-md hover:bg-green-200 transition-colors"
+                  title="Run end-to-end test"
+                >
+                  Test E2E
+                </button>
+              ) : null}
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Settings className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
