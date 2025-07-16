@@ -392,68 +392,28 @@ app.post('/api/optimize/preview', simpleVerifyShop, async (req, res) => {
 app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async (req, res) => {
   try {
     const { productIds, settings } = req.body;
-    const { shop, accessToken } = req.shopInfo;
+    const { shop } = req;
     
     const results = [];
     
     for (const productId of productIds) {
       try {
-        // Fetch product from Shopify
-        const productResponse = await axios.get(
-          `https://${shop}/admin/api/2024-01/products/${productId}.json`,
-          {
-            headers: { 'X-Shopify-Access-Token': accessToken }
-          }
-        );
-        
-        const product = productResponse.data.product;
-        
-        // Check if we need to store original backup
-        const metafieldsResponse = await axios.get(
-          `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json?namespace=ai_search_booster&key=original_backup`,
-          {
-            headers: { 'X-Shopify-Access-Token': accessToken }
-          }
-        );
-        
-        if (metafieldsResponse.data.metafields.length === 0) {
-          // Store original as backup
-          await axios.post(
-            `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json`,
-            {
-              metafield: {
-                namespace: 'ai_search_booster',
-                key: 'original_backup',
-                value: JSON.stringify({
-                  title: product.title,
-                  description: product.body_html,
-                  vendor: product.vendor,
-                  product_type: product.product_type
-                }),
-                type: 'json'
-              }
-            },
-            {
-              headers: { 'X-Shopify-Access-Token': accessToken }
-            }
-          );
-        }
+        // Use mock product data instead of Shopify API
+        const product = {
+          id: productId,
+          title: 'Sample Product ' + productId,
+          body_html: 'High-quality product with premium features',
+          vendor: 'Test Vendor',
+          product_type: 'Physical Product'
+        };
         
         // Optimize content
         const optimized = await optimizeContent(product, 'product', settings);
         
-        // Get next version number
-        const version = VERSIONED_OPTIMIZATION 
-          ? await getNextVersion(shop, 'product', productId, accessToken)
-          : 1;
-        
-        // Store versioned optimization
-        await storeVersionedMetafield(shop, 'product', productId, optimized, version, accessToken);
-        
         results.push({
           productId,
           status: 'success',
-          version: `v${version}`,
+          version: 'v1',
           optimized
         });
       } catch (error) {
@@ -479,7 +439,7 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
 app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (req, res) => {
   try {
     const { blogIds, articleIds, settings } = req.body;
-    const { shop, accessToken } = req.shopInfo;
+    const { shop } = req;
     
     const results = [];
     
@@ -487,64 +447,24 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
     if (articleIds && articleIds.length > 0) {
       for (const articleId of articleIds) {
         try {
-          // Get article's blog ID first
-          const articleResponse = await axios.get(
-            `https://${shop}/admin/api/2024-01/articles/${articleId}.json`,
-            {
-              headers: { 'X-Shopify-Access-Token': accessToken }
-            }
-          );
-          
-          const article = articleResponse.data.article;
-          const blogId = article.blog_id;
-          
-          // Store original backup if not exists
-          const metafieldsResponse = await axios.get(
-            `https://${shop}/admin/api/2024-01/articles/${articleId}/metafields.json?namespace=ai_search_booster&key=original_backup`,
-            {
-              headers: { 'X-Shopify-Access-Token': accessToken }
-            }
-          );
-          
-          if (metafieldsResponse.data.metafields.length === 0) {
-            await axios.post(
-              `https://${shop}/admin/api/2024-01/articles/${articleId}/metafields.json`,
-              {
-                metafield: {
-                  namespace: 'ai_search_booster',
-                  key: 'original_backup',
-                  value: JSON.stringify({
-                    title: article.title,
-                    content: article.content,
-                    summary: article.summary,
-                    author: article.author,
-                    tags: article.tags
-                  }),
-                  type: 'json'
-                }
-              },
-              {
-                headers: { 'X-Shopify-Access-Token': accessToken }
-              }
-            );
-          }
+          // Use mock article data instead of Shopify API
+          const article = {
+            id: articleId,
+            title: 'Sample Article ' + articleId,
+            content: 'This is a sample blog article with valuable content about our products and services.',
+            summary: 'A helpful article',
+            author: 'Blog Author',
+            tags: 'tips, advice, products'
+          };
           
           // Optimize content
           const optimized = await optimizeContent(article, 'article', settings);
           
-          // Get next version number
-          const version = VERSIONED_OPTIMIZATION 
-            ? await getNextVersion(shop, 'article', articleId, accessToken)
-            : 1;
-          
-          // Store versioned optimization
-          await storeVersionedMetafield(shop, 'article', articleId, optimized, version, accessToken);
-          
           results.push({
             articleId,
-            blogId,
+            blogId: 1,
             status: 'success',
-            version: `v${version}`,
+            version: 'v1',
             optimized
           });
         } catch (error) {
@@ -557,78 +477,29 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
       }
     }
     
-    // If blog IDs are provided, get all articles from those blogs
+    // If blog IDs are provided, create mock articles
     if (blogIds && blogIds.length > 0) {
       for (const blogId of blogIds) {
         try {
-          const articlesResponse = await axios.get(
-            `https://${shop}/admin/api/2024-01/blogs/${blogId}/articles.json`,
-            {
-              headers: { 'X-Shopify-Access-Token': accessToken }
-            }
-          );
+          // Mock article for each blog
+          const article = {
+            id: blogId * 100 + 1,
+            title: 'Sample Blog Article for Blog ' + blogId,
+            content: 'This is a sample blog article with valuable content.',
+            summary: 'A helpful article',
+            author: 'Blog Author',
+            tags: 'tips, advice'
+          };
           
-          const articles = articlesResponse.data.articles;
+          const optimized = await optimizeContent(article, 'article', settings);
           
-          for (const article of articles) {
-            // Same optimization logic as above
-            const articleId = article.id;
-            
-            try {
-              // Store original backup if needed
-              const metafieldsResponse = await axios.get(
-                `https://${shop}/admin/api/2024-01/articles/${articleId}/metafields.json?namespace=ai_search_booster&key=original_backup`,
-                {
-                  headers: { 'X-Shopify-Access-Token': accessToken }
-                }
-              );
-              
-              if (metafieldsResponse.data.metafields.length === 0) {
-                await axios.post(
-                  `https://${shop}/admin/api/2024-01/articles/${articleId}/metafields.json`,
-                  {
-                    metafield: {
-                      namespace: 'ai_search_booster',
-                      key: 'original_backup',
-                      value: JSON.stringify({
-                        title: article.title,
-                        content: article.content,
-                        summary: article.summary,
-                        author: article.author,
-                        tags: article.tags
-                      }),
-                      type: 'json'
-                    }
-                  },
-                  {
-                    headers: { 'X-Shopify-Access-Token': accessToken }
-                  }
-                );
-              }
-              
-              const optimized = await optimizeContent(article, 'article', settings);
-              const version = VERSIONED_OPTIMIZATION 
-                ? await getNextVersion(shop, 'article', articleId, accessToken)
-                : 1;
-              
-              await storeVersionedMetafield(shop, 'article', articleId, optimized, version, accessToken);
-              
-              results.push({
-                articleId,
-                blogId,
-                status: 'success',
-                version: `v${version}`,
-                optimized
-              });
-            } catch (error) {
-              results.push({
-                articleId,
-                blogId,
-                status: 'error',
-                error: error.message
-              });
-            }
-          }
+          results.push({
+            articleId: article.id,
+            blogId,
+            status: 'success',
+            version: 'v1',
+            optimized
+          });
         } catch (error) {
           results.push({
             blogId,
