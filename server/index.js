@@ -155,6 +155,24 @@ app.get('/auth/callback', async (req, res) => {
   }
 });
 
+// Function to verify session token
+const verifySessionToken = (sessionToken) => {
+  try {
+    // For embedded apps, we need to verify the session token
+    // This is a basic implementation - in production, use proper JWT verification
+    if (!sessionToken) return false;
+    
+    // Session tokens start with 'Bearer ' prefix
+    const token = sessionToken.replace('Bearer ', '');
+    if (!token) return false;
+    
+    // Basic token validation - in production, verify with JWT library
+    return token.length > 10; // Simple check
+  } catch (error) {
+    return false;
+  }
+};
+
 // Middleware to verify shop authentication
 const verifyShop = (req, res, next) => {
   // Get shop from different sources
@@ -164,13 +182,24 @@ const verifyShop = (req, res, next) => {
     return res.status(400).json({ error: 'Missing shop parameter' });
   }
   
-  // For now, we'll create a simple access token since we're using basic scopes
-  // In production, this should verify the session token properly
-  const shopInfo = shopData.get(shop) || {};
-  if (!shopInfo.accessToken) {
-    // Create a temporary shop entry for API access
-    shopInfo.accessToken = 'temp-token'; // This would be the real OAuth token in production
-    shopData.set(shop, shopInfo);
+  // For embedded apps, check session token from Authorization header
+  const sessionToken = req.headers.authorization;
+  if (!verifySessionToken(sessionToken)) {
+    return res.status(401).json({ 
+      error: 'Invalid session token', 
+      shop,
+      redirectUrl: `${req.protocol}://${req.get('host')}/auth?shop=${shop}`
+    });
+  }
+  
+  // Check if shop has valid access token from OAuth flow
+  const shopInfo = shopData.get(shop);
+  if (!shopInfo || !shopInfo.accessToken) {
+    return res.status(401).json({ 
+      error: 'Shop not authenticated', 
+      shop,
+      redirectUrl: `${req.protocol}://${req.get('host')}/auth?shop=${shop}`
+    });
   }
   
   req.shopInfo = shopInfo;
@@ -925,8 +954,28 @@ app.get('/api/status', verifyShop, async (req, res) => {
   }
 });
 
+// Simplified auth middleware for mock endpoints
+const simpleVerifyShop = (req, res, next) => {
+  const shop = req.query.shop || req.body.shop || req.params.shop || req.headers['x-shopify-shop-domain'];
+  
+  if (!shop) {
+    return res.status(400).json({ error: 'Missing shop parameter' });
+  }
+  
+  // Create or get shop info for mock data
+  let shopInfo = shopData.get(shop);
+  if (!shopInfo) {
+    shopInfo = { accessToken: 'mock-token', installedAt: new Date().toISOString() };
+    shopData.set(shop, shopInfo);
+  }
+  
+  req.shopInfo = shopInfo;
+  req.shop = shop;
+  next();
+};
+
 // API: Get products
-app.get('/api/products', verifyShop, async (req, res) => {
+app.get('/api/products', simpleVerifyShop, async (req, res) => {
   try {
     const { shop } = req;
     const { limit = 50, page = 1 } = req.query;
@@ -969,7 +1018,7 @@ app.get('/api/products', verifyShop, async (req, res) => {
 });
 
 // API: Get blogs
-app.get('/api/blogs', verifyShop, async (req, res) => {
+app.get('/api/blogs', simpleVerifyShop, async (req, res) => {
   try {
     const { shop } = req;
     const { limit = 50, page = 1 } = req.query;
