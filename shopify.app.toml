@@ -1,0 +1,36 @@
+# This file stores configurations for your Shopify app.
+
+scopes = "read_products,write_products,read_content,write_content"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  "https://ai-search-booster-backend.onrender.com/auth/callback",
+  "https://ai-search-booster-frontend.onrender.com/",
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3001/"
+]
+
+[webhooks]
+api_version = "2024-01"
+
+[[webhooks.subscriptions]]
+topics = ["products/update"]
+uri = "/webhooks/product_updated"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+uri = "/webhooks/app_uninstalled"
+
+[app_proxy]
+# Not used for embedded apps
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "aisearch-dev.myshopify.com"
