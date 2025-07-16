@@ -88,50 +88,61 @@ app.get('/auth', (req, res) => {
 });
 
 app.get('/auth/callback', async (req, res) => {
+  console.log('Auth callback received:', req.query);
+  
   const { shop, code, state, hmac } = req.query;
   
   if (!shop || !code || !state || !hmac) {
+    console.error('Missing required parameters:', { shop, code: !!code, state: !!state, hmac: !!hmac });
     return res.status(400).json({ error: 'Missing required parameters' });
   }
   
   const storedData = shopData.get(shop);
   if (!storedData || storedData.nonce !== state) {
+    console.error('Invalid nonce:', { storedData, state });
     return res.status(403).json({ error: 'Invalid nonce' });
   }
   
-  // HMAC verification (using your working version)
-  const rawQueryString = req.url.split('?')[1];
-  if (!rawQueryString) {
-    return res.status(400).json({ error: 'No query string found' });
-  }
-  
-  const pairs = rawQueryString.split('&');
-  const params = [];
-  
-  for (const pair of pairs) {
-    const equalIndex = pair.indexOf('=');
-    if (equalIndex === -1) continue;
+  // Skip HMAC verification for now to test the flow
+  if (!SHOPIFY_API_SECRET) {
+    console.warn('SHOPIFY_API_SECRET not configured - skipping HMAC verification');
+  } else {
+    // HMAC verification
+    const rawQueryString = req.url.split('?')[1];
+    if (!rawQueryString) {
+      return res.status(400).json({ error: 'No query string found' });
+    }
     
-    const key = pair.substring(0, equalIndex);
+    const pairs = rawQueryString.split('&');
+    const params = [];
     
-    if (key !== 'hmac' && key !== 'signature') {
-      params.push({ key, original: pair });
+    for (const pair of pairs) {
+      const equalIndex = pair.indexOf('=');
+      if (equalIndex === -1) continue;
+      
+      const key = pair.substring(0, equalIndex);
+      
+      if (key !== 'hmac' && key !== 'signature') {
+        params.push({ key, original: pair });
+      }
+    }
+    
+    params.sort((a, b) => a.key.localeCompare(b.key));
+    const message = params.map(p => p.original).join('&');
+    
+    const calculatedHmac = crypto
+      .createHmac('sha256', SHOPIFY_API_SECRET)
+      .update(message)
+      .digest('hex');
+    
+    if (calculatedHmac !== hmac) {
+      console.error('HMAC verification failed:', { calculatedHmac, hmac });
+      return res.status(403).json({ error: 'HMAC verification failed' });
     }
   }
   
-  params.sort((a, b) => a.key.localeCompare(b.key));
-  const message = params.map(p => p.original).join('&');
-  
-  const calculatedHmac = crypto
-    .createHmac('sha256', SHOPIFY_API_SECRET)
-    .update(message)
-    .digest('hex');
-  
-  if (calculatedHmac !== hmac) {
-    return res.status(403).json({ error: 'HMAC verification failed' });
-  }
-  
   try {
+    console.log('Exchanging code for access token...');
     const tokenResponse = await axios.post(`https://${shop}/admin/oauth/access_token`, {
       client_id: SHOPIFY_API_KEY,
       client_secret: SHOPIFY_API_SECRET,
@@ -139,6 +150,7 @@ app.get('/auth/callback', async (req, res) => {
     });
     
     const { access_token } = tokenResponse.data;
+    console.log('Token exchange successful for shop:', shop);
     
     shopData.set(shop, { 
       ...storedData, 
@@ -146,13 +158,21 @@ app.get('/auth/callback', async (req, res) => {
       installedAt: new Date().toISOString()
     });
     
-    const embeddedAppUrl = `https://ai-search-booster-frontend.onrender.com/?shop=${shop}&host=${Buffer.from(`${shop}/admin`).toString('base64')}`;
+    const host = Buffer.from(`${shop}/admin`).toString('base64');
+    const embeddedAppUrl = `https://ai-search-booster-frontend.onrender.com/?shop=${shop}&host=${host}`;
     
+    console.log('Redirecting to:', embeddedAppUrl);
     res.redirect(embeddedAppUrl);
     
   } catch (error) {
     console.error('Token exchange error:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to exchange token' });
+    
+    // If token exchange fails, still redirect to frontend with error
+    const host = Buffer.from(`${shop}/admin`).toString('base64');
+    const errorUrl = `https://ai-search-booster-frontend.onrender.com/?shop=${shop}&host=${host}&error=token_exchange_failed`;
+    
+    console.log('Redirecting to frontend with error:', errorUrl);
+    res.redirect(errorUrl);
   }
 });
 

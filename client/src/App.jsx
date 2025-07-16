@@ -51,10 +51,16 @@ const Loading = () => (
 // Authenticated Component Wrapper
 function AuthenticatedApp() {
   const app = useAppBridge();
-  const host = new URLSearchParams(location.search).get('host');
+  const urlParams = new URLSearchParams(location.search);
+  const host = urlParams.get('host');
+  const shop = urlParams.get('shop');
+  const error = urlParams.get('error');
   
   React.useEffect(() => {
+    console.log('AuthenticatedApp loaded with params:', { host, shop, error });
+    
     if (!host) {
+      console.log('No host parameter, redirecting to apps');
       const redirect = Redirect.create(app);
       redirect.dispatch(Redirect.Action.ADMIN_PATH, '/apps');
     }
@@ -64,6 +70,16 @@ function AuthenticatedApp() {
   React.useEffect(() => {
     window.authenticatedFetch = authenticatedFetch(app);
   }, [app]);
+
+  if (error) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h1>Authentication Error</h1>
+        <p>Error: {error}</p>
+        <p>Please try installing the app again.</p>
+      </div>
+    );
+  }
 
   if (!host) {
     return <Loading />;
