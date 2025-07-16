@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package } from 'lucide-react';
-import { useAppBridge } from '@shopify/app-bridge-react';
-import { authenticatedFetch } from '@shopify/app-bridge-utils';
+import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
 
 const Dashboard = () => {
-  const app = useAppBridge();
-  const redirect = Redirect.create(app);
-  const authFetch = authenticatedFetch(app);
+  const { authFetch, isReady, app } = useAuthenticatedFetch();
+  const redirect = app ? Redirect.create(app) : null;
   
   const [shop, setShop] = useState('');
   const [status, setStatus] = useState(null);
@@ -35,33 +33,43 @@ const Dashboard = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const shopParam = urlParams.get('shop');
     console.log('Dashboard: Shop parameter:', shopParam);
+    console.log('Dashboard: Auth fetch ready:', isReady);
+    console.log('Dashboard: Auth fetch function:', typeof authFetch);
+    console.log('Dashboard: window.authenticatedFetch type:', typeof window.authenticatedFetch);
     
     if (shopParam) {
       setShop(shopParam);
       
-      // Set loading to false after a timeout to prevent endless loading
-      const loadingTimeout = setTimeout(() => {
-        console.log('Dashboard: Setting loading to false after timeout');
-        setLoading(false);
-      }, 5000);
-      
-      // Fetch data with individual error handling
-      Promise.allSettled([
-        fetchStatus(shopParam),
-        fetchHistory(shopParam),
-        fetchProducts(shopParam),
-        fetchBlogs(shopParam),
-        fetchUsage(shopParam)
-      ]).then(() => {
-        clearTimeout(loadingTimeout);
-        setLoading(false);
-        console.log('Dashboard: All data fetched, loading complete');
-      });
+      // Wait for authFetch to be ready before making API calls
+      if (isReady && authFetch) {
+        console.log('Dashboard: Starting API calls with authenticated fetch');
+        
+        // Set loading to false after a timeout to prevent endless loading
+        const loadingTimeout = setTimeout(() => {
+          console.log('Dashboard: Setting loading to false after timeout');
+          setLoading(false);
+        }, 5000);
+        
+        // Fetch data with individual error handling
+        Promise.allSettled([
+          fetchStatus(shopParam),
+          fetchHistory(shopParam),
+          fetchProducts(shopParam),
+          fetchBlogs(shopParam),
+          fetchUsage(shopParam)
+        ]).then(() => {
+          clearTimeout(loadingTimeout);
+          setLoading(false);
+          console.log('Dashboard: All data fetched, loading complete');
+        });
+      } else {
+        console.log('Dashboard: Waiting for auth fetch to be ready...');
+      }
     } else {
       console.log('Dashboard: No shop parameter found');
       setLoading(false);
     }
-  }, []);
+  }, [isReady, authFetch]); // Re-run when authFetch becomes ready
 
   const fetchStatus = async (shopName) => {
     try {
@@ -292,12 +300,18 @@ const Dashboard = () => {
     );
   };
 
-  if (loading) {
+  if (loading || !isReady) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-gray-600">Loading AI Search Booster...</p>
+          <p className="text-gray-600">
+            {!isReady ? 'Initializing authentication...' : 'Loading AI Search Booster...'}
+          </p>
+          <div className="mt-2 text-xs text-gray-400">
+            Auth ready: {isReady ? '✓' : '⏳'} | 
+            Fetch available: {authFetch ? '✓' : '⏳'}
+          </div>
         </div>
       </div>
     );

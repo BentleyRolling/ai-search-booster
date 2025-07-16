@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Provider, useAppBridge } from '@shopify/app-bridge-react';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { AppProvider } from '@shopify/polaris';
-import { authenticatedFetch } from '@shopify/app-bridge-utils';
+import { AuthProvider } from './contexts/AuthContext';
 import Dashboard from './pages/Dashboard';
 import '@shopify/polaris/build/esm/styles.css';
 
@@ -67,11 +67,10 @@ function AuthenticatedApp() {
     console.log('=== END DEBUG INFO ===');
   }, []);
 
-  // Create authenticated fetch and make it globally available
+  // Log that AuthenticatedApp is running
   React.useEffect(() => {
-    if (app) {
-      window.authenticatedFetch = authenticatedFetch(app);
-    }
+    console.log('AuthenticatedApp: Component mounted');
+    console.log('AuthenticatedApp: App bridge available:', !!app);
   }, [app]);
 
   // Show error if present
@@ -112,11 +111,13 @@ function AuthenticatedApp() {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthProvider>
   );
 }
 
