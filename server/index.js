@@ -399,6 +399,26 @@ Make sure the content is engaging, keyword-rich, and optimized for search engine
   }
 };
 
+// Simplified auth middleware for mock endpoints
+const simpleVerifyShop = (req, res, next) => {
+  const shop = req.query.shop || req.body.shop || req.params.shop || req.headers['x-shopify-shop-domain'];
+  
+  if (!shop) {
+    return res.status(400).json({ error: 'Missing shop parameter' });
+  }
+  
+  // Create or get shop info for mock data
+  let shopInfo = shopData.get(shop);
+  if (!shopInfo) {
+    shopInfo = { accessToken: 'mock-token', installedAt: new Date().toISOString() };
+    shopData.set(shop, shopInfo);
+  }
+  
+  req.shopInfo = shopInfo;
+  req.shop = shop;
+  next();
+};
+
 // API: Preview optimization
 app.post('/api/optimize/preview', simpleVerifyShop, async (req, res) => {
   try {
@@ -842,26 +862,6 @@ app.get('/api/metafields/:type/:id', simpleVerifyShop, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch metafields' });
   }
 });
-
-// Simplified auth middleware for mock endpoints
-const simpleVerifyShop = (req, res, next) => {
-  const shop = req.query.shop || req.body.shop || req.params.shop || req.headers['x-shopify-shop-domain'];
-  
-  if (!shop) {
-    return res.status(400).json({ error: 'Missing shop parameter' });
-  }
-  
-  // Create or get shop info for mock data
-  let shopInfo = shopData.get(shop);
-  if (!shopInfo) {
-    shopInfo = { accessToken: 'mock-token', installedAt: new Date().toISOString() };
-    shopData.set(shop, shopInfo);
-  }
-  
-  req.shopInfo = shopInfo;
-  req.shop = shop;
-  next();
-};
 
 // API: Get optimization history
 app.get('/api/history/:shop', simpleVerifyShop, async (req, res) => {
