@@ -25,6 +25,7 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SCOPES = process.env.SCOPES || 'read_products,write_products,read_content,write_content';
 const REDIRECT_URI = process.env.REDIRECT_URI || 'https://ai-search-booster-backend.onrender.com/auth/callback';
 const VERSIONED_OPTIMIZATION = process.env.VERSIONED_OPTIMIZATION === 'true';
+const MOCK_MODE = process.env.MOCK_MODE === 'true';
 
 // Rate limiting for optimization endpoints
 const optimizationLimiter = rateLimit({
@@ -277,25 +278,8 @@ const storeVersionedMetafield = async (shop, resourceType, resourceId, content, 
 const optimizeContent = async (content, type, settings = {}) => {
   const { targetLLM = 'general', keywords = [], tone = 'professional' } = settings;
   
-  const prompt = `
-    Optimize this ${type} content for AI/LLM search visibility.
-    Target: ${targetLLM}
-    Keywords to emphasize: ${keywords.join(', ')}
-    Tone: ${tone}
-    
-    Original content: ${JSON.stringify(content)}
-    
-    Generate:
-    1. A concise summary (2-3 sentences)
-    2. 3-5 FAQs in Q&A format
-    3. Structured data (JSON-LD format)
-    4. LLM-friendly description (plain language, keyword-rich)
-    
-    Return as JSON with keys: summary, faqs, jsonLd, llmDescription
-  `;
-  
-  // Use fallback method for demo - no AI API calls
-  try {
+  // If in mock mode, use fallback
+  if (MOCK_MODE) {
     return {
       summary: `${content.title || content.name} - A quality product available in our store.`,
       faqs: [
@@ -316,24 +300,101 @@ const optimizeContent = async (content, type, settings = {}) => {
       },
       llmDescription: content.description || content.body_html || content.content || `Learn about ${content.title || content.name}`
     };
+  }
+  
+  // Real AI optimization with OpenAI API
+  const prompt = `You are an expert e-commerce content optimizer. Your task is to optimize ${type} content for AI/LLM search visibility and better customer engagement.
+
+Target LLM: ${targetLLM}
+Keywords to emphasize: ${keywords.join(', ')}
+Tone: ${tone}
+
+Original content: ${JSON.stringify(content)}
+
+Please generate optimized content that includes:
+1. An optimized title (if it's a product)
+2. An optimized description/body content
+3. A concise summary (2-3 sentences)
+4. 3-5 relevant FAQs in Q&A format
+5. Structured data (JSON-LD format)
+6. LLM-friendly description (plain language, keyword-rich)
+
+Return ONLY a valid JSON object with keys: optimizedTitle, optimizedDescription, summary, faqs, jsonLd, llmDescription
+
+Make sure the content is engaging, keyword-rich, and optimized for search engines and AI understanding.`;
+  
+  try {
+    if (OPENAI_API_KEY) {
+      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 1500
+      }, {
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const aiResponse = response.data.choices[0].message.content;
+      return JSON.parse(aiResponse);
+    } else if (ANTHROPIC_API_KEY) {
+      const response = await axios.post('https://api.anthropic.com/v1/messages', {
+        model: 'claude-3-sonnet-20240229',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1500
+      }, {
+        headers: {
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json'
+        }
+      });
+      
+      const aiResponse = response.data.content[0].text;
+      return JSON.parse(aiResponse);
+    } else {
+      // Fallback when no AI API keys are available
+      return {
+        optimizedTitle: content.title || content.name,
+        optimizedDescription: content.description || content.body_html || content.content || 'A premium product from our collection.',
+        summary: `${content.title || content.name} - A quality product available in our store.`,
+        faqs: [
+          {
+            question: `What is ${content.title || content.name}?`,
+            answer: content.description || content.body_html || content.content || 'A premium product from our collection.'
+          }
+        ],
+        jsonLd: {
+          "@context": "https://schema.org",
+          "@type": type === 'product' ? "Product" : "Article",
+          "name": content.title || content.name,
+          "description": content.description || content.body_html || content.content || ''
+        },
+        llmDescription: content.description || content.body_html || content.content || `Learn about ${content.title || content.name}`
+      };
+    }
   } catch (error) {
-    console.error('Content optimization error:', error);
-    // Return basic fallback even on error
+    console.error('AI optimization error:', error);
+    // Return fallback on error
     return {
-      summary: "Quality product available in our store.",
+      optimizedTitle: content.title || content.name,
+      optimizedDescription: content.description || content.body_html || content.content || 'A premium product from our collection.',
+      summary: `${content.title || content.name} - A quality product available in our store.`,
       faqs: [
         {
-          question: "What is this product?",
-          answer: "A premium product from our collection."
+          question: `What is ${content.title || content.name}?`,
+          answer: content.description || content.body_html || content.content || 'A premium product from our collection.'
         }
       ],
       jsonLd: {
         "@context": "https://schema.org",
         "@type": type === 'product' ? "Product" : "Article",
-        "name": "Product",
-        "description": "Quality product"
+        "name": content.title || content.name,
+        "description": content.description || content.body_html || content.content || ''
       },
-      llmDescription: "Learn about our quality products"
+      llmDescription: content.description || content.body_html || content.content || `Learn about ${content.title || content.name}`
     };
   }
 };
@@ -380,34 +441,126 @@ app.post('/api/optimize/preview', simpleVerifyShop, async (req, res) => {
 });
 
 // API: Optimize products
-app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async (req, res) => {
+app.post('/api/optimize/products', async (req, res) => {
   try {
     const { productIds, settings } = req.body;
-    const { shop } = req;
+    const shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
     
+    if (!shop) {
+      return res.status(400).json({ error: 'Missing shop parameter' });
+    }
+    
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
     const results = [];
     
     for (const productId of productIds) {
       try {
-        // Use mock product data instead of Shopify API
-        const product = {
-          id: productId,
-          title: 'Sample Product ' + productId,
-          body_html: 'High-quality product with premium features',
-          vendor: 'Test Vendor',
-          product_type: 'Physical Product'
+        // Fetch product from Shopify API
+        const productResponse = await axios.get(
+          `https://${shop}/admin/api/2024-01/products/${productId}.json`,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        const product = productResponse.data.product;
+        
+        // Store original as backup if not already stored
+        const metafieldsResponse = await axios.get(
+          `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json?namespace=ai_search_booster&key=original_backup`,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        if (metafieldsResponse.data.metafields.length === 0) {
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'ai_search_booster',
+                key: 'original_backup',
+                value: JSON.stringify({
+                  title: product.title,
+                  body_html: product.body_html,
+                  vendor: product.vendor,
+                  product_type: product.product_type
+                }),
+                type: 'json'
+              }
+            },
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
+            }
+          );
+        }
+        
+        // Optimize content using AI
+        const optimized = await optimizeContent(product, 'product', settings);
+        
+        // Update the product with optimized content
+        const updateData = {
+          product: {
+            id: productId
+          }
         };
         
-        // Optimize content
-        const optimized = await optimizeContent(product, 'product', settings);
+        // Only update if we have optimized content
+        if (optimized.optimizedTitle) {
+          updateData.product.title = optimized.optimizedTitle;
+        }
+        if (optimized.optimizedDescription) {
+          updateData.product.body_html = optimized.optimizedDescription;
+        }
+        
+        // Update product in Shopify
+        await axios.put(
+          `https://${shop}/admin/api/2024-01/products/${productId}.json`,
+          updateData,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        // Store optimization metadata
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json`,
+          {
+            metafield: {
+              namespace: 'ai_search_booster',
+              key: 'optimization_data',
+              value: JSON.stringify({
+                optimized,
+                settings,
+                timestamp: new Date().toISOString()
+              }),
+              type: 'json'
+            }
+          },
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
         
         results.push({
           productId,
           status: 'success',
           version: 'v1',
-          optimized
+          optimized,
+          originalTitle: product.title,
+          newTitle: optimized.optimizedTitle || product.title
         });
       } catch (error) {
+        console.error(`Error optimizing product ${productId}:`, error);
         results.push({
           productId,
           status: 'error',
@@ -567,65 +720,91 @@ app.get('/api/optimize/status/:type/:id', simpleVerifyShop, async (req, res) => 
 });
 
 // API: Rollback optimization
-app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
+app.post('/api/rollback/:type/:id', async (req, res) => {
   try {
     const { type, id } = req.params;
     const { version = 'original' } = req.body;
-    const { shop, accessToken } = req.shopInfo;
+    const shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
     
-    const endpoint = type === 'product' 
-      ? `products/${id}/metafields`
-      : `articles/${id}/metafields`;
-    
-    // Update current version metafield
-    const metafieldsResponse = await axios.get(
-      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=ai_search_booster&key=current_version`,
-      {
-        headers: { 'X-Shopify-Access-Token': accessToken }
-      }
-    );
-    
-    if (metafieldsResponse.data.metafields.length > 0) {
-      const metafieldId = metafieldsResponse.data.metafields[0].id;
-      await axios.put(
-        `https://${shop}/admin/api/2024-01/metafields/${metafieldId}.json`,
-        {
-          metafield: {
-            value: version,
-            type: 'single_line_text_field'
-          }
-        },
-        {
-          headers: { 'X-Shopify-Access-Token': accessToken }
-        }
-      );
-    } else {
-      // Create current version metafield
-      await axios.post(
-        `https://${shop}/admin/api/2024-01/${endpoint}.json`,
-        {
-          metafield: {
-            namespace: 'ai_search_booster',
-            key: 'current_version',
-            value: version,
-            type: 'single_line_text_field'
-          }
-        },
-        {
-          headers: { 'X-Shopify-Access-Token': accessToken }
-        }
-      );
+    if (!shop) {
+      return res.status(400).json({ error: 'Missing shop parameter' });
     }
     
-    res.json({
-      message: `Successfully rolled back to ${version}`,
-      type,
-      id,
-      version
-    });
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
+    
+    if (type === 'product') {
+      // Get original backup from metafields
+      const metafieldsResponse = await axios.get(
+        `https://${shop}/admin/api/2024-01/products/${id}/metafields.json?namespace=ai_search_booster&key=original_backup`,
+        {
+          headers: { 'X-Shopify-Access-Token': accessToken }
+        }
+      );
+      
+      if (metafieldsResponse.data.metafields.length > 0) {
+        const originalData = JSON.parse(metafieldsResponse.data.metafields[0].value);
+        
+        // Restore original product content
+        const updateData = {
+          product: {
+            id: parseInt(id),
+            title: originalData.title,
+            body_html: originalData.body_html,
+            vendor: originalData.vendor,
+            product_type: originalData.product_type
+          }
+        };
+        
+        await axios.put(
+          `https://${shop}/admin/api/2024-01/products/${id}.json`,
+          updateData,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        // Remove optimization metadata
+        const optimizationMetafields = await axios.get(
+          `https://${shop}/admin/api/2024-01/products/${id}/metafields.json?namespace=ai_search_booster&key=optimization_data`,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        for (const metafield of optimizationMetafields.data.metafields) {
+          await axios.delete(
+            `https://${shop}/admin/api/2024-01/metafields/${metafield.id}.json`,
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
+            }
+          );
+        }
+        
+        res.json({
+          message: `Successfully rolled back product ${id} to original version`,
+          type,
+          id,
+          version: 'original',
+          restoredData: originalData
+        });
+      } else {
+        res.status(404).json({ error: 'No original backup found for this product' });
+      }
+    } else {
+      res.status(400).json({ error: 'Rollback for articles not implemented yet' });
+    }
   } catch (error) {
     console.error('Rollback error:', error);
-    res.status(500).json({ error: 'Failed to rollback' });
+    res.status(500).json({ error: 'Failed to rollback: ' + error.message });
   }
 });
 
