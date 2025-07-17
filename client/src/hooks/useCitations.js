@@ -114,7 +114,10 @@ export const useCitations = (shop) => {
 
   // Initialize data on mount
   useEffect(() => {
-    fetchCitationData();
+    console.log('useCitations: shop=', shop, 'authFetch=', !!authFetch);
+    if (shop && authFetch) {
+      fetchCitationData();
+    }
   }, [shop, authFetch]);
 
   // Auto-refresh every 5 minutes

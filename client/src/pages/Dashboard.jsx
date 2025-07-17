@@ -1099,6 +1099,14 @@ const Dashboard = () => {
             {/* Citation Monitoring Controls */}
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="text-md font-semibold mb-4">Citation Monitoring</h3>
+              
+              {/* Debug Info */}
+              {window.location.hostname === 'localhost' && (
+                <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
+                  Debug: shop={shop ? 'loaded' : 'missing'}, authFetch={authFetch ? 'ready' : 'missing'}, citationLoading={citationLoading.toString()}, isMonitoring={isMonitoring.toString()}
+                </div>
+              )}
+              
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <Monitor className={`w-5 h-5 ${isMonitoring ? 'text-green-600' : 'text-gray-400'}`} />
@@ -1110,6 +1118,7 @@ const Dashboard = () => {
                 {!isMonitoring ? (
                   <button
                     onClick={async () => {
+                      console.log('Start monitoring clicked');
                       const success = await startMonitoring({ 
                         interval: 'daily', 
                         keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k) 
@@ -1120,10 +1129,11 @@ const Dashboard = () => {
                         addNotification('Failed to start citation monitoring', 'error');
                       }
                     }}
-                    disabled={citationLoading}
+                    disabled={citationLoading || !shop || !authFetch}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    title={citationLoading ? 'Loading...' : !shop ? 'Shop not loaded' : !authFetch ? 'Auth not ready' : 'Start citation monitoring'}
                   >
-                    {citationLoading ? 'Starting...' : 'Start Monitoring'}
+                    {citationLoading ? 'Loading...' : 'Start Monitoring'}
                   </button>
                 ) : (
                   <button
