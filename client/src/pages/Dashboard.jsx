@@ -208,6 +208,46 @@ const Dashboard = () => {
     }
   };
 
+  // Test function to verify app proxy routing
+  const testProxyRouting = async () => {
+    console.log('\n=== TESTING APP PROXY ROUTING ===');
+    console.log('1. Current environment detection:');
+    console.log('   - hostname:', window.location.hostname);
+    console.log('   - API_BASE:', API_BASE);
+    console.log('   - Using relative paths?', API_BASE === '');
+    
+    if (!isReady || !authFetch) {
+      console.log('⚠️ Cannot test: Auth not ready yet');
+      return;
+    }
+    
+    const testUrl = `${API_BASE}/api/products?shop=${shop}`;
+    console.log('2. Testing API call:');
+    console.log('   - URL:', testUrl);
+    console.log('   - Expected in Network tab:', API_BASE === '' ? '/apps/ai-search-booster/api/products' : testUrl);
+    
+    try {
+      console.log('3. Making authenticated request...');
+      const response = await authFetch(testUrl);
+      console.log('4. Response received:');
+      console.log('   - Status:', response.status);
+      console.log('   - Headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('5. ✅ SUCCESS - API call worked!');
+        console.log('   - Data received:', data);
+        console.log('   - Products count:', data.products?.length || 0);
+      } else {
+        console.log('5. ❌ FAILED - Response not OK');
+      }
+    } catch (error) {
+      console.log('5. ❌ ERROR - Request failed:', error);
+    }
+    
+    console.log('=== END TEST ===\n');
+  };
+
   const optimizeProducts = async () => {
     if (selectedProducts.length === 0) {
       alert('Please select products to optimize');
@@ -653,6 +693,14 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Select Products to Optimize</h3>
                   <div className="flex space-x-2">
+                    <button
+                      onClick={testProxyRouting}
+                      className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center space-x-1 text-sm"
+                      title="Test app proxy routing - check console logs"
+                    >
+                      <Search className="w-3 h-3" />
+                      <span>Test API</span>
+                    </button>
                     <button
                       onClick={previewOptimization}
                       className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
