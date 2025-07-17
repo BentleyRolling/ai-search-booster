@@ -127,7 +127,9 @@ app.get('/', (req, res) => {
       history: 'GET /api/history/:shop',
       metafields: 'GET /api/metafields/:type/:id',
       llmFeed: 'GET /llm-feed.xml?shop=your-store.myshopify.com',
-      vector: 'GET /api/vector/:id?type=product&format=openai'
+      vector: 'GET /api/vector/:id?type=product&format=openai',
+      aiPlugin: 'GET /.well-known/ai-plugin.json',
+      openapi: 'GET /.well-known/openapi.yaml'
     }
   });
 });
@@ -2023,6 +2025,265 @@ const buildEmbeddingText = (data) => {
   
   return text.trim();
 };
+
+// OpenAI Plugin Manifest
+app.get('/.well-known/ai-plugin.json', (req, res) => {
+  const shop = req.query.shop || req.headers['x-shopify-shop-domain'] || 'example-store.myshopify.com';
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  
+  const manifest = {
+    schema_version: "v1",
+    name_for_human: "AI Search Booster",
+    name_for_model: "ai_search_booster",
+    description_for_human: "Optimize Shopify store content for AI/LLM visibility with structured data, RSS feeds, and vector endpoints.",
+    description_for_model: "Plugin for optimizing e-commerce content for AI/LLM discoverability. Provides structured product data, FAQ generation, RSS feeds for LLM training, and vector endpoints for embedding models. Supports non-destructive editing with rollback capabilities.",
+    auth: {
+      type: "none"
+    },
+    api: {
+      type: "openapi",
+      url: `${baseUrl}/.well-known/openapi.yaml`,
+      is_user_authenticated: false
+    },
+    logo_url: `${baseUrl}/logo.png`,
+    contact_email: "support@ai-search-booster.com",
+    legal_info_url: `${baseUrl}/legal`,
+    capabilities: [
+      "product_optimization",
+      "content_generation",
+      "structured_data",
+      "rss_feeds",
+      "vector_embeddings",
+      "faq_generation",
+      "rollback_safety"
+    ],
+    endpoints: {
+      llm_feed: `${baseUrl}/llm-feed.xml?shop=${shop}`,
+      vector_data: `${baseUrl}/api/vector/{id}?type=product&format=openai&shop=${shop}`,
+      product_optimization: `${baseUrl}/api/optimize/products?shop=${shop}`,
+      content_preview: `${baseUrl}/api/optimize/preview?shop=${shop}`,
+      rollback: `${baseUrl}/api/rollback/{type}/{id}?shop=${shop}`
+    },
+    privacy_policy_url: `${baseUrl}/privacy`,
+    terms_of_service_url: `${baseUrl}/terms`
+  };
+  
+  res.json(manifest);
+});
+
+// OpenAPI specification for AI Plugin
+app.get('/.well-known/openapi.yaml', (req, res) => {
+  const shop = req.query.shop || req.headers['x-shopify-shop-domain'] || 'example-store.myshopify.com';
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  
+  const openapi = `openapi: 3.0.1
+info:
+  title: AI Search Booster Plugin
+  description: Optimize Shopify store content for AI/LLM visibility
+  version: 'v2.0.0'
+  contact:
+    email: support@ai-search-booster.com
+servers:
+  - url: ${baseUrl}
+paths:
+  /llm-feed.xml:
+    get:
+      operationId: getLLMFeed
+      summary: Get LLM training RSS feed
+      description: Retrieve RSS feed with AI-optimized content for LLM training
+      parameters:
+        - name: shop
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Shopify store domain
+      responses:
+        '200':
+          description: RSS feed content
+          content:
+            application/rss+xml:
+              schema:
+                type: string
+  /api/vector/{id}:
+    get:
+      operationId: getVectorData
+      summary: Get vector embedding data
+      description: Retrieve product or article data formatted for embedding models
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [product, article]
+            default: product
+          description: Resource type
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [openai, huggingface, claude, generic]
+            default: openai
+          description: Output format
+        - name: shop
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Shopify store domain
+      responses:
+        '200':
+          description: Vector data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  format:
+                    type: string
+                  data:
+                    type: object
+                  metadata:
+                    type: object
+  /api/optimize/preview:
+    post:
+      operationId: previewOptimization
+      summary: Preview content optimization
+      description: Generate AI-optimized content preview without saving
+      parameters:
+        - name: shop
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Shopify store domain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: object
+                  description: Content to optimize
+                type:
+                  type: string
+                  enum: [product, article]
+                settings:
+                  type: object
+                  description: Optimization settings
+      responses:
+        '200':
+          description: Optimization preview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  original:
+                    type: object
+                  optimized:
+                    type: object
+                  preview:
+                    type: object
+  /api/rollback/{type}/{id}:
+    post:
+      operationId: rollbackOptimization
+      summary: Rollback content optimization
+      description: Restore original content and remove all optimizations
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [product, article]
+          description: Resource type
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+        - name: shop
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Shopify store domain
+      responses:
+        '200':
+          description: Rollback completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  type:
+                    type: string
+                  id:
+                    type: string
+                  version:
+                    type: string
+                  restoredData:
+                    type: object
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string`;
+
+  res.set('Content-Type', 'application/x-yaml');
+  res.send(openapi);
+});
+
+// Legal/Privacy endpoints for AI Plugin compliance
+app.get('/legal', (req, res) => {
+  res.json({
+    name: 'AI Search Booster',
+    version: '2.0.0',
+    legal_info: 'Legal information and terms of service',
+    contact: 'support@ai-search-booster.com',
+    message: 'AI Search Booster is a Shopify app that optimizes store content for AI/LLM visibility while maintaining non-destructive editing and rollback capabilities.'
+  });
+});
+
+app.get('/privacy', (req, res) => {
+  res.json({
+    name: 'AI Search Booster',
+    version: '2.0.0',
+    privacy_policy: 'Privacy policy information',
+    data_handling: 'We only process shop product data for optimization purposes. No personal customer data is stored.',
+    contact: 'support@ai-search-booster.com',
+    message: 'AI Search Booster respects user privacy and follows GDPR compliance standards.'
+  });
+});
+
+app.get('/terms', (req, res) => {
+  res.json({
+    name: 'AI Search Booster',
+    version: '2.0.0',
+    terms_of_service: 'Terms of service information',
+    usage: 'This service is provided for optimizing e-commerce content for AI/LLM discoverability.',
+    contact: 'support@ai-search-booster.com',
+    message: 'By using AI Search Booster, you agree to use it responsibly for content optimization purposes.'
+  });
+});
 
 // Health check
 app.get('/health', (req, res) => {
