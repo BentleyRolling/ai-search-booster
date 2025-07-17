@@ -1,139 +1,157 @@
 {% comment %}
   AI Search Booster - Theme Extension
-  Injects AI-optimized content for better LLM visibility
+  Injects AI-optimized content for better LLM visibility with comprehensive rollback support
+  
+  Key Features:
+  - Comprehensive JSON-LD structured data for LLM training
+  - Non-destructive editing with draft/live content separation
+  - One-click rollback capability via metafield toggle
+  - Enhanced FAQPage, Product, and BreadcrumbList schemas
+  - Organization/Brand graph with Wikidata integration
 {% endcomment %}
 
-{% assign namespace = section.settings.custom_namespace | default: 'ai_search_booster' %}
+{% assign namespace = section.settings.custom_namespace | default: 'asb' %}
 {% assign enable_structured = section.settings.enable_structured_data | default: true %}
 {% assign enable_llm = section.settings.enable_llm_blocks | default: true %}
 
-{% if product %}
-  {% assign ai_content = product.metafields[namespace].current_version.value %}
-  {% assign version_num = product.metafields[namespace].current_version.value | default: 0 %}
-  
-  {% if version_num > 0 %}
-    {% assign version_key = 'optimized_v' | append: version_num %}
-    {% assign ai_content = product.metafields[namespace][version_key].value %}
-  {% endif %}
-  
-  {% if ai_content and enable_structured %}
-    {% comment %} JSON-LD Structured Data for Search Engines and LLMs {% endcomment %}
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org/",
-      "@type": "Product",
-      "name": "{{ product.title | escape }}",
-      "description": "{{ ai_content.summary | escape }}",
-      "brand": {
-        "@type": "Brand",
-        "name": "{{ shop.name | escape }}"
-      },
-      "offers": {
-        "@type": "Offer",
-        "price": "{{ product.price | money_without_currency }}",
-        "priceCurrency": "{{ shop.currency }}",
-        "availability": "{% if product.available %}InStock{% else %}OutOfStock{% endif %}"
-      },
-      "mainEntity": {
-        "@type": "FAQPage",
-        "mainEntity": [
-          {% for faq in ai_content.faqs %}
-          {
-            "@type": "Question",
-            "name": "{{ faq.question | escape }}",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "{{ faq.answer | escape }}"
-            }
-          }{% unless forloop.last %},{% endunless %}
-          {% endfor %}
-        ]
-      }
-    }
-    </script>
-  {% endif %}
+{% comment %}
+  Main LLM Schema Integration
+  This renders the comprehensive schema when enabled
+{% endcomment %}
+{% if product and enable_structured %}
+  {% render 'asb-llm-schema' %}
+{% endif %}
 
-  {% if ai_content and enable_llm %}
-    {% comment %} Hidden content specifically for LLM parsing {% endcomment %}
-    <div data-llm="product-context" data-version="{{ version_num }}" style="display: none; visibility: hidden;" aria-hidden="true">
-      <div data-llm-product-id="{{ product.id }}">
-        <h2>{{ product.title }}</h2>
-        <p>{{ ai_content.llmDescription }}</p>
+{% comment %}
+  Visible Content Enhancement
+  Shows AI-optimized content when published (not draft)
+{% endcomment %}
+{% if product %}
+  {% assign optimized_content = product.metafields[namespace].optimized_content %}
+  {% assign optimization_enabled = product.metafields[namespace].enable_schema %}
+  {% assign faq_data = product.metafields[namespace].faq_data %}
+  
+  {% if optimization_enabled and optimized_content %}
+    <div class="ai-search-booster-content" data-product-id="{{ product.id }}">
+      <div class="ai-optimized-content" data-llm="enhanced-content">
+        {% if section.settings.show_ai_badge %}
+        <div class="ai-badge">
+          <span>✨ AI-Enhanced Content</span>
+        </div>
+        {% endif %}
         
-        {% comment %} Keywords for LLM context {% endcomment %}
-        <div data-llm-keywords>
-          {% for tag in product.tags %}
-            <span>{{ tag }}</span>
-          {% endfor %}
+        <div class="optimized-description">
+          {{ optimized_content }}
         </div>
         
-        {% comment %} Additional context {% endcomment %}
-        <div data-llm-details>
-          <span data-price>{{ product.price | money }}</span>
-          <span data-availability>{% if product.available %}In Stock{% else %}Out of Stock{% endif %}</span>
-          <span data-vendor>{{ product.vendor }}</span>
-          <span data-optimization-version>v{{ version_num }}</span>
-        </div>
+        {% if faq_data %}
+          {% assign faq_parsed = faq_data | parse_json %}
+          {% if faq_parsed.questions.size > 0 %}
+          <div class="ai-faq-section">
+            <h4>{{ section.settings.faq_heading | default: "Frequently Asked Questions" }}</h4>
+            <div class="faq-content">
+              {% for faq in faq_parsed.questions %}
+              <details class="faq-item">
+                <summary>{{ faq.question }}</summary>
+                <div class="faq-answer">{{ faq.answer }}</div>
+              </details>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        {% endif %}
       </div>
     </div>
-
-    {% comment %} Microdata for additional SEO/AI benefit {% endcomment %}
-    <meta itemprop="description" content="{{ ai_content.summary | escape }}">
-    {% for faq in ai_content.faqs %}
-      <meta itemprop="faq-question-{{ forloop.index }}" content="{{ faq.question | escape }}">
-      <meta itemprop="faq-answer-{{ forloop.index }}" content="{{ faq.answer | escape }}">
-    {% endfor %}
   {% endif %}
 {% endif %}
 
+{% comment %}
+  Blog/Article Content Enhancement
+  Similar to product optimization but for blog posts
+{% endcomment %}
 {% if article %}
-  {% assign ai_blog_content = article.metafields[namespace].current_version.value %}
-  {% assign blog_version_num = article.metafields[namespace].current_version.value | default: 0 %}
+  {% assign blog_optimized_content = article.metafields[namespace].optimized_content %}
+  {% assign blog_optimization_enabled = article.metafields[namespace].enable_schema %}
+  {% assign blog_faq_data = article.metafields[namespace].faq_data %}
   
-  {% if blog_version_num > 0 %}
-    {% assign blog_version_key = 'optimized_v' | append: blog_version_num %}
-    {% assign ai_blog_content = article.metafields[namespace][blog_version_key].value %}
+  {% if blog_optimization_enabled and blog_optimized_content %}
+    <div class="ai-search-booster-blog-content" data-article-id="{{ article.id }}">
+      <div class="ai-optimized-blog-content" data-llm="enhanced-blog-content">
+        {% if section.settings.show_ai_badge %}
+        <div class="ai-badge">
+          <span>✨ AI-Enhanced Article</span>
+        </div>
+        {% endif %}
+        
+        <div class="optimized-blog-description">
+          {{ blog_optimized_content }}
+        </div>
+        
+        {% if blog_faq_data %}
+          {% assign blog_faq_parsed = blog_faq_data | parse_json %}
+          {% if blog_faq_parsed.questions.size > 0 %}
+          <div class="ai-blog-faq-section">
+            <h4>{{ section.settings.faq_heading | default: "Frequently Asked Questions" }}</h4>
+            <div class="faq-content">
+              {% for faq in blog_faq_parsed.questions %}
+              <details class="faq-item">
+                <summary>{{ faq.question }}</summary>
+                <div class="faq-answer">{{ faq.answer }}</div>
+              </details>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
   {% endif %}
   
-  {% if ai_blog_content and enable_structured %}
+  {% comment %}
+    Blog-specific structured data
+    Rendered separately from product schema
+  {% endcomment %}
+  {% if blog_optimization_enabled and enable_structured %}
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "BlogPosting",
-      "headline": "{{ article.title | escape }}",
-      "description": "{{ ai_blog_content.summary | escape }}",
+      "headline": {{ article.title | json }},
+      "description": {% if blog_optimized_content %}{{ blog_optimized_content | strip_html | json }}{% else %}{{ article.excerpt | strip_html | json }}{% endif %},
       "author": {
         "@type": "Organization",
-        "name": "{{ shop.name | escape }}"
+        "name": {{ shop.name | json }},
+        "url": "{{ shop.url }}"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": {{ shop.name | json }},
+        "url": "{{ shop.url }}"
       },
       "datePublished": "{{ article.created_at | date: '%Y-%m-%d' }}",
+      "dateModified": "{{ article.updated_at | date: '%Y-%m-%d' }}",
+      "url": "{{ shop.url }}{{ article.url }}",
+      "image": {% if article.image %}"{{ article.image | image_url: width: 800 }}"{% else %}"{{ 'logo.png' | asset_url }}"{% endif %}
+      {% if blog_faq_data %}
+      ,
       "mainEntity": {
         "@type": "FAQPage",
         "mainEntity": [
-          {% for faq in ai_blog_content.faqs %}
+          {% for faq in blog_faq_parsed.questions %}
           {
             "@type": "Question",
-            "name": "{{ faq.question | escape }}",
+            "name": {{ faq.question | json }},
             "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "{{ faq.answer | escape }}"
+              "@type": "Answer", 
+              "text": {{ faq.answer | json }}
             }
           }{% unless forloop.last %},{% endunless %}
           {% endfor %}
         ]
       }
+      {% endif %}
     }
     </script>
-  {% endif %}
-
-  {% if ai_blog_content and enable_llm %}
-    <div data-llm="blog-context" data-version="{{ blog_version_num }}" style="display: none; visibility: hidden;" aria-hidden="true">
-      <div data-llm-article-id="{{ article.id }}">
-        <h2>{{ article.title }}</h2>
-        <p>{{ ai_blog_content.llmDescription }}</p>
-        <span data-optimization-version>v{{ blog_version_num }}</span>
-      </div>
-    </div>
   {% endif %}
 {% endif %}
 
@@ -148,24 +166,154 @@
     {
       "type": "checkbox",
       "id": "enable_structured_data",
-      "label": "Enable Structured Data",
+      "label": "Enable LLM Structured Data",
       "default": true,
-      "info": "Injects JSON-LD structured data for search engines"
+      "info": "Injects comprehensive JSON-LD structured data for LLM training and search engines"
     },
     {
       "type": "checkbox",
       "id": "enable_llm_blocks",
-      "label": "Enable LLM Content Blocks",
+      "label": "Enable Enhanced Content",
       "default": true,
-      "info": "Adds hidden content blocks optimized for AI/LLM parsing"
+      "info": "Shows AI-optimized content when published"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_ai_badge",
+      "label": "Show AI-Enhanced Badge",
+      "default": true,
+      "info": "Displays badge on AI-optimized content"
+    },
+    {
+      "type": "text",
+      "id": "faq_heading",
+      "label": "FAQ Section Heading",
+      "default": "Frequently Asked Questions",
+      "info": "Heading for AI-generated FAQ sections"
     },
     {
       "type": "text",
       "id": "custom_namespace",
       "label": "Metafield Namespace",
-      "default": "ai_search_booster",
+      "default": "asb",
       "info": "Advanced: Change if using custom metafield namespace"
     }
   ]
 }
 {% endschema %}
+
+<style>
+  .ai-search-booster-content,
+  .ai-search-booster-blog-content {
+    margin: 20px 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border-left: 4px solid #007cba;
+  }
+  
+  .ai-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #007cba, #0056b3);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    margin-bottom: 15px;
+    font-weight: 500;
+  }
+  
+  .ai-optimized-content,
+  .ai-optimized-blog-content {
+    line-height: 1.6;
+  }
+  
+  .optimized-description,
+  .optimized-blog-description {
+    margin-bottom: 20px;
+  }
+  
+  .ai-faq-section,
+  .ai-blog-faq-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+  }
+  
+  .ai-faq-section h4,
+  .ai-blog-faq-section h4 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+  }
+  
+  .faq-content {
+    line-height: 1.5;
+  }
+  
+  .faq-item {
+    margin-bottom: 12px;
+    padding: 15px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    transition: box-shadow 0.2s ease;
+  }
+  
+  .faq-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 124, 186, 0.1);
+  }
+  
+  .faq-item summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #007cba;
+    list-style: none;
+    position: relative;
+    padding-right: 25px;
+  }
+  
+  .faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+  
+  .faq-item summary::after {
+    content: '+';
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #007cba;
+    transition: transform 0.2s ease;
+  }
+  
+  .faq-item[open] summary::after {
+    transform: rotate(45deg);
+  }
+  
+  .faq-item[open] summary {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .faq-answer {
+    color: #555;
+    line-height: 1.6;
+    margin-top: 10px;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .ai-search-booster-content,
+    .ai-search-booster-blog-content {
+      margin: 15px 0;
+      padding: 15px;
+    }
+    
+    .faq-item {
+      padding: 12px;
+    }
+  }
+</style>
