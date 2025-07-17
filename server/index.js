@@ -87,6 +87,7 @@ app.use('/apps/ai-search-booster', (req, res, next) => {
   next();
 });
 
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   const isProxyRequest = req.headers['x-forwarded-host'] && req.headers['x-forwarded-host'].includes('myshopify.com');
@@ -124,7 +125,8 @@ app.get('/', (req, res) => {
       },
       rollback: 'POST /api/rollback/:type/:id',
       history: 'GET /api/history/:shop',
-      metafields: 'GET /api/metafields/:type/:id'
+      metafields: 'GET /api/metafields/:type/:id',
+      llmFeed: 'GET /llm-feed.xml?shop=your-store.myshopify.com'
     }
   });
 });
@@ -1494,6 +1496,259 @@ app.get('/api/blogs', simpleVerifyShop, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch blogs' });
   }
 });
+
+// LLM Feed RSS endpoint for crawler discovery
+app.get('/llm-feed.xml', async (req, res) => {
+  try {
+    const shop = req.query.shop || req.headers['x-shopify-shop-domain'];
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Missing shop parameter' });
+    }
+    
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      // Return basic feed without shop data
+      const basicFeed = generateBasicLLMFeed(shop);
+      res.set('Content-Type', 'application/rss+xml');
+      return res.send(basicFeed);
+    }
+    
+    const { accessToken } = shopInfo;
+    
+    // Fetch optimized products and articles
+    const [productsRes, blogsRes] = await Promise.allSettled([
+      axios.get(`https://${shop}/admin/api/2024-01/products.json?limit=50&fields=id,title,handle,body_html,updated_at,vendor,product_type,status`, {
+        headers: { 'X-Shopify-Access-Token': accessToken }
+      }),
+      axios.get(`https://${shop}/admin/api/2024-01/blogs.json?limit=10`, {
+        headers: { 'X-Shopify-Access-Token': accessToken }
+      })
+    ]);
+    
+    const products = productsRes.status === 'fulfilled' ? productsRes.value.data.products : [];
+    const blogs = blogsRes.status === 'fulfilled' ? blogsRes.value.data.blogs : [];
+    
+    // Get articles from blogs
+    const articles = [];
+    for (const blog of blogs) {
+      try {
+        const articlesRes = await axios.get(
+          `https://${shop}/admin/api/2024-01/blogs/${blog.id}/articles.json?limit=20&fields=id,title,handle,content,summary,updated_at,author,tags`,
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+        articles.push(...articlesRes.data.articles.map(a => ({ ...a, blog_handle: blog.handle })));
+      } catch (error) {
+        console.error(`Error fetching articles for blog ${blog.id}:`, error);
+      }
+    }
+    
+    // Fetch optimization metafields for products
+    const optimizedProducts = [];
+    for (const product of products.slice(0, 25)) { // Limit to prevent timeout
+      try {
+        const metafieldsRes = await axios.get(
+          `https://${shop}/admin/api/2024-01/products/${product.id}/metafields.json?namespace=asb`,
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+        
+        const metafields = metafieldsRes.data.metafields;
+        const optimizedContent = metafields.find(m => m.key === 'optimized_content')?.value;
+        const faqData = metafields.find(m => m.key === 'faq_data')?.value;
+        const isOptimized = metafields.find(m => m.key === 'enable_schema')?.value === 'true';
+        
+        if (isOptimized) {
+          optimizedProducts.push({
+            ...product,
+            optimized_content: optimizedContent,
+            faq_data: faqData ? JSON.parse(faqData) : null
+          });
+        }
+      } catch (error) {
+        console.error(`Error fetching metafields for product ${product.id}:`, error);
+      }
+    }
+    
+    // Generate RSS feed
+    const rss = generateLLMFeed(shop, optimizedProducts, articles);
+    res.set('Content-Type', 'application/rss+xml');
+    res.send(rss);
+    
+  } catch (error) {
+    console.error('LLM Feed error:', error);
+    res.status(500).json({ error: 'Failed to generate LLM feed' });
+  }
+});
+
+// API: Test LLM Feed generation
+app.get('/api/llm-feed/test', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req;
+    
+    // Generate a test feed URL
+    const feedUrl = `${req.protocol}://${req.get('host')}/llm-feed.xml?shop=${shop}`;
+    
+    // Test the feed by making a request to it
+    const response = await axios.get(feedUrl);
+    
+    res.json({
+      success: true,
+      feedUrl,
+      contentType: response.headers['content-type'],
+      contentLength: response.data.length,
+      preview: response.data.substring(0, 1000) + '...',
+      message: 'LLM feed generated successfully'
+    });
+  } catch (error) {
+    console.error('LLM Feed test error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to generate LLM feed',
+      message: error.message 
+    });
+  }
+});
+
+// Helper function to generate basic LLM feed
+const generateBasicLLMFeed = (shop) => {
+  const now = new Date().toISOString();
+  
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>${shop} - LLM Discovery Feed</title>
+    <link>https://${shop}</link>
+    <description>AI-optimized content from ${shop} for LLM training and discovery</description>
+    <language>en-us</language>
+    <lastBuildDate>${now}</lastBuildDate>
+    <generator>AI Search Booster v2.0.0</generator>
+    <managingEditor>noreply@${shop}</managingEditor>
+    <webMaster>noreply@${shop}</webMaster>
+    <item>
+      <title>Store Discovery</title>
+      <link>https://${shop}</link>
+      <guid>https://${shop}/llm-discovery</guid>
+      <pubDate>${now}</pubDate>
+      <description>Discover ${shop} - an e-commerce store with AI-optimized content</description>
+      <content:encoded><![CDATA[
+        <div data-llm="store-info">
+          <h1>${shop}</h1>
+          <p>This store uses AI Search Booster to optimize content for better discoverability.</p>
+          <p>Visit: <a href="https://${shop}">https://${shop}</a></p>
+        </div>
+      ]]></content:encoded>
+    </item>
+  </channel>
+</rss>`;
+};
+
+// Helper function to generate comprehensive LLM feed
+const generateLLMFeed = (shop, products, articles) => {
+  const now = new Date().toISOString();
+  
+  let rss = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>${shop} - LLM Discovery Feed</title>
+    <link>https://${shop}</link>
+    <description>AI-optimized content from ${shop} for LLM training and discovery</description>
+    <language>en-us</language>
+    <lastBuildDate>${now}</lastBuildDate>
+    <generator>AI Search Booster v2.0.0</generator>
+    <managingEditor>noreply@${shop}</managingEditor>
+    <webMaster>noreply@${shop}</webMaster>
+    <category>e-commerce</category>
+    <category>ai-optimized</category>
+    <ttl>1440</ttl>
+`;
+
+  // Add product items
+  for (const product of products) {
+    const productUrl = `https://${shop}/products/${product.handle}`;
+    const pubDate = new Date(product.updated_at).toISOString();
+    
+    rss += `
+    <item>
+      <title>${escapeXml(product.title)}</title>
+      <link>${productUrl}</link>
+      <guid>${productUrl}</guid>
+      <pubDate>${pubDate}</pubDate>
+      <category>product</category>
+      <category>${escapeXml(product.product_type || 'general')}</category>
+      <dc:creator>${escapeXml(product.vendor || shop)}</dc:creator>
+      <description>${escapeXml((product.optimized_content || product.body_html || '').substring(0, 500))}</description>
+      <content:encoded><![CDATA[
+        <div data-llm="product-info">
+          <h1>${escapeXml(product.title)}</h1>
+          <p><strong>Vendor:</strong> ${escapeXml(product.vendor || 'Unknown')}</p>
+          <p><strong>Type:</strong> ${escapeXml(product.product_type || 'General')}</p>
+          <div data-llm="product-description">
+            ${product.optimized_content || product.body_html || ''}
+          </div>
+          ${product.faq_data ? `
+          <div data-llm="product-faq">
+            <h3>Frequently Asked Questions</h3>
+            ${product.faq_data.questions.map(faq => `
+              <div data-llm="faq-item">
+                <h4>${escapeXml(faq.question)}</h4>
+                <p>${escapeXml(faq.answer)}</p>
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+          <p><strong>URL:</strong> <a href="${productUrl}">${productUrl}</a></p>
+        </div>
+      ]]></content:encoded>
+    </item>`;
+  }
+
+  // Add article items
+  for (const article of articles) {
+    const articleUrl = `https://${shop}/blogs/${article.blog_handle}/${article.handle}`;
+    const pubDate = new Date(article.updated_at).toISOString();
+    
+    rss += `
+    <item>
+      <title>${escapeXml(article.title)}</title>
+      <link>${articleUrl}</link>
+      <guid>${articleUrl}</guid>
+      <pubDate>${pubDate}</pubDate>
+      <category>article</category>
+      <category>blog</category>
+      <dc:creator>${escapeXml(article.author || shop)}</dc:creator>
+      <description>${escapeXml((article.summary || article.content || '').substring(0, 500))}</description>
+      <content:encoded><![CDATA[
+        <div data-llm="article-info">
+          <h1>${escapeXml(article.title)}</h1>
+          <p><strong>Author:</strong> ${escapeXml(article.author || 'Unknown')}</p>
+          ${article.tags ? `<p><strong>Tags:</strong> ${escapeXml(article.tags)}</p>` : ''}
+          <div data-llm="article-content">
+            ${article.content || ''}
+          </div>
+          <p><strong>URL:</strong> <a href="${articleUrl}">${articleUrl}</a></p>
+        </div>
+      ]]></content:encoded>
+    </item>`;
+  }
+
+  rss += `
+  </channel>
+</rss>`;
+
+  return rss;
+};
+
+// Helper function to escape XML characters
+const escapeXml = (unsafe) => {
+  if (!unsafe) return '';
+  return unsafe.toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
 
 // Health check
 app.get('/health', (req, res) => {
