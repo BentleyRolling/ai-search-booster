@@ -709,11 +709,16 @@ const Dashboard = () => {
   };
 
   const toggleProductSelection = (productId) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
+    console.log('toggleProductSelection called with:', productId, typeof productId);
+    console.log('Current selectedProducts:', selectedProducts);
+    
+    setSelectedProducts(prev => {
+      const newSelection = prev.includes(productId) 
         ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
+        : [...prev, productId];
+      console.log('New selectedProducts:', newSelection);
+      return newSelection;
+    });
   };
 
   const toggleBlogSelection = (blogId) => {
