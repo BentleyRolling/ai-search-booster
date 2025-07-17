@@ -7,6 +7,9 @@ const Dashboard = () => {
   const { authFetch, isReady, app } = useAuthenticatedFetch();
   const redirect = app ? Redirect.create(app) : null;
   
+  // Add error state for better debugging
+  const [error, setError] = useState(null);
+  
   const [shop, setShop] = useState('');
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,44 +34,55 @@ const Dashboard = () => {
   const API_BASE = '';
 
   useEffect(() => {
-    // Get shop from URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const shopParam = urlParams.get('shop');
-    console.log('[ASB-DEBUG] Dashboard: Shop parameter:', shopParam);
-    console.log('[ASB-DEBUG] Dashboard: Auth fetch ready:', isReady);
-    console.log('[ASB-DEBUG] Dashboard: Auth fetch function:', typeof authFetch);
-    console.log('[ASB-DEBUG] Dashboard: window.authenticatedFetch type:', typeof window.authenticatedFetch);
-    
-    if (shopParam) {
-      setShop(shopParam);
+    try {
+      // Get shop from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const shopParam = urlParams.get('shop');
+      console.log('[ASB-DEBUG] Dashboard: Shop parameter:', shopParam);
+      console.log('[ASB-DEBUG] Dashboard: Auth fetch ready:', isReady);
+      console.log('[ASB-DEBUG] Dashboard: Auth fetch function:', typeof authFetch);
+      console.log('[ASB-DEBUG] Dashboard: window.authenticatedFetch type:', typeof window.authenticatedFetch);
       
-      // Wait for authFetch to be ready before making API calls
-      if (isReady && authFetch) {
-        console.log('[ASB-DEBUG] Dashboard: Starting API calls with authenticated fetch');
+      if (shopParam) {
+        setShop(shopParam);
         
-        // Set loading to false after a timeout to prevent endless loading
-        const loadingTimeout = setTimeout(() => {
-          console.log('Dashboard: Setting loading to false after timeout');
-          setLoading(false);
-        }, 5000);
-        
-        // Fetch data with individual error handling
-        Promise.allSettled([
-          fetchStatus(shopParam),
-          fetchHistory(shopParam),
-          fetchProducts(shopParam),
-          fetchBlogs(shopParam),
-          fetchUsage(shopParam)
-        ]).then(() => {
-          clearTimeout(loadingTimeout);
-          setLoading(false);
-          console.log('Dashboard: All data fetched, loading complete');
-        });
+        // Wait for authFetch to be ready before making API calls
+        if (isReady && authFetch) {
+          console.log('[ASB-DEBUG] Dashboard: Starting API calls with authenticated fetch');
+          
+          // Set loading to false after a timeout to prevent endless loading
+          const loadingTimeout = setTimeout(() => {
+            console.log('Dashboard: Setting loading to false after timeout');
+            setLoading(false);
+          }, 5000);
+          
+          // Fetch data with individual error handling
+          Promise.allSettled([
+            fetchStatus(shopParam),
+            fetchHistory(shopParam),
+            fetchProducts(shopParam),
+            fetchBlogs(shopParam),
+            fetchUsage(shopParam)
+          ]).then(() => {
+            clearTimeout(loadingTimeout);
+            setLoading(false);
+            console.log('Dashboard: All data fetched, loading complete');
+          }).catch(error => {
+            console.error('[ASB-DEBUG] Dashboard: Promise.allSettled error:', error);
+            clearTimeout(loadingTimeout);
+            setLoading(false);
+            setError(error);
+          });
+        } else {
+          console.log('Dashboard: Waiting for auth fetch to be ready...');
+        }
       } else {
-        console.log('Dashboard: Waiting for auth fetch to be ready...');
+        console.log('Dashboard: No shop parameter found');
+        setLoading(false);
       }
-    } else {
-      console.log('Dashboard: No shop parameter found');
+    } catch (error) {
+      console.error('[ASB-DEBUG] Dashboard: useEffect error:', error);
+      setError(error);
       setLoading(false);
     }
   }, [isReady, authFetch]); // Re-run when authFetch becomes ready
@@ -506,6 +520,31 @@ const Dashboard = () => {
       setTestResults(results);
     }
   };
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Dashboard Error</h2>
+          <p className="text-gray-600 mb-4">{error.message}</p>
+          <details className="text-left text-sm text-gray-500 mb-4">
+            <summary className="cursor-pointer">Technical Details</summary>
+            <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
+              {error.stack}
+            </pre>
+          </details>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading || !isReady) {
     return (
