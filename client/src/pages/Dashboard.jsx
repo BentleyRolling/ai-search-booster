@@ -678,12 +678,12 @@ const Dashboard = () => {
               <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-blue-500 transition-all duration-500"
-                  style={{ width: `${usage ? (usage.usage.optimizations / usage.billing.optimizationsLimit * 100) : 0}%` }}
+                  style={{ width: `${usage ? ((usage.optimizations?.total || 0) / (usage.limits?.monthlyOptimizations || 1000) * 100) : 0}%` }}
                 />
               </div>
             </div>
             <p className="text-lg font-bold text-blue-600">
-              {usage?.usage.optimizations || 0} / {usage?.billing.optimizationsLimit || 50}
+              {usage?.optimizations?.total || 0} / {usage?.limits?.monthlyOptimizations || 1000}
             </p>
           </div>
           
