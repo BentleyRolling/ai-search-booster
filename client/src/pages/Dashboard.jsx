@@ -970,23 +970,32 @@ const Dashboard = () => {
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Select Blogs to Optimize</h3>
-                  <button
-                    onClick={optimizeBlogs}
-                    disabled={optimizing || selectedBlogs.length === 0}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-                  >
-                    {optimizing ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Optimizing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <BookOpen className="w-4 h-4" />
-                        <span>Optimize Selected</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => previewBlogOptimization(blogs[0])}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>Preview</span>
+                    </button>
+                    <button
+                      onClick={optimizeBlogs}
+                      disabled={optimizing || selectedBlogs.length === 0}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                    >
+                      {optimizing ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Optimizing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="w-4 h-4" />
+                          <span>Optimize Selected</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
                 
                 {blogs.length === 0 ? (
@@ -1016,16 +1025,6 @@ const Dashboard = () => {
                               Created: {new Date(blog.created_at).toLocaleDateString()}
                             </p>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              previewBlogOptimization(blog);
-                            }}
-                            className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors flex items-center space-x-1"
-                          >
-                            <Eye className="w-4 h-4" />
-                            <span>Preview</span>
-                          </button>
                         </div>
                       </div>
                     ))}
