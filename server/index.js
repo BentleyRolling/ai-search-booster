@@ -583,6 +583,278 @@ app.post('/api/optimize/preview', simpleVerifyShop, async (req, res) => {
   }
 });
 
+// API: Save draft optimization
+app.post('/api/optimize/draft', simpleVerifyShop, async (req, res) => {
+  try {
+    const { resourceType, resourceId, content, settings } = req.body;
+    const { shop } = req;
+    
+    if (!resourceType || !resourceId || !content) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+    
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
+    
+    // Optimize the content
+    const optimized = await optimizeContent(content, resourceType, settings);
+    
+    // Store as draft metafields
+    const draftMetafields = [
+      {
+        namespace: 'asb',
+        key: 'optimized_content_draft',
+        value: optimized.optimizedDescription || optimized.summary,
+        type: 'multi_line_text_field'
+      },
+      {
+        namespace: 'asb',
+        key: 'faq_data_draft',
+        value: JSON.stringify({ questions: optimized.faqs }),
+        type: 'json'
+      },
+      {
+        namespace: 'asb',
+        key: 'optimization_settings_draft',
+        value: JSON.stringify(settings),
+        type: 'json'
+      },
+      {
+        namespace: 'asb',
+        key: 'draft_timestamp',
+        value: new Date().toISOString(),
+        type: 'single_line_text_field'
+      }
+    ];
+    
+    const endpoint = resourceType === 'product' 
+      ? `products/${resourceId}/metafields`
+      : `articles/${resourceId}/metafields`;
+    
+    // Save all draft metafields
+    for (const metafield of draftMetafields) {
+      try {
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/${endpoint}.json`,
+          { metafield },
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+      } catch (error) {
+        console.error(`Error saving draft metafield ${metafield.key}:`, error);
+      }
+    }
+    
+    res.json({
+      message: 'Draft optimization saved successfully',
+      resourceType,
+      resourceId,
+      optimized,
+      draftSaved: true,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Draft save error:', error);
+    res.status(500).json({ error: 'Failed to save draft optimization' });
+  }
+});
+
+// API: Publish draft optimization
+app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
+  try {
+    const { resourceType, resourceId } = req.body;
+    const { shop } = req;
+    
+    if (!resourceType || !resourceId) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+    
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
+    
+    const endpoint = resourceType === 'product' 
+      ? `products/${resourceId}/metafields`
+      : `articles/${resourceId}/metafields`;
+    
+    // Get draft metafields
+    const draftResponse = await axios.get(
+      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=asb`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    const metafields = draftResponse.data.metafields;
+    const draftContent = metafields.find(m => m.key === 'optimized_content_draft')?.value;
+    const draftFaq = metafields.find(m => m.key === 'faq_data_draft')?.value;
+    const draftSettings = metafields.find(m => m.key === 'optimization_settings_draft')?.value;
+    
+    if (!draftContent) {
+      return res.status(404).json({ error: 'No draft content found to publish' });
+    }
+    
+    // Store original content as backup (if not already stored)
+    const originalBackup = metafields.find(m => m.key === 'original_backup');
+    if (!originalBackup) {
+      // Fetch original content
+      const originalResponse = await axios.get(
+        `https://${shop}/admin/api/2024-01/${resourceType === 'product' ? 'products' : 'articles'}/${resourceId}.json`,
+        { headers: { 'X-Shopify-Access-Token': accessToken } }
+      );
+      
+      const originalData = originalResponse.data[resourceType];
+      await axios.post(
+        `https://${shop}/admin/api/2024-01/${endpoint}.json`,
+        {
+          metafield: {
+            namespace: 'asb',
+            key: 'original_backup',
+            value: JSON.stringify({
+              title: originalData.title,
+              description: originalData.body_html || originalData.content,
+              backup_timestamp: new Date().toISOString()
+            }),
+            type: 'json'
+          }
+        },
+        { headers: { 'X-Shopify-Access-Token': accessToken } }
+      );
+    }
+    
+    // Publish draft to live metafields
+    const liveMetafields = [
+      {
+        namespace: 'asb',
+        key: 'optimized_content',
+        value: draftContent,
+        type: 'multi_line_text_field'
+      },
+      {
+        namespace: 'asb',
+        key: 'faq_data',
+        value: draftFaq,
+        type: 'json'
+      },
+      {
+        namespace: 'asb',
+        key: 'optimization_settings',
+        value: draftSettings,
+        type: 'json'
+      },
+      {
+        namespace: 'asb',
+        key: 'enable_schema',
+        value: 'true',
+        type: 'boolean'
+      },
+      {
+        namespace: 'asb',
+        key: 'published_timestamp',
+        value: new Date().toISOString(),
+        type: 'single_line_text_field'
+      }
+    ];
+    
+    // Save live metafields
+    for (const metafield of liveMetafields) {
+      try {
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/${endpoint}.json`,
+          { metafield },
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+      } catch (error) {
+        console.error(`Error publishing metafield ${metafield.key}:`, error);
+      }
+    }
+    
+    res.json({
+      message: 'Draft optimization published successfully',
+      resourceType,
+      resourceId,
+      published: true,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Publish error:', error);
+    res.status(500).json({ error: 'Failed to publish draft optimization' });
+  }
+});
+
+// API: Get draft content for preview
+app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    const { shop } = req;
+    
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
+    
+    const endpoint = type === 'product' 
+      ? `products/${id}/metafields`
+      : `articles/${id}/metafields`;
+    
+    // Get draft metafields
+    const draftResponse = await axios.get(
+      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=asb`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    const metafields = draftResponse.data.metafields;
+    const draftContent = metafields.find(m => m.key === 'optimized_content_draft')?.value;
+    const draftFaq = metafields.find(m => m.key === 'faq_data_draft')?.value;
+    const draftSettings = metafields.find(m => m.key === 'optimization_settings_draft')?.value;
+    const draftTimestamp = metafields.find(m => m.key === 'draft_timestamp')?.value;
+    
+    // Get live content for comparison
+    const liveContent = metafields.find(m => m.key === 'optimized_content')?.value;
+    const liveFaq = metafields.find(m => m.key === 'faq_data')?.value;
+    const publishedTimestamp = metafields.find(m => m.key === 'published_timestamp')?.value;
+    
+    res.json({
+      type,
+      id,
+      hasDraft: !!draftContent,
+      hasLive: !!liveContent,
+      draft: {
+        content: draftContent,
+        faq: draftFaq ? JSON.parse(draftFaq) : null,
+        settings: draftSettings ? JSON.parse(draftSettings) : null,
+        timestamp: draftTimestamp
+      },
+      live: {
+        content: liveContent,
+        faq: liveFaq ? JSON.parse(liveFaq) : null,
+        timestamp: publishedTimestamp
+      }
+    });
+  } catch (error) {
+    console.error('Draft fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch draft content' });
+  }
+});
+
 // API: Optimize products
 app.post('/api/optimize/products', async (req, res) => {
   try {
@@ -862,7 +1134,7 @@ app.get('/api/optimize/status/:type/:id', simpleVerifyShop, async (req, res) => 
   }
 });
 
-// API: Rollback optimization
+// API: Rollback to original content
 app.post('/api/rollback/:type/:id', async (req, res) => {
   try {
     const { type, id } = req.params;
