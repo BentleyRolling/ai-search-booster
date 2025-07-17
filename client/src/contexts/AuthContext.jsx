@@ -52,12 +52,12 @@ export const AuthProvider = ({ children }) => {
             console.log('[ASB-DEBUG] AuthProvider: Dev - absolute backend URL:', finalUrl);
           }
         } else {
-          // Production: use Shopify app proxy paths (CSP-compliant)
+          // Production: Try app proxy first, fallback to direct backend
           if (url.startsWith('/api') || (url.startsWith('api') && !url.includes('://'))) {
             const apiPath = url.startsWith('/') ? url : '/' + url;
             finalUrl = `/apps/ai-search-booster${apiPath}`;
-            console.log('[ASB-DEBUG] AuthProvider: Prod - app proxy path:', finalUrl);
-            console.log('[ASB-DEBUG] AuthProvider: This routes through Shopify to our backend');
+            console.log('[ASB-DEBUG] AuthProvider: Prod - trying app proxy path:', finalUrl);
+            console.log('[ASB-DEBUG] AuthProvider: Will fallback to direct backend if proxy fails');
           }
         }
         
@@ -69,9 +69,54 @@ export const AuthProvider = ({ children }) => {
           console.log('[ASB-DEBUG] AuthProvider: Response URL:', result.url);
           console.log('[ASB-DEBUG] AuthProvider: Response status:', result.status);
           console.log('[ASB-DEBUG] AuthProvider: Response headers:', Object.fromEntries(result.headers.entries()));
+          
+          // If proxy request failed with redirect, try direct backend as fallback
+          if (!isDevelopment && result.status === 302 && finalUrl.startsWith('/apps/ai-search-booster')) {
+            console.log('[ASB-DEBUG] AuthProvider: App proxy returned 302, trying direct backend fallback...');
+            const BACKEND_URL = 'https://ai-search-booster-backend.onrender.com';
+            const directUrl = `${BACKEND_URL}${url.startsWith('/') ? url : '/' + url}`;
+            console.log('[ASB-DEBUG] AuthProvider: Fallback URL:', directUrl);
+            
+            const fallbackResult = await fetch(directUrl, {
+              ...options,
+              mode: 'cors',
+              credentials: 'omit' // Don't send cookies for CORS requests
+            });
+            
+            console.log('[ASB-DEBUG] AuthProvider: Fallback result:', fallbackResult.status);
+            if (fallbackResult.ok) {
+              console.log('[ASB-DEBUG] AuthProvider: ✅ Fallback to direct backend succeeded!');
+              console.log('[ASB-DEBUG] AuthProvider: ⚠️ Note: App proxy not configured, using direct CORS calls');
+              return fallbackResult;
+            }
+          }
+          
           return result;
         } catch (error) {
           console.error('[ASB-DEBUG] AuthProvider: wrappedFetch error:', error);
+          
+          // If proxy failed and we're in production, try direct backend
+          if (!isDevelopment && finalUrl.startsWith('/apps/ai-search-booster')) {
+            console.log('[ASB-DEBUG] AuthProvider: Proxy request failed, trying direct backend...');
+            try {
+              const BACKEND_URL = 'https://ai-search-booster-backend.onrender.com';
+              const directUrl = `${BACKEND_URL}${url.startsWith('/') ? url : '/' + url}`;
+              
+              const fallbackResult = await fetch(directUrl, {
+                ...options,
+                mode: 'cors',
+                credentials: 'omit'
+              });
+              
+              if (fallbackResult.ok) {
+                console.log('[ASB-DEBUG] AuthProvider: ✅ Emergency fallback succeeded!');
+                return fallbackResult;
+              }
+            } catch (fallbackError) {
+              console.error('[ASB-DEBUG] AuthProvider: Fallback also failed:', fallbackError);
+            }
+          }
+          
           throw error;
         }
       };
