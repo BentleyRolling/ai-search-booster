@@ -115,8 +115,18 @@ const Dashboard = () => {
 
   const fetchProducts = async (shopName) => {
     try {
+      const url = `${API_BASE}/api/products?shop=${shopName}`;
       console.log('[ASB-DEBUG] Dashboard: Fetching products for shop:', shopName);
-      const response = await authFetch(`${API_BASE}/api/products?shop=${shopName}`);
+      console.log('[ASB-DEBUG] Dashboard: Full URL being fetched:', url);
+      console.log('[ASB-DEBUG] Dashboard: API_BASE:', API_BASE);
+      console.log('[ASB-DEBUG] Dashboard: authFetch function:', typeof authFetch);
+      
+      console.log('[ASB-DEBUG] Dashboard: About to call authFetch...');
+      const response = await authFetch(url);
+      console.log('[ASB-DEBUG] Dashboard: authFetch response received:', response);
+      console.log('[ASB-DEBUG] Dashboard: Response status:', response.status, response.statusText);
+      console.log('[ASB-DEBUG] Dashboard: Response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -124,7 +134,8 @@ const Dashboard = () => {
       console.log('[ASB-DEBUG] Dashboard: Products data received:', data);
       setProducts(data.products || []);
     } catch (error) {
-      console.error('Failed to fetch products:', error);
+      console.error('[ASB-DEBUG] Dashboard: fetchProducts error:', error);
+      console.error('[ASB-DEBUG] Dashboard: Error stack:', error.stack);
       setProducts([]); // Set empty array as fallback
     }
   };
