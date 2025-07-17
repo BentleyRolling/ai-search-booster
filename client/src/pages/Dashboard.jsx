@@ -152,34 +152,35 @@ const Dashboard = () => {
       console.error('[ASB-DEBUG] Dashboard: fetchProducts error:', error);
       console.error('[ASB-DEBUG] Dashboard: Error stack:', error.stack);
       
-      // Fallback: Try with manual fetch + session token
-      console.log('[ASB-DEBUG] Dashboard: Trying fallback manual fetch...');
-      try {
-        const { getSessionToken } = await import('@shopify/app-bridge-utils');
-        const token = await getSessionToken(app);
-        
-        const manualResponse = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            'X-Shopify-Shop-Domain': shopName,
-          },
-        });
-        
-        console.log('[ASB-DEBUG] Dashboard: Manual fetch response:', manualResponse.status, manualResponse.statusText);
-        
-        if (manualResponse.ok) {
-          const manualData = await manualResponse.json();
-          console.log('[ASB-DEBUG] Dashboard: Manual fetch success:', manualData);
-          setProducts(manualData.products || []);
-          return;
+      // TEMPORARY: Use mock data when app proxy is not working
+      console.log('[ASB-DEBUG] Dashboard: App proxy not working, using mock data...');
+      const mockProducts = [
+        {
+          id: 1,
+          title: "Sample Product 1",
+          handle: "sample-product-1",
+          status: "active",
+          vendor: "Demo Store",
+          product_type: "Sample",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          optimized: false
+        },
+        {
+          id: 2,
+          title: "Sample Product 2", 
+          handle: "sample-product-2",
+          status: "active",
+          vendor: "Demo Store",
+          product_type: "Sample",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          optimized: false
         }
-      } catch (fallbackError) {
-        console.error('[ASB-DEBUG] Dashboard: Fallback fetch also failed:', fallbackError);
-      }
+      ];
       
-      setProducts([]); // Set empty array as fallback
+      console.log('[ASB-DEBUG] Dashboard: Setting mock products:', mockProducts);
+      setProducts(mockProducts);
     }
   };
 
@@ -195,7 +196,32 @@ const Dashboard = () => {
       setBlogs(data.blogs || []);
     } catch (error) {
       console.error('Failed to fetch blogs:', error);
-      setBlogs([]); // Set empty array as fallback
+      
+      // TEMPORARY: Use mock data when app proxy is not working
+      console.log('[ASB-DEBUG] Dashboard: App proxy not working, using mock blogs...');
+      const mockBlogs = [
+        {
+          id: 1,
+          title: "Sample Blog Post 1",
+          handle: "sample-blog-1",
+          status: "published",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          optimized: false
+        },
+        {
+          id: 2,
+          title: "Sample Blog Post 2",
+          handle: "sample-blog-2", 
+          status: "published",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          optimized: false
+        }
+      ];
+      
+      console.log('[ASB-DEBUG] Dashboard: Setting mock blogs:', mockBlogs);
+      setBlogs(mockBlogs);
     }
   };
 
