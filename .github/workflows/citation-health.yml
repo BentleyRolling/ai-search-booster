@@ -136,7 +136,7 @@ jobs:
         cat health-report.md
     
     - name: Upload health report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: health-report-${{ matrix.environment }}
         path: health-report.md
@@ -257,7 +257,7 @@ jobs:
         artillery report load-test-report.json --output load-test-report.html
     
     - name: Upload load test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: load-test-results-${{ github.event.inputs.environment }}
         path: |
