@@ -667,10 +667,11 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              {/* Logo placeholder - replace with your actual logo */}
-              <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AI</span>
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="AI Search Booster Logo" 
+                className="w-8 h-8 object-contain"
+              />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">AI Search Booster</h1>
                 <p className="text-sm text-gray-500">Optimize your store for AI visibility</p>
