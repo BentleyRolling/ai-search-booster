@@ -174,7 +174,7 @@ jobs:
         cat pr-summary.md
     
     - name: Comment PR summary
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const fs = require('fs');
@@ -250,7 +250,7 @@ jobs:
         fail_ci_if_error: false
     
     - name: Coverage comment
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           // This would parse coverage reports and comment on the PR
