@@ -13,6 +13,7 @@
 {% assign namespace = section.settings.custom_namespace | default: 'asb' %}
 {% assign enable_structured = section.settings.enable_structured_data | default: true %}
 {% assign enable_llm = section.settings.enable_llm_blocks | default: true %}
+{% assign show_drafts = section.settings.show_draft_content | default: false %}
 
 {% comment %}
   Main LLM Schema Integration
@@ -27,25 +28,50 @@
   Shows AI-optimized content when published (not draft)
 {% endcomment %}
 {% if product %}
+  {% comment %}
+    Content Selection Logic:
+    - If show_drafts is enabled, prefer draft content over live content
+    - Otherwise, only show published (live) content
+  {% endcomment %}
   {% assign optimized_content = product.metafields[namespace].optimized_content %}
   {% assign optimization_enabled = product.metafields[namespace].enable_schema %}
   {% assign faq_data = product.metafields[namespace].faq_data %}
   
-  {% if optimization_enabled and optimized_content %}
+  {% comment %} Draft content variables {% endcomment %}
+  {% assign draft_content = product.metafields[namespace].optimized_content_draft %}
+  {% assign draft_faq_data = product.metafields[namespace].faq_data_draft %}
+  {% assign draft_timestamp = product.metafields[namespace].draft_timestamp %}
+  
+  {% comment %} Determine which content to show {% endcomment %}
+  {% if show_drafts and draft_content %}
+    {% assign content_to_show = draft_content %}
+    {% assign faq_to_show = draft_faq_data %}
+    {% assign is_draft_mode = true %}
+  {% else %}
+    {% assign content_to_show = optimized_content %}
+    {% assign faq_to_show = faq_data %}
+    {% assign is_draft_mode = false %}
+  {% endif %}
+  
+  {% comment %} Show content if we have content to display {% endcomment %}
+  {% if content_to_show and (optimization_enabled or show_drafts) %}
     <div class="ai-search-booster-content" data-product-id="{{ product.id }}">
       <div class="ai-optimized-content" data-llm="enhanced-content">
         {% if section.settings.show_ai_badge %}
         <div class="ai-badge">
-          <span>✨ AI-Enhanced Content</span>
+          <span>✨ {% if is_draft_mode %}Draft Preview{% else %}AI-Enhanced Content{% endif %}</span>
+          {% if is_draft_mode %}
+            <span class="draft-indicator">DRAFT</span>
+          {% endif %}
         </div>
         {% endif %}
         
         <div class="optimized-description">
-          {{ optimized_content }}
+          {{ content_to_show }}
         </div>
         
-        {% if faq_data %}
-          {% assign faq_parsed = faq_data | parse_json %}
+        {% if faq_to_show %}
+          {% assign faq_parsed = faq_to_show | parse_json %}
           {% if faq_parsed.questions.size > 0 %}
           <div class="ai-faq-section">
             <h4>{{ section.settings.faq_heading | default: "Frequently Asked Questions" }}</h4>
@@ -197,6 +223,13 @@
       "label": "Metafield Namespace",
       "default": "asb",
       "info": "Advanced: Change if using custom metafield namespace"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_draft_content",
+      "label": "Show Draft Content (Preview Mode)",
+      "default": false,
+      "info": "Enable to preview draft content before publishing. Only visible to admin users."
     }
   ]
 }
@@ -221,6 +254,23 @@
     font-size: 0.8em;
     margin-bottom: 15px;
     font-weight: 500;
+    position: relative;
+  }
+  
+  .draft-indicator {
+    background: #ff6b35;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.7em;
+    font-weight: 700;
+    margin-left: 8px;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
   }
   
   .ai-optimized-content,
