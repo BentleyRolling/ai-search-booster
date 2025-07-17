@@ -136,6 +136,34 @@ const Dashboard = () => {
     } catch (error) {
       console.error('[ASB-DEBUG] Dashboard: fetchProducts error:', error);
       console.error('[ASB-DEBUG] Dashboard: Error stack:', error.stack);
+      
+      // Fallback: Try with manual fetch + session token
+      console.log('[ASB-DEBUG] Dashboard: Trying fallback manual fetch...');
+      try {
+        const { getSessionToken } = await import('@shopify/app-bridge-utils');
+        const token = await getSessionToken(app);
+        
+        const manualResponse = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-Shopify-Shop-Domain': shopName,
+          },
+        });
+        
+        console.log('[ASB-DEBUG] Dashboard: Manual fetch response:', manualResponse.status, manualResponse.statusText);
+        
+        if (manualResponse.ok) {
+          const manualData = await manualResponse.json();
+          console.log('[ASB-DEBUG] Dashboard: Manual fetch success:', manualData);
+          setProducts(manualData.products || []);
+          return;
+        }
+      } catch (fallbackError) {
+        console.error('[ASB-DEBUG] Dashboard: Fallback fetch also failed:', fallbackError);
+      }
+      
       setProducts([]); // Set empty array as fallback
     }
   };
