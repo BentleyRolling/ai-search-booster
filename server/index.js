@@ -50,11 +50,11 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 
-// Initialize citation monitoring routes
-app.use('/api/monitoring', initializeCitationRoutes(shopData));
-
 // Store for shop data (in production, use a database)
 const shopData = new Map();
+
+// Initialize citation monitoring routes
+app.use('/api/monitoring', initializeCitationRoutes(shopData));
 
 // Environment variables
 const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY || '4509cf5ef854ceac54c93cceda14987d';
