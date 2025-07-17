@@ -1765,6 +1765,58 @@ const escapeXml = (unsafe) => {
     .replace(/'/g, "&#039;");
 };
 
+// Generate mock vector data for different formats
+const generateMockVectorData = (resourceData, format) => {
+  // Create a simple hash-based mock embedding (1536 dimensions for OpenAI compatibility)
+  const text = `${resourceData.title} ${resourceData.description} ${resourceData.vendor}`;
+  const mockEmbedding = [];
+  
+  for (let i = 0; i < 1536; i++) {
+    // Generate deterministic but realistic-looking embeddings
+    const seed = text.charCodeAt(i % text.length) * (i + 1);
+    mockEmbedding.push((Math.sin(seed) * 0.5));
+  }
+  
+  switch (format) {
+    case 'openai':
+      return {
+        object: 'embedding',
+        model: 'text-embedding-ada-002',
+        data: [{
+          object: 'embedding',
+          index: 0,
+          embedding: mockEmbedding
+        }],
+        usage: {
+          prompt_tokens: text.split(' ').length,
+          total_tokens: text.split(' ').length
+        }
+      };
+      
+    case 'huggingface':
+      return {
+        embeddings: [mockEmbedding],
+        model: 'sentence-transformers/all-MiniLM-L6-v2'
+      };
+      
+    case 'claude':
+      return {
+        type: 'embedding',
+        embedding: mockEmbedding,
+        model: 'claude-3-haiku',
+        dimensions: 1536
+      };
+      
+    case 'generic':
+    default:
+      return {
+        vector: mockEmbedding,
+        dimensions: 1536,
+        model: 'mock-embedding-v1'
+      };
+  }
+};
+
 // API: Vector endpoint for OpenAI embedding format
 app.get('/api/vector/:id', async (req, res) => {
   try {
@@ -1779,9 +1831,73 @@ app.get('/api/vector/:id', async (req, res) => {
     // Get shop info for access token
     const shopInfo = shopData.get(shop);
     if (!shopInfo || !shopInfo.accessToken) {
-      return res.status(401).json({ 
-        error: 'Shop not authenticated', 
-        redirectUrl: `/auth?shop=${shop}`
+      // Return mock vector data for development
+      console.log('No access token for vector endpoint, returning mock data for shop:', shop);
+      
+      const mockProducts = {
+        '1': {
+          id: 1,
+          title: 'Sample Product 1',
+          description: 'High-quality sample product perfect for testing AI optimization features.',
+          vendor: 'Sample Store',
+          product_type: 'Test Product',
+          handle: 'sample-product-1',
+          variants: [{ price: '29.99', compare_at_price: '39.99' }],
+          tags: ['sample', 'test', 'ai-optimized']
+        },
+        '2': {
+          id: 2,
+          title: 'Sample Product 2',
+          description: 'Another excellent sample product with premium features and quality.',
+          vendor: 'Sample Store',
+          product_type: 'Test Product',
+          handle: 'sample-product-2',
+          variants: [{ price: '49.99', compare_at_price: '59.99' }],
+          tags: ['sample', 'premium', 'ai-optimized']
+        }
+      };
+      
+      const mockProduct = mockProducts[id];
+      if (!mockProduct) {
+        return res.status(404).json({ error: 'Product not found in mock data' });
+      }
+      
+      const resourceData = {
+        id: mockProduct.id,
+        type: 'product',
+        title: mockProduct.title,
+        description: mockProduct.description,
+        vendor: mockProduct.vendor,
+        product_type: mockProduct.product_type,
+        handle: mockProduct.handle,
+        variants: mockProduct.variants,
+        tags: mockProduct.tags,
+        url: `https://${shop}/products/${mockProduct.handle}`,
+        optimized: true,
+        faq_data: [
+          {
+            question: `What makes ${mockProduct.title} special?`,
+            answer: `${mockProduct.title} is designed with premium features and quality materials for exceptional performance.`
+          },
+          {
+            question: `Is ${mockProduct.title} suitable for beginners?`,
+            answer: `Yes, ${mockProduct.title} is perfect for both beginners and advanced users.`
+          }
+        ]
+      };
+      
+      // Generate mock vector data based on format
+      const vectorData = generateMockVectorData(resourceData, format);
+      
+      return res.json({
+        id: mockProduct.id,
+        type: 'product',
+        shop,
+        format,
+        data: resourceData,
+        vector: vectorData,
+        generated_at: new Date().toISOString(),
+        mock: true
       });
     }
     
