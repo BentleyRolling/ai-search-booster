@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import { initCitationJobs } from './jobs/citationScheduler.js';
+import { initializeCitationRoutes } from './routes/citations.js';
 
 dotenv.config();
 
@@ -48,6 +49,9 @@ app.use(cors(corsOptions));
 // Explicit OPTIONS handler for preflight requests
 app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
+
+// Initialize citation monitoring routes
+app.use('/api/monitoring', initializeCitationRoutes(shopData));
 
 // Store for shop data (in production, use a database)
 const shopData = new Map();
@@ -130,7 +134,14 @@ app.get('/', (req, res) => {
       llmFeed: 'GET /llm-feed.xml?shop=your-store.myshopify.com',
       vector: 'GET /api/vector/:id?type=product&format=openai',
       aiPlugin: 'GET /.well-known/ai-plugin.json',
-      openapi: 'GET /.well-known/openapi.yaml'
+      openapi: 'GET /.well-known/openapi.yaml',
+      monitoring: {
+        start: 'POST /api/monitoring/start',
+        stop: 'POST /api/monitoring/stop',
+        status: 'GET /api/monitoring/status',
+        citations: 'GET /api/monitoring/citations',
+        stats: 'GET /api/monitoring/stats'
+      }
     }
   });
 });
