@@ -21,24 +21,24 @@ api_version = "2024-01"
 
 [[webhooks.subscriptions]]
 topics = ["products/update"]
-uri = "/webhooks/product_updated"
+uri = "https://ai-search-booster-backend.onrender.com/webhooks/product_updated"
 
 [[webhooks.subscriptions]]
 topics = ["app/uninstalled"]
-uri = "/webhooks/app_uninstalled"
+uri = "https://ai-search-booster-backend.onrender.com/webhooks/app_uninstalled"
 
 # GDPR Compliance Webhooks (Mandatory)
 [[webhooks.subscriptions]]
 topics = ["customers/data_request"]
-uri = "/webhooks/customers/data_request"
+uri = "https://ai-search-booster-backend.onrender.com/webhooks/customers/data_request"
 
 [[webhooks.subscriptions]]
 topics = ["customers/redact"]
-uri = "/webhooks/customers/redact"
+uri = "https://ai-search-booster-backend.onrender.com/webhooks/customers/redact"
 
 [[webhooks.subscriptions]]
 topics = ["shop/redact"]
-uri = "/webhooks/shop/redact"
+uri = "https://ai-search-booster-backend.onrender.com/webhooks/shop/redact"
 
 [build]
 automatically_update_urls_on_dev = true
