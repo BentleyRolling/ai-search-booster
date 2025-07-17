@@ -65,20 +65,47 @@ export const AuthProvider = ({ children }) => {
         console.log('[ASB-DEBUG] AuthProvider: Final URL for request:', finalUrl);
         
         try {
-          // For direct backend calls, use CORS mode
+          // For direct backend calls, use CORS mode with timeout
           const fetchOptions = finalUrl.startsWith('https://') ? 
             { ...options, mode: 'cors', credentials: 'omit' } : 
             options;
             
-          const result = await fetch(finalUrl, fetchOptions);
-          console.log('[ASB-DEBUG] AuthProvider: wrappedFetch result:', result);
+          console.log('[ASB-DEBUG] AuthProvider: Making fetch request with options:', fetchOptions);
+          
+          // Add timeout for hanging requests
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout after 8 seconds')), 8000);
+          });
+          
+          const result = await Promise.race([fetch(finalUrl, fetchOptions), timeoutPromise]);
+          console.log('[ASB-DEBUG] AuthProvider: ✅ Got response!');
           console.log('[ASB-DEBUG] AuthProvider: Response URL:', result.url);
           console.log('[ASB-DEBUG] AuthProvider: Response status:', result.status);
+          console.log('[ASB-DEBUG] AuthProvider: Response ok:', result.ok);
           console.log('[ASB-DEBUG] AuthProvider: Response headers:', Object.fromEntries(result.headers.entries()));
           
           return result;
         } catch (error) {
-          console.error('[ASB-DEBUG] AuthProvider: wrappedFetch error:', error);
+          console.error('[ASB-DEBUG] AuthProvider: ❌ Request failed:', error.message);
+          console.error('[ASB-DEBUG] AuthProvider: Error type:', error.name);
+          console.error('[ASB-DEBUG] AuthProvider: Full error:', error);
+          
+          // Try with a simpler fetch as last resort
+          if (finalUrl.startsWith('https://') && error.message.includes('timeout')) {
+            console.log('[ASB-DEBUG] AuthProvider: Trying simplified fetch...');
+            try {
+              const simpleResult = await fetch(finalUrl, { 
+                method: 'GET',
+                mode: 'cors',
+                headers: { 'Accept': 'application/json' }
+              });
+              console.log('[ASB-DEBUG] AuthProvider: ✅ Simple fetch worked!', simpleResult.status);
+              return simpleResult;
+            } catch (simpleError) {
+              console.error('[ASB-DEBUG] AuthProvider: ❌ Simple fetch also failed:', simpleError);
+            }
+          }
+          
           throw error;
         }
       };
