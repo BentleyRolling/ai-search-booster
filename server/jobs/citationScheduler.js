@@ -88,7 +88,7 @@ const cleanupJobs = () => {
   console.log('[CITATION-SCHEDULER] All monitoring jobs stopped');
 };
 
-module.exports = {
+export {
   initCitationJobs,
   startCitationMonitoring,
   stopCitationMonitoring,
