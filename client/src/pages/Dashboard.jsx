@@ -212,8 +212,10 @@ const Dashboard = () => {
     console.log('1. Environment detection:');
     console.log('   - hostname:', window.location.hostname);
     console.log('   - API_BASE:', API_BASE);
-    console.log('   - import.meta.env.MODE:', import.meta.env.MODE);
-    console.log('   - import.meta.env.VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
+    const envMode = import.meta.env.MODE;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    console.log('   - Environment mode:', envMode);
+    console.log('   - Backend URL:', backendUrl);
     
     if (!isReady || !authFetch) {
       console.log('⚠️ Cannot test: Auth not ready yet');

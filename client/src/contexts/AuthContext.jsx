@@ -28,15 +28,18 @@ export const AuthProvider = ({ children }) => {
       const wrappedFetch = async (url, options = {}) => {
         console.log('[ASB-DEBUG] AuthProvider: wrappedFetch called with URL:', url);
         console.log('[ASB-DEBUG] AuthProvider: Current location:', window.location.href);
-        console.log('[ASB-DEBUG] AuthProvider: Environment mode:', import.meta.env.MODE);
         console.log('[ASB-DEBUG] AuthProvider: wrappedFetch options:', options);
         
         // Determine the correct API base URL
-        const isDevelopment = import.meta.env.MODE === 'development' || 
+        const envMode = import.meta.env.MODE;
+        const envBackendUrl = import.meta.env.VITE_BACKEND_URL;
+        console.log('[ASB-DEBUG] AuthProvider: Environment mode:', envMode);
+        
+        const isDevelopment = envMode === 'development' || 
                              window.location.hostname === 'localhost' || 
                              window.location.hostname === '127.0.0.1';
         
-        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://ai-search-booster-backend.onrender.com';
+        const BACKEND_URL = envBackendUrl || 'https://ai-search-booster-backend.onrender.com';
         
         console.log('[ASB-DEBUG] AuthProvider: isDevelopment:', isDevelopment);
         console.log('[ASB-DEBUG] AuthProvider: BACKEND_URL:', BACKEND_URL);
