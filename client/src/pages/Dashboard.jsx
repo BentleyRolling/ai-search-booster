@@ -335,16 +335,22 @@ const Dashboard = () => {
   };
 
   const optimizeProducts = async () => {
+    console.log('optimizeProducts called, selectedProducts:', selectedProducts);
+    console.log('selectedProducts.length:', selectedProducts.length);
+    
     if (selectedProducts.length === 0) {
+      console.log('No products selected, showing warning');
       addNotification('Please select products to optimize', 'warning');
       return;
     }
     
+    console.log('Starting optimization for products:', selectedProducts);
     setOptimizing(true);
     setOptimizationProgress({ type: 'products', current: 0, total: selectedProducts.length });
     addNotification(`Starting optimization of ${selectedProducts.length} products...`, 'info');
     
     try {
+      console.log('Making optimize request to:', `${API_BASE}/api/optimize/products?shop=${shop}`);
       const response = await authFetch(`${API_BASE}/api/optimize/products?shop=${shop}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -358,14 +364,18 @@ const Dashboard = () => {
           }
         })
       });
+      console.log('Optimize response received:', response);
       const data = await response.json();
-      const successCount = data.results.filter(r => r.status === 'success').length;
+      console.log('Optimize response data:', data);
+      const successCount = data.results ? data.results.filter(r => r.status === 'success').length : 0;
+      console.log('Success count:', successCount);
       addNotification(`Successfully optimized ${successCount} products!`, 'success');
       fetchStatus(shop);
       fetchHistory(shop);
       fetchUsage(shop);
       setSelectedProducts([]);
     } catch (error) {
+      console.error('Optimization error:', error);
       addNotification('Failed to optimize products. Please try again.', 'error');
     } finally {
       setOptimizing(false);
