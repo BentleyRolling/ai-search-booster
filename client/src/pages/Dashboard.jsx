@@ -1095,6 +1095,60 @@ const Dashboard = () => {
                 </select>
               </div>
             </div>
+            
+            {/* Citation Monitoring Controls */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-md font-semibold mb-4">Citation Monitoring</h3>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Monitor className={`w-5 h-5 ${isMonitoring ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className={`text-sm ${isMonitoring ? 'text-green-600' : 'text-gray-400'}`}>
+                    Status: {isMonitoring ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                
+                {!isMonitoring ? (
+                  <button
+                    onClick={async () => {
+                      const success = await startMonitoring({ 
+                        interval: 'daily', 
+                        keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k) 
+                      });
+                      if (success) {
+                        addNotification('Citation monitoring started successfully', 'success');
+                      } else {
+                        addNotification('Failed to start citation monitoring', 'error');
+                      }
+                    }}
+                    disabled={citationLoading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {citationLoading ? 'Starting...' : 'Start Monitoring'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      const success = await stopMonitoring();
+                      if (success) {
+                        addNotification('Citation monitoring stopped', 'info');
+                      } else {
+                        addNotification('Failed to stop citation monitoring', 'error');
+                      }
+                    }}
+                    disabled={citationLoading}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {citationLoading ? 'Stopping...' : 'Stop Monitoring'}
+                  </button>
+                )}
+                
+                {stats && stats.total > 0 && (
+                  <div className="text-sm text-gray-600">
+                    Total citations: {stats.total}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
