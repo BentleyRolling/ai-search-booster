@@ -53,6 +53,26 @@ app.use('/apps/ai-search-booster', (req, res, next) => {
   next();
 });
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  const isProxyRequest = req.headers['x-forwarded-host'] && req.headers['x-forwarded-host'].includes('myshopify.com');
+  
+  res.json({
+    status: 'healthy',
+    name: 'AI Search Booster v2',
+    version: '2.0.0',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    proxy: {
+      detected: isProxyRequest,
+      headers: isProxyRequest ? {
+        'x-forwarded-host': req.headers['x-forwarded-host'],
+        'x-forwarded-proto': req.headers['x-forwarded-proto']
+      } : null
+    }
+  });
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({
@@ -60,6 +80,7 @@ app.get('/', (req, res) => {
     version: '2.0.0',
     description: 'Optimize your Shopify store for AI/LLM visibility',
     endpoints: {
+      health: 'GET /health',
       auth: '/auth?shop=your-store.myshopify.com',
       optimize: {
         products: 'POST /api/optimize/products',
@@ -982,6 +1003,28 @@ app.get('/api/products', async (req, res) => {
   try {
     const shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
     const { limit = 50, page = 1 } = req.query;
+    
+    // Log proxy detection for debugging
+    const isProxyRequest = req.headers['x-forwarded-host'] && req.headers['x-forwarded-host'].includes('myshopify.com');
+    const userAgent = req.headers['user-agent'] || '';
+    const isEmbeddedApp = userAgent.includes('Shopify') || req.headers['sec-fetch-site'] === 'same-origin';
+    
+    console.log('[ASB-DEBUG] Products API called:', {
+      shop,
+      isProxyRequest,
+      isEmbeddedApp,
+      origin: req.headers.origin,
+      referer: req.headers.referer,
+      userAgent: userAgent.substring(0, 100),
+      forwardedHost: req.headers['x-forwarded-host']
+    });
+    
+    if (isEmbeddedApp && !isProxyRequest) {
+      console.log('[ASB-CI] ⚠️ WARNING: Embedded app request without proxy detected!');
+      console.log('[ASB-CI] This suggests the Shopify app proxy is not configured correctly.');
+      console.log('[ASB-CI] Expected: x-forwarded-host should contain myshopify.com');
+      console.log('[ASB-CI] Actual headers:', JSON.stringify(req.headers, null, 2));
+    }
     
     if (!shop) {
       return res.status(400).json({ error: 'Missing shop parameter' });
