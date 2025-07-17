@@ -1100,12 +1100,10 @@ const Dashboard = () => {
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="text-md font-semibold mb-4">Citation Monitoring</h3>
               
-              {/* Debug Info */}
-              {window.location.hostname === 'localhost' && (
-                <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
-                  Debug: shop={shop ? 'loaded' : 'missing'}, authFetch={authFetch ? 'ready' : 'missing'}, citationLoading={citationLoading.toString()}, isMonitoring={isMonitoring.toString()}
-                </div>
-              )}
+              {/* Debug Info - Always show for troubleshooting */}
+              <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
+                <strong>Debug:</strong> shop={shop ? 'loaded' : 'missing'}, authFetch={authFetch ? 'ready' : 'missing'}, citationLoading={citationLoading.toString()}, isMonitoring={isMonitoring.toString()}, citationError={citationError || 'none'}
+              </div>
               
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">

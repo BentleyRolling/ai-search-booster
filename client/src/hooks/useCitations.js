@@ -17,9 +17,14 @@ export const useCitations = (shop) => {
 
   // Fetch citation status and data
   const fetchCitationData = async () => {
-    if (!shop || !authFetch) return;
+    console.log('fetchCitationData called: shop=', shop, 'authFetch=', !!authFetch);
+    if (!shop || !authFetch) {
+      console.log('fetchCitationData: Missing requirements, returning early');
+      return;
+    }
 
     try {
+      console.log('fetchCitationData: Starting fetch...');
       setLoading(true);
       setError(null);
 
@@ -29,20 +34,29 @@ export const useCitations = (shop) => {
         authFetch(`${API_BASE}/api/monitoring/stats?shop=${shop}`)
       ]);
 
+      console.log('fetchCitationData: Got responses:', statusRes.status, statsRes.status);
+
       if (statusRes.ok) {
         const statusData = await statusRes.json();
+        console.log('fetchCitationData: Status data:', statusData);
         setIsMonitoring(statusData.monitoring_active);
         setCitations(statusData.recent_citations || []);
+      } else {
+        console.log('fetchCitationData: Status response not ok:', statusRes.status);
       }
 
       if (statsRes.ok) {
         const statsData = await statsRes.json();
+        console.log('fetchCitationData: Stats data:', statsData);
         setStats(statsData.statistics);
+      } else {
+        console.log('fetchCitationData: Stats response not ok:', statsRes.status);
       }
     } catch (err) {
       console.error('Error fetching citation data:', err);
       setError('Failed to fetch citation data');
     } finally {
+      console.log('fetchCitationData: Setting loading to false');
       setLoading(false);
     }
   };
@@ -114,9 +128,12 @@ export const useCitations = (shop) => {
 
   // Initialize data on mount
   useEffect(() => {
-    console.log('useCitations: shop=', shop, 'authFetch=', !!authFetch);
+    console.log('useCitations: shop=', shop, 'authFetch=', !!authFetch, 'loading=', loading);
     if (shop && authFetch) {
       fetchCitationData();
+    } else {
+      // If we don't have required data, stop loading to prevent endless disabled state
+      setLoading(false);
     }
   }, [shop, authFetch]);
 
