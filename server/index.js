@@ -10,8 +10,39 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
+// Middleware - Enhanced CORS for Shopify embedded apps
+const corsOptions = {
+  origin: [
+    'https://ai-search-booster-frontend.onrender.com',
+    'https://aisearch-dev.myshopify.com',
+    /\.myshopify\.com$/,
+    /\.shopify\.com$/,
+    'http://localhost:3000',
+    'http://localhost:3001'
+  ],
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Shopify-Shop-Domain',
+    'X-Requested-With',
+    'Accept',
+    'Origin'
+  ],
+  exposedHeaders: ['Content-Length', 'Date'],
+  optionsSuccessStatus: 200
+};
+
+// Add CORS debugging
+app.use((req, res, next) => {
+  console.log('[ASB-CORS] Request from origin:', req.headers.origin);
+  console.log('[ASB-CORS] Request method:', req.method);
+  console.log('[ASB-CORS] Request path:', req.path);
+  next();
+});
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 
 // Store for shop data (in production, use a database)
