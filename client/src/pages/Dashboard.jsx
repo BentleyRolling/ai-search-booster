@@ -666,16 +666,12 @@ const Dashboard = () => {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center">
               <img 
                 src="/logo.png" 
                 alt="AI Search Booster Logo" 
-                className="w-8 h-8 object-contain"
+                className="w-24 h-24 object-contain"
               />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">AI Search Booster</h1>
-                <p className="text-sm text-gray-500">Optimize your store for AI visibility</p>
-              </div>
             </div>
             <div className="flex items-center space-x-2">
               {/* Hidden test button - only visible in dev */}
