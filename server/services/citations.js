@@ -199,7 +199,7 @@ const sendCitationSummary = async (shop, citations) => {
   return summary;
 };
 
-module.exports = {
+export {
   runCitationMonitoring,
   getCitationHistory,
   getCitationStats,
