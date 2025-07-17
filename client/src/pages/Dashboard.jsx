@@ -33,6 +33,9 @@ const Dashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [optimizationProgress, setOptimizationProgress] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [draftContent, setDraftContent] = useState(new Map());
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [selectedDraft, setSelectedDraft] = useState(null);
   
   // Citation monitoring hook
   const { 
@@ -521,6 +524,103 @@ const Dashboard = () => {
     }
   };
 
+  const saveDraft = async (type, id, content, settings) => {
+    try {
+      setOptimizing(true);
+      const response = await authFetch(`${API_BASE}/api/optimize/draft?shop=${shop}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          resourceType: type, 
+          resourceId: id, 
+          content, 
+          settings 
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      addNotification('Draft saved successfully', 'success');
+      
+      // Refresh data
+      fetchStatus(shop);
+      fetchProducts(shop);
+      
+      return data;
+    } catch (error) {
+      console.error('Save draft error:', error);
+      addNotification('Failed to save draft. Please try again.', 'error');
+      throw error;
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
+  const publishDraft = async (type, id) => {
+    if (!confirm('Publish draft optimization?\n\nThis will make the draft content live on your store.')) return;
+    
+    try {
+      setOptimizing(true);
+      const response = await authFetch(`${API_BASE}/api/optimize/publish?shop=${shop}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          resourceType: type, 
+          resourceId: id 
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      addNotification('Draft published successfully', 'success');
+      
+      // Update the product/blog status to reflect the publication
+      if (type === 'product') {
+        setProducts(prev => prev.map(p => 
+          p.id.toString() === id.toString() ? { ...p, optimized: true } : p
+        ));
+      } else if (type === 'blog') {
+        setBlogs(prev => prev.map(b => 
+          b.id.toString() === id.toString() ? { ...b, optimized: true } : b
+        ));
+      }
+      
+      // Refresh data
+      fetchStatus(shop);
+      fetchHistory(shop);
+      
+      return data;
+    } catch (error) {
+      console.error('Publish draft error:', error);
+      addNotification('Failed to publish draft. Please try again.', 'error');
+      throw error;
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
+  const getDraftContent = async (type, id) => {
+    try {
+      const response = await authFetch(`${API_BASE}/api/draft/${type}/${id}?shop=${shop}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Get draft content error:', error);
+      addNotification('Failed to fetch draft content', 'error');
+      return null;
+    }
+  };
+
   const rollbackAllOptimizations = async (type) => {
     const itemsToRollback = type === 'product' 
       ? products.filter(p => p.optimized)
@@ -587,6 +687,14 @@ const Dashboard = () => {
       addNotification('Failed to rollback optimizations. Please try again.', 'error');
     } finally {
       setOptimizing(false);
+    }
+  };
+
+  const handlePreviewDraft = async (type, id) => {
+    const draftData = await getDraftContent(type, id);
+    if (draftData) {
+      setSelectedDraft({ type, id, data: draftData });
+      setShowDraftModal(true);
     }
   };
 
@@ -1163,24 +1271,54 @@ const Dashboard = () => {
                                 {product.product_type}
                               </span>
                             )}
-                            {product.optimized && (
-                              <div className="mt-2 flex items-center space-x-2">
+                            <div className="mt-2 flex items-center space-x-2 flex-wrap">
+                              {product.optimized && (
                                 <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
                                   ✓ Optimized
                                 </span>
+                              )}
+                              
+                              {/* Draft Actions */}
+                              <div className="flex items-center space-x-1">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    rollback('product', product.id);
+                                    handlePreviewDraft('product', product.id);
                                   }}
-                                  className="text-red-600 hover:text-red-800 text-xs flex items-center space-x-1"
-                                  title="Rollback to original content"
+                                  className="text-blue-600 hover:text-blue-800 text-xs flex items-center space-x-1"
+                                  title="Preview draft content"
                                 >
-                                  <RotateCcw className="w-3 h-3" />
-                                  <span>Rollback</span>
+                                  <Eye className="w-3 h-3" />
+                                  <span>Preview</span>
                                 </button>
+                                
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    publishDraft('product', product.id);
+                                  }}
+                                  className="text-green-600 hover:text-green-800 text-xs flex items-center space-x-1"
+                                  title="Publish draft optimization"
+                                >
+                                  <CheckCircle className="w-3 h-3" />
+                                  <span>Publish</span>
+                                </button>
+                                
+                                {product.optimized && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      rollback('product', product.id);
+                                    }}
+                                    className="text-red-600 hover:text-red-800 text-xs flex items-center space-x-1"
+                                    title="Rollback to original content"
+                                  >
+                                    <RotateCcw className="w-3 h-3" />
+                                    <span>Rollback</span>
+                                  </button>
+                                )}
                               </div>
-                            )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1352,6 +1490,124 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Draft Preview Modal */}
+      {showDraftModal && selectedDraft && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Draft Preview - {selectedDraft.type} {selectedDraft.id}
+                </h2>
+                <button
+                  onClick={() => setShowDraftModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Draft Content */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Draft Content</h3>
+                  {selectedDraft.data.hasDraft ? (
+                    <div className="space-y-4">
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h4 className="font-medium text-yellow-800 mb-2">Content</h4>
+                        <div className="text-sm text-yellow-700 whitespace-pre-wrap">
+                          {selectedDraft.data.draft.content}
+                        </div>
+                      </div>
+                      
+                      {selectedDraft.data.draft.faq && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <h4 className="font-medium text-blue-800 mb-2">FAQ</h4>
+                          <div className="space-y-2">
+                            {selectedDraft.data.draft.faq.questions?.map((faq, index) => (
+                              <div key={index} className="text-sm">
+                                <div className="font-medium text-blue-700">Q: {faq.question}</div>
+                                <div className="text-blue-600">A: {faq.answer}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="text-xs text-gray-500">
+                        Draft saved: {new Date(selectedDraft.data.draft.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-gray-600">No draft content available</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Live Content */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Live Content</h3>
+                  {selectedDraft.data.hasLive ? (
+                    <div className="space-y-4">
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h4 className="font-medium text-green-800 mb-2">Content</h4>
+                        <div className="text-sm text-green-700 whitespace-pre-wrap">
+                          {selectedDraft.data.live.content}
+                        </div>
+                      </div>
+                      
+                      {selectedDraft.data.live.faq && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <h4 className="font-medium text-green-800 mb-2">FAQ</h4>
+                          <div className="space-y-2">
+                            {selectedDraft.data.live.faq.questions?.map((faq, index) => (
+                              <div key={index} className="text-sm">
+                                <div className="font-medium text-green-700">Q: {faq.question}</div>
+                                <div className="text-green-600">A: {faq.answer}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="text-xs text-gray-500">
+                        Published: {new Date(selectedDraft.data.live.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-gray-600">No live content available</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Actions */}
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDraftModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Close
+                </button>
+                {selectedDraft.data.hasDraft && (
+                  <button
+                    onClick={() => {
+                      publishDraft(selectedDraft.type, selectedDraft.id);
+                      setShowDraftModal(false);
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+                  >
+                    Publish Draft
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
