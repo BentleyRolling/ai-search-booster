@@ -1,0 +1,161 @@
+name: Dependabot Auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  dependabot-auto-merge:
+    name: Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          server/package-lock.json
+          client/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd server && npm ci
+        cd ../client && npm ci
+    
+    - name: Run security audit
+      run: |
+        cd server && npm audit --audit-level=high
+        cd ../client && npm audit --audit-level=high
+    
+    - name: Run tests
+      run: |
+        npm run test:all
+    
+    - name: Check PR metadata
+      id: pr-metadata
+      run: |
+        # Extract dependency info from PR title
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        echo "PR Title: $PR_TITLE"
+        
+        # Determine if this is a patch or minor update
+        if echo "$PR_TITLE" | grep -q "patch\|minor"; then
+          echo "auto_merge=true" >> $GITHUB_OUTPUT
+        else
+          echo "auto_merge=false" >> $GITHUB_OUTPUT
+        fi
+        
+        # Check if it's a security update
+        if echo "$PR_TITLE" | grep -qi "security\|vulnerability"; then
+          echo "security_update=true" >> $GITHUB_OUTPUT
+        else
+          echo "security_update=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Auto-merge patch and minor updates
+      if: steps.pr-metadata.outputs.auto_merge == 'true'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { context } = require('@actions/github');
+          
+          // Enable auto-merge
+          await github.rest.pulls.createReview({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+            event: 'APPROVE',
+            body: '✅ Auto-approving Dependabot PR after successful tests'
+          });
+          
+          // Merge the PR
+          await github.rest.pulls.merge({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+            merge_method: 'squash'
+          });
+    
+    - name: Auto-merge security updates
+      if: steps.pr-metadata.outputs.security_update == 'true'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { context } = require('@actions/github');
+          
+          // Enable auto-merge for security updates
+          await github.rest.pulls.createReview({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+            event: 'APPROVE',
+            body: '🔒 Auto-approving security update after successful tests'
+          });
+          
+          // Merge the PR
+          await github.rest.pulls.merge({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+            merge_method: 'squash'
+          });
+    
+    - name: Comment on manual review needed
+      if: steps.pr-metadata.outputs.auto_merge == 'false' && steps.pr-metadata.outputs.security_update == 'false'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { context } = require('@actions/github');
+          
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: `
+          ## 🔍 Manual Review Required
+          
+          This Dependabot PR requires manual review because it contains a major version update.
+          
+          **Tests Status:** ✅ All tests passed
+          **Security Audit:** ✅ No high-severity vulnerabilities
+          
+          Please review the changes and merge manually if appropriate.
+          
+          **Breaking Changes:** Check the dependency's changelog for any breaking changes.
+          **Compatibility:** Verify compatibility with the existing codebase.
+          `
+          });
+    
+    - name: Notify on test failure
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { context } = require('@actions/github');
+          
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: `
+          ## ❌ Tests Failed
+          
+          The Dependabot PR could not be auto-merged because tests failed.
+          
+          **Action Required:** Please review the test failures and fix any issues.
+          
+          **Test Results:** Check the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.
+          `
+          });

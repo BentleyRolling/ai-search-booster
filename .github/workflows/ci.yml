@@ -1,0 +1,267 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, feat/llm-ready ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+  SHOPIFY_API_KEY: ${{ secrets.SHOPIFY_API_KEY }}
+  SHOPIFY_API_SECRET: ${{ secrets.SHOPIFY_API_SECRET }}
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        test-type: [server, client]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          server/package-lock.json
+          client/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd server && npm ci
+        cd ../client && npm ci
+    
+    - name: Run linting
+      if: matrix.test-type == 'client'
+      run: |
+        cd client && npm run lint
+    
+    - name: Run tests with coverage
+      run: |
+        if [ "${{ matrix.test-type }}" == "server" ]; then
+          cd server && npm run test:coverage
+        else
+          cd client && npm run test:coverage
+        fi
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./${{ matrix.test-type }}/coverage/lcov.info
+        flags: ${{ matrix.test-type }}
+        name: ${{ matrix.test-type }}-coverage
+        fail_ci_if_error: false
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          server/package-lock.json
+          client/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd server && npm ci
+        cd ../client && npm ci
+    
+    - name: Run integration tests
+      run: |
+        cd server && npm test -- --testPathPattern=integration
+    
+    - name: Test LLM endpoints
+      run: |
+        cd server && npm start &
+        SERVER_PID=$!
+        sleep 5
+        
+        # Test RSS feed endpoint
+        curl -f http://localhost:3000/llm-feed.xml > /dev/null
+        
+        # Test vector endpoint
+        curl -f http://localhost:3000/api/vector/test-product > /dev/null
+        
+        # Test plugin manifest
+        curl -f http://localhost:3000/.well-known/ai-plugin.json > /dev/null
+        
+        kill $SERVER_PID
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          server/package-lock.json
+          client/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd server && npm ci
+        cd ../client && npm ci
+    
+    - name: Run security audit
+      run: |
+        cd server && npm audit --audit-level=moderate
+        cd ../client && npm audit --audit-level=moderate
+    
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          server/package-lock.json
+          client/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd server && npm ci
+        cd ../client && npm ci
+    
+    - name: Build client
+      run: |
+        cd client && npm run build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: client-build
+        path: client/dist/
+        retention-days: 7
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [test, integration-test, security-scan, build]
+    if: github.ref == 'refs/heads/feat/llm-ready' && github.event_name == 'push'
+    
+    environment:
+      name: staging
+      url: https://ai-search-booster-staging.onrender.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: client-build
+        path: client/dist/
+    
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your staging deployment commands here
+        # This could be Render, Heroku, AWS, etc.
+    
+    - name: Run smoke tests
+      run: |
+        sleep 30  # Wait for deployment
+        curl -f https://ai-search-booster-staging.onrender.com/health
+        curl -f https://ai-search-booster-staging.onrender.com/llm-feed.xml
+        curl -f https://ai-search-booster-staging.onrender.com/.well-known/ai-plugin.json
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, integration-test, security-scan, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    environment:
+      name: production
+      url: https://ai-search-booster.onrender.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: client-build
+        path: client/dist/
+    
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production environment..."
+        # Add your production deployment commands here
+    
+    - name: Run smoke tests
+      run: |
+        sleep 30  # Wait for deployment
+        curl -f https://ai-search-booster.onrender.com/health
+        curl -f https://ai-search-booster.onrender.com/llm-feed.xml
+        curl -f https://ai-search-booster.onrender.com/.well-known/ai-plugin.json
+    
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        body: |
+          Automated release of AI Search Booster LLM-ready features
+          
+          ## Changes
+          - LLM-optimized structured data (JSON-LD)
+          - Citation monitoring system
+          - Draft/publish workflow
+          - Comprehensive rollback functionality
+          - Vector embeddings and RSS feeds
+          - OpenAI plugin integration
+        draft: false
+        prerelease: false

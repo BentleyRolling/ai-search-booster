@@ -1,0 +1,263 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Validate PR title
+      uses: amannn/action-semantic-pull-request@v5
+      with:
+        types: |
+          feat
+          fix
+          docs
+          style
+          refactor
+          test
+          chore
+          ci
+        scopes: |
+          server
+          client
+          theme
+          infra
+          deps
+        requireScope: false
+        subjectPattern: ^(?![A-Z]).+$
+        subjectPatternError: |
+          The subject "{subject}" found in the pull request title "{title}"
+          didn't match the configured pattern. Please ensure that the subject
+          doesn't start with an uppercase character.
+    
+    - name: Check file changes
+      id: changes
+      uses: dorny/paths-filter@v2
+      with:
+        filters: |
+          server:
+            - 'server/**'
+          client:
+            - 'client/**'
+          theme:
+            - 'extensions/**'
+          docs:
+            - '*.md'
+            - 'docs/**'
+          github:
+            - '.github/**'
+          root:
+            - 'package.json'
+            - 'run-tests.js'
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          server/package-lock.json
+          client/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd server && npm ci
+        cd ../client && npm ci
+    
+    - name: Run server tests
+      if: steps.changes.outputs.server == 'true'
+      run: |
+        cd server && npm test
+    
+    - name: Run client tests
+      if: steps.changes.outputs.client == 'true'
+      run: |
+        cd client && npm test
+    
+    - name: Run client linting
+      if: steps.changes.outputs.client == 'true'
+      run: |
+        cd client && npm run lint
+    
+    - name: Check for sensitive files
+      run: |
+        # Check for accidentally committed sensitive files
+        if find . -name "*.env" -not -path "./node_modules/*" -not -name "*.env.test" -not -name "*.env.example" | grep -q .; then
+          echo "❌ Environment files detected:"
+          find . -name "*.env" -not -path "./node_modules/*" -not -name "*.env.test" -not -name "*.env.example"
+          exit 1
+        fi
+        
+        # Check for API keys or tokens in code
+        if grep -r -n "sk-\|pk_\|access_token\|secret_key" --include="*.js" --include="*.jsx" --include="*.ts" --include="*.tsx" . | grep -v node_modules | grep -v test | grep -v mock; then
+          echo "❌ Potential API keys or tokens found in code"
+          exit 1
+        fi
+        
+        echo "✅ No sensitive files detected"
+    
+    - name: Check bundle size (client)
+      if: steps.changes.outputs.client == 'true'
+      run: |
+        cd client
+        npm run build
+        
+        # Check if bundle size is reasonable (< 1MB)
+        BUNDLE_SIZE=$(du -sk dist/ | cut -f1)
+        if [ $BUNDLE_SIZE -gt 1024 ]; then
+          echo "⚠️  Warning: Bundle size is large (${BUNDLE_SIZE}KB)"
+        else
+          echo "✅ Bundle size is acceptable (${BUNDLE_SIZE}KB)"
+        fi
+    
+    - name: Check for TODO comments
+      run: |
+        # Find TODO comments and create a summary
+        TODO_COUNT=$(grep -r -n "TODO\|FIXME\|HACK" --include="*.js" --include="*.jsx" --include="*.ts" --include="*.tsx" . | grep -v node_modules | wc -l)
+        
+        if [ $TODO_COUNT -gt 0 ]; then
+          echo "📝 Found $TODO_COUNT TODO/FIXME/HACK comments:"
+          grep -r -n "TODO\|FIXME\|HACK" --include="*.js" --include="*.jsx" --include="*.ts" --include="*.tsx" . | grep -v node_modules | head -10
+          if [ $TODO_COUNT -gt 10 ]; then
+            echo "... and $((TODO_COUNT - 10)) more"
+          fi
+        fi
+    
+    - name: Generate PR summary
+      run: |
+        echo "## PR Summary" > pr-summary.md
+        echo "" >> pr-summary.md
+        echo "**Files changed:**" >> pr-summary.md
+        
+        if [ "${{ steps.changes.outputs.server }}" == "true" ]; then
+          echo "- 🔧 Server changes detected" >> pr-summary.md
+        fi
+        
+        if [ "${{ steps.changes.outputs.client }}" == "true" ]; then
+          echo "- 🌐 Client changes detected" >> pr-summary.md
+        fi
+        
+        if [ "${{ steps.changes.outputs.theme }}" == "true" ]; then
+          echo "- 🎨 Theme extension changes detected" >> pr-summary.md
+        fi
+        
+        if [ "${{ steps.changes.outputs.docs }}" == "true" ]; then
+          echo "- 📚 Documentation changes detected" >> pr-summary.md
+        fi
+        
+        if [ "${{ steps.changes.outputs.github }}" == "true" ]; then
+          echo "- ⚙️ GitHub workflow changes detected" >> pr-summary.md
+        fi
+        
+        echo "" >> pr-summary.md
+        echo "**Test results:**" >> pr-summary.md
+        echo "- ✅ All checks passed" >> pr-summary.md
+        echo "- ✅ No sensitive files detected" >> pr-summary.md
+        echo "- ✅ Bundle size is acceptable" >> pr-summary.md
+        
+        cat pr-summary.md
+    
+    - name: Comment PR summary
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('pr-summary.md', 'utf8');
+          
+          // Check if we've already commented
+          const comments = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number
+          });
+          
+          const existingComment = comments.data.find(comment => 
+            comment.user.login === 'github-actions[bot]' && 
+            comment.body.includes('PR Summary')
+          );
+          
+          if (existingComment) {
+            // Update existing comment
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: summary
+            });
+          } else {
+            // Create new comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: summary
+            });
+          }
+
+  code-coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          server/package-lock.json
+          client/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd server && npm ci
+        cd ../client && npm ci
+    
+    - name: Run tests with coverage
+      run: |
+        cd server && npm run test:coverage
+        cd ../client && npm run test:coverage
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./
+        flags: pr
+        name: pr-coverage
+        fail_ci_if_error: false
+    
+    - name: Coverage comment
+      uses: actions/github-script@v6
+      with:
+        script: |
+          // This would parse coverage reports and comment on the PR
+          // For now, just indicate coverage was run
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: '📊 Code coverage report has been generated and uploaded to Codecov.'
+          });

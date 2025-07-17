@@ -1,0 +1,266 @@
+name: Citation Monitoring Health Check
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to check'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  health-check:
+    name: Citation System Health Check
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        environment: 
+          - ${{ github.event.inputs.environment || 'production' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+    
+    - name: Install server dependencies
+      run: |
+        cd server && npm ci
+    
+    - name: Set environment URLs
+      run: |
+        if [ "${{ matrix.environment }}" == "production" ]; then
+          echo "BASE_URL=https://ai-search-booster.onrender.com" >> $GITHUB_ENV
+        else
+          echo "BASE_URL=https://ai-search-booster-staging.onrender.com" >> $GITHUB_ENV
+        fi
+    
+    - name: Check citation monitoring endpoints
+      run: |
+        echo "Checking citation monitoring health on ${{ matrix.environment }}..."
+        
+        # Health check
+        curl -f "${BASE_URL}/health" || exit 1
+        
+        # Citation monitoring status (with mock shop)
+        curl -f "${BASE_URL}/api/monitoring/status?shop=health-check.myshopify.com" || exit 1
+        
+        # Citation statistics
+        curl -f "${BASE_URL}/api/monitoring/stats?shop=health-check.myshopify.com" || exit 1
+        
+        echo "✅ Citation endpoints are healthy"
+    
+    - name: Check LLM endpoints
+      run: |
+        echo "Checking LLM integration endpoints..."
+        
+        # RSS feed
+        curl -f "${BASE_URL}/llm-feed.xml" -H "Accept: application/rss+xml" || exit 1
+        
+        # Vector endpoint
+        curl -f "${BASE_URL}/api/vector/health-check" || exit 1
+        
+        # OpenAI plugin manifest
+        curl -f "${BASE_URL}/.well-known/ai-plugin.json" || exit 1
+        
+        # OpenAPI specification
+        curl -f "${BASE_URL}/.well-known/openapi.json" || exit 1
+        
+        echo "✅ LLM endpoints are healthy"
+    
+    - name: Check database connectivity
+      run: |
+        echo "Checking database connectivity..."
+        
+        # Citation history endpoint (should work even with empty data)
+        curl -f "${BASE_URL}/api/monitoring/citations?shop=health-check.myshopify.com&limit=1" || exit 1
+        
+        echo "✅ Database connectivity is healthy"
+    
+    - name: Performance check
+      run: |
+        echo "Running performance checks..."
+        
+        # Measure response times
+        START_TIME=$(date +%s%N)
+        curl -f "${BASE_URL}/health" > /dev/null
+        END_TIME=$(date +%s%N)
+        RESPONSE_TIME=$(( (END_TIME - START_TIME) / 1000000 ))
+        
+        echo "Health endpoint response time: ${RESPONSE_TIME}ms"
+        
+        # Check if response time is reasonable (< 2 seconds)
+        if [ $RESPONSE_TIME -gt 2000 ]; then
+          echo "⚠️  Warning: Health endpoint response time is high (${RESPONSE_TIME}ms)"
+        else
+          echo "✅ Response time is acceptable"
+        fi
+    
+    - name: Create health report
+      run: |
+        echo "## Citation Monitoring Health Report" > health-report.md
+        echo "" >> health-report.md
+        echo "**Environment:** ${{ matrix.environment }}" >> health-report.md
+        echo "**Date:** $(date -u)" >> health-report.md
+        echo "**Status:** ✅ Healthy" >> health-report.md
+        echo "" >> health-report.md
+        echo "### Endpoints Checked" >> health-report.md
+        echo "- ✅ Health endpoint" >> health-report.md
+        echo "- ✅ Citation monitoring status" >> health-report.md
+        echo "- ✅ Citation statistics" >> health-report.md
+        echo "- ✅ Citation history" >> health-report.md
+        echo "- ✅ LLM RSS feed" >> health-report.md
+        echo "- ✅ Vector embeddings" >> health-report.md
+        echo "- ✅ OpenAI plugin manifest" >> health-report.md
+        echo "- ✅ OpenAPI specification" >> health-report.md
+        echo "" >> health-report.md
+        echo "### Performance Metrics" >> health-report.md
+        echo "- Health endpoint response time: ${RESPONSE_TIME}ms" >> health-report.md
+        
+        cat health-report.md
+    
+    - name: Upload health report
+      uses: actions/upload-artifact@v3
+      with:
+        name: health-report-${{ matrix.environment }}
+        path: health-report.md
+        retention-days: 30
+    
+    - name: Notify on failure
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { context } = require('@actions/github');
+          const issue = {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `🚨 Citation Monitoring Health Check Failed - ${{ matrix.environment }}`,
+            body: `
+          ## Citation Monitoring Health Check Failed
+          
+          **Environment:** ${{ matrix.environment }}
+          **Date:** ${new Date().toISOString()}
+          **Workflow:** ${context.workflow}
+          **Run:** ${context.runNumber}
+          
+          ### Details
+          The automated health check for the citation monitoring system has failed.
+          
+          **Affected Components:**
+          - Citation monitoring endpoints
+          - LLM integration endpoints
+          - Database connectivity
+          
+          ### Action Required
+          Please investigate the issue and restore service as soon as possible.
+          
+          **Troubleshooting Steps:**
+          1. Check server logs for errors
+          2. Verify database connectivity
+          3. Test citation monitoring job status
+          4. Validate LLM endpoint responses
+          
+          **Related Links:**
+          - [Workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+          - [Monitoring dashboard](${process.env.BASE_URL}/health)
+          `,
+            labels: ['bug', 'monitoring', 'urgent']
+          };
+          
+          github.rest.issues.create(issue);
+
+  load-test:
+    name: Load Test Citation Endpoints
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        npm install -g artillery
+    
+    - name: Set environment URLs
+      run: |
+        if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+          echo "BASE_URL=https://ai-search-booster.onrender.com" >> $GITHUB_ENV
+        else
+          echo "BASE_URL=https://ai-search-booster-staging.onrender.com" >> $GITHUB_ENV
+        fi
+    
+    - name: Create load test configuration
+      run: |
+        cat > load-test.yml << EOF
+        config:
+          target: '${BASE_URL}'
+          phases:
+            - duration: 60
+              arrivalRate: 5
+              name: "Warm up"
+            - duration: 120
+              arrivalRate: 10
+              name: "Load test"
+            - duration: 60
+              arrivalRate: 5
+              name: "Cool down"
+        scenarios:
+          - name: "Citation monitoring endpoints"
+            weight: 60
+            flow:
+              - get:
+                  url: "/health"
+              - get:
+                  url: "/api/monitoring/status?shop=load-test.myshopify.com"
+              - get:
+                  url: "/api/monitoring/stats?shop=load-test.myshopify.com"
+          - name: "LLM endpoints"
+            weight: 40
+            flow:
+              - get:
+                  url: "/llm-feed.xml"
+              - get:
+                  url: "/api/vector/test-product"
+              - get:
+                  url: "/.well-known/ai-plugin.json"
+        EOF
+    
+    - name: Run load test
+      run: |
+        artillery run load-test.yml --output load-test-report.json
+    
+    - name: Generate load test report
+      run: |
+        artillery report load-test-report.json --output load-test-report.html
+    
+    - name: Upload load test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: load-test-results-${{ github.event.inputs.environment }}
+        path: |
+          load-test-report.json
+          load-test-report.html
+        retention-days: 30
