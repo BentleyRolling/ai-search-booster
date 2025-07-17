@@ -773,13 +773,13 @@ const Dashboard = () => {
         <div className="bg-white border-b shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center space-x-4">
-              <Eye className="w-5 h-5 text-purple-600 animate-pulse" />
+              <Eye className="w-5 h-5 text-black animate-pulse" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900">
                   Preview Incoming!
                 </p>
                 <div className="mt-2 bg-gray-200 rounded-full h-2">
-                  <div className="bg-purple-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }} />
+                  <div className="bg-black h-2 rounded-full animate-pulse" style={{ width: '100%' }} />
                 </div>
               </div>
             </div>
@@ -1038,7 +1038,7 @@ const Dashboard = () => {
                     <button
                       onClick={optimizeBlogs}
                       disabled={optimizing || selectedBlogs.length === 0}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                     >
                       {optimizing ? (
                         <>
@@ -1065,7 +1065,7 @@ const Dashboard = () => {
                         onClick={() => toggleBlogSelection(blog.id.toString())}
                         className={`border rounded-lg p-4 cursor-pointer transition-all ${
                           selectedBlogs.includes(blog.id.toString())
-                            ? 'border-purple-500 bg-purple-50'
+                            ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
