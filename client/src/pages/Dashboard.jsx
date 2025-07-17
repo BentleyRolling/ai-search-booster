@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
+import { useCitations } from '../hooks/useCitations';
 
 const Dashboard = () => {
   const { authFetch, isReady, app } = useAuthenticatedFetch();
@@ -32,6 +33,18 @@ const Dashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [optimizationProgress, setOptimizationProgress] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  
+  // Citation monitoring hook
+  const { 
+    citations, 
+    stats, 
+    isMonitoring, 
+    loading: citationLoading,
+    error: citationError,
+    startMonitoring,
+    stopMonitoring,
+    fetchCitationHistory
+  } = useCitations(shop);
 
   // Always use relative paths - AuthContext will convert to absolute backend URLs
   const API_BASE = '';
@@ -765,6 +778,22 @@ const Dashboard = () => {
           </div>
           <div className="absolute right-4 top-4">
             <div className="flex items-center space-x-2">
+              {/* Citation Badge */}
+              {stats && stats.total > 0 && (
+                <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full">
+                  <img src="/icons/citation-badge.svg" alt="Citations" className="w-4 h-4" />
+                  <span className="text-sm font-medium">{stats.total} citations</span>
+                </div>
+              )}
+              
+              {/* Monitoring Status */}
+              <div className="flex items-center space-x-2">
+                <Monitor className={`w-5 h-5 ${isMonitoring ? 'text-green-600' : 'text-gray-400'}`} />
+                <span className={`text-sm ${isMonitoring ? 'text-green-600' : 'text-gray-400'}`}>
+                  {isMonitoring ? 'Monitoring' : 'Not Monitoring'}
+                </span>
+              </div>
+              
               {/* Hidden test button - only visible in dev */}
               {window.location.hostname === 'localhost' || window.location.search.includes('debug=true') ? (
                 <button
@@ -832,6 +861,37 @@ const Dashboard = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Citation Notifications */}
+      {citations.length > 0 && (
+        <div className="fixed top-20 right-4 z-40 max-w-sm">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <Bell className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-sm font-medium text-blue-800">
+                  Recent Citations Found
+                </h3>
+                <div className="mt-2 space-y-1">
+                  {citations.slice(0, 3).map((citation) => (
+                    <div key={citation.id} className="text-xs text-blue-700">
+                      <span className="font-medium">{citation.source}</span> mentioned{' '}
+                      <span className="font-medium">{citation.product_title}</span>
+                    </div>
+                  ))}
+                  {citations.length > 3 && (
+                    <div className="text-xs text-blue-600">
+                      +{citations.length - 3} more citations
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
