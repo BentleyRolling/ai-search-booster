@@ -5,7 +5,13 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "nodemon server/index.js"
+    "dev": "nodemon server/index.js",
+    "test": "node run-tests.js",
+    "test:server": "node run-tests.js --server-only",
+    "test:client": "node run-tests.js --client-only",
+    "test:coverage": "node run-tests.js --coverage",
+    "test:lint": "node run-tests.js --lint",
+    "test:all": "node run-tests.js --coverage --lint"
   },
   "keywords": [
     "shopify",
