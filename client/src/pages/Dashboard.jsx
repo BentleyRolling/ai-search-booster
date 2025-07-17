@@ -31,6 +31,7 @@ const Dashboard = () => {
   const [testResults, setTestResults] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [optimizationProgress, setOptimizationProgress] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   // Always use relative paths - AuthContext will convert to absolute backend URLs
   const API_BASE = '';
@@ -394,6 +395,9 @@ const Dashboard = () => {
   };
 
   const previewOptimization = async () => {
+    setPreviewLoading(true);
+    addNotification('Generating product preview...', 'info');
+    
     try {
       const sampleProduct = products[0] || {
         name: 'Sample Product',
@@ -417,19 +421,30 @@ const Dashboard = () => {
       });
       const data = await response.json();
       setPreview(data);
+      addNotification('Product preview generated successfully!', 'success');
     } catch (error) {
       addNotification('Failed to generate preview. Please try again.', 'error');
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
   const previewBlogOptimization = async (blog) => {
+    setPreviewLoading(true);
+    addNotification('Generating blog preview...', 'info');
+    
     try {
+      const sampleBlog = blog || blogs[0] || {
+        title: 'Sample Blog Post',
+        content: 'This is a sample blog post content for preview purposes.'
+      };
+      
       const response = await authFetch(`${API_BASE}/api/optimize/preview?shop=${shop}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           shop,
-          content: blog,
+          content: sampleBlog,
           type: 'blog',
           settings: {
             targetLLM: settings.targetLLM,
@@ -440,8 +455,11 @@ const Dashboard = () => {
       });
       const data = await response.json();
       setPreview(data);
+      addNotification('Blog preview generated successfully!', 'success');
     } catch (error) {
       addNotification('Failed to generate blog preview. Please try again.', 'error');
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -750,6 +768,25 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Progress Bar for Preview Loading */}
+      {previewLoading && (
+        <div className="bg-white border-b shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center space-x-4">
+              <Eye className="w-5 h-5 text-purple-600 animate-pulse" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  Preview Incoming!
+                </p>
+                <div className="mt-2 bg-gray-200 rounded-full h-2">
+                  <div className="bg-purple-600 h-2 rounded-full animate-pulse" style={{ width: '100%' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Settings Panel */}
       {showSettings && (
         <div className="bg-white border-b shadow-sm">
@@ -902,10 +939,20 @@ const Dashboard = () => {
                     </button>
                     <button
                       onClick={previewOptimization}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                      disabled={previewLoading}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                     >
-                      <Eye className="w-4 h-4" />
-                      <span>Preview</span>
+                      {previewLoading ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4" />
+                          <span>Preview</span>
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={optimizeProducts}
@@ -973,10 +1020,20 @@ const Dashboard = () => {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => previewBlogOptimization(blogs[0])}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                      disabled={previewLoading}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                     >
-                      <Eye className="w-4 h-4" />
-                      <span>Preview</span>
+                      {previewLoading ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-4 h-4" />
+                          <span>Preview</span>
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={optimizeBlogs}
