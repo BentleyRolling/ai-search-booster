@@ -35,6 +35,24 @@ const optimizationLimiter = rateLimit({
   keyGenerator: (req) => req.shop || req.ip
 });
 
+// Middleware to handle Shopify app proxy requests
+app.use('/apps/ai-search-booster', (req, res, next) => {
+  console.log('App proxy request received:', req.path, req.query);
+  
+  // Extract shop from query parameters (Shopify adds this automatically)
+  const shop = req.query.shop;
+  if (shop) {
+    req.headers['x-shopify-shop-domain'] = shop;
+  }
+  
+  // Strip the /apps/ai-search-booster prefix and continue
+  req.url = req.url.replace('/apps/ai-search-booster', '');
+  if (req.url === '') req.url = '/';
+  
+  console.log('Proxied request to:', req.url, 'for shop:', shop);
+  next();
+});
+
 // Root route
 app.get('/', (req, res) => {
   res.json({

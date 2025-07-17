@@ -27,7 +27,10 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('products');
   const [testResults, setTestResults] = useState(null);
 
-  const API_BASE = import.meta.env.VITE_BACKEND_URL || 'https://ai-search-booster-backend.onrender.com';
+  // Use relative paths for Shopify app proxy in production, absolute URLs for local dev
+  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? (import.meta.env.VITE_BACKEND_URL || 'https://ai-search-booster-backend.onrender.com')
+    : ''; // Relative paths for production (Shopify app proxy)
 
   useEffect(() => {
     // Get shop from URL params
