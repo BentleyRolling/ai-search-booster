@@ -27,6 +27,19 @@ uri = "/webhooks/product_updated"
 topics = ["app/uninstalled"]
 uri = "/webhooks/app_uninstalled"
 
+# GDPR Compliance Webhooks (Mandatory)
+[[webhooks.subscriptions]]
+topics = ["customers/data_request"]
+uri = "/webhooks/customers/data_request"
+
+[[webhooks.subscriptions]]
+topics = ["customers/redact"]
+uri = "/webhooks/customers/redact"
+
+[[webhooks.subscriptions]]
+topics = ["shop/redact"]
+uri = "/webhooks/shop/redact"
+
 [build]
 automatically_update_urls_on_dev = true
 dev_store_url = "aisearch-dev.myshopify.com"

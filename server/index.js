@@ -1216,6 +1216,64 @@ app.get('/health', (req, res) => {
   });
 });
 
+// GDPR Compliance Webhooks
+app.post('/webhooks/customers/data_request', express.raw({ type: 'application/json' }), (req, res) => {
+  console.log('[COMPLIANCE] Customer data request received');
+  
+  // For AI Search Booster: We don't store personal customer data
+  // We only store shop-level optimization history and settings
+  const response = {
+    message: 'AI Search Booster does not store personal customer data',
+    data_stored: 'None - app only stores shop-level product optimization history',
+    contact: 'support@ai-search-booster.com'
+  };
+  
+  console.log('[COMPLIANCE] Customer data request response:', response);
+  res.status(200).json(response);
+});
+
+app.post('/webhooks/customers/redact', express.raw({ type: 'application/json' }), (req, res) => {
+  console.log('[COMPLIANCE] Customer redaction request received');
+  
+  // For AI Search Booster: We don't store personal customer data to redact
+  const response = {
+    message: 'No customer data to redact - AI Search Booster does not store personal customer information',
+    action_taken: 'N/A - no personal data stored'
+  };
+  
+  console.log('[COMPLIANCE] Customer redaction response:', response);
+  res.status(200).json(response);
+});
+
+app.post('/webhooks/shop/redact', express.raw({ type: 'application/json' }), (req, res) => {
+  console.log('[COMPLIANCE] Shop redaction request received');
+  
+  try {
+    const payload = JSON.parse(req.body);
+    const shopDomain = payload.shop_domain;
+    
+    if (shopDomain && shopData.has(shopDomain)) {
+      // Remove shop data from memory store
+      shopData.delete(shopDomain);
+      console.log(`[COMPLIANCE] Deleted data for shop: ${shopDomain}`);
+    }
+    
+    const response = {
+      message: 'Shop data redacted successfully',
+      shop: shopDomain,
+      action_taken: 'Removed optimization history and access tokens',
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('[COMPLIANCE] Shop redaction response:', response);
+    res.status(200).json(response);
+    
+  } catch (error) {
+    console.error('[COMPLIANCE] Shop redaction error:', error);
+    res.status(500).json({ error: 'Failed to process redaction request' });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`AI Search Booster v2 running on port ${PORT}`);
@@ -1225,6 +1283,7 @@ app.listen(PORT, () => {
   console.log(`- OpenAI API: ${OPENAI_API_KEY ? '✓' : '✗'}`);
   console.log(`- Anthropic API: ${ANTHROPIC_API_KEY ? '✓' : '✗'}`);
   console.log(`- Versioned Optimization: ${VERSIONED_OPTIMIZATION ? '✓' : '✗'}`);
+  console.log('- GDPR Compliance webhooks: ✓');
 });
 
 export default app;
