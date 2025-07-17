@@ -663,16 +663,16 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <img 
-                src="/logo.png" 
-                alt="AI Search Booster Logo" 
-                className="w-24 h-24 object-contain"
-              />
-            </div>
+          <div className="flex items-center justify-center">
+            <img 
+              src="/logo.png" 
+              alt="AI Search Booster Logo" 
+              className="w-24 h-24 object-contain"
+            />
+          </div>
+          <div className="absolute right-4 top-4">
             <div className="flex items-center space-x-2">
               {/* Hidden test button - only visible in dev */}
               {window.location.hostname === 'localhost' || window.location.search.includes('debug=true') ? (
