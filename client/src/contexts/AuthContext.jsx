@@ -52,31 +52,24 @@ export const AuthProvider = ({ children }) => {
             console.log('[ASB-DEBUG] AuthProvider: Dev - absolute backend URL:', finalUrl);
           }
         } else {
-          // Production: Force direct backend until proxy is registered
+          // Production: Use app proxy paths (requires manual registration)
           if (url.startsWith('/api') || (url.startsWith('api') && !url.includes('://'))) {
-            const BACKEND_URL = 'https://ai-search-booster-backend.onrender.com';
             const apiPath = url.startsWith('/') ? url : '/' + url;
-            finalUrl = `${BACKEND_URL}${apiPath}`;
-            console.log('[ASB-DEBUG] AuthProvider: Prod - using direct backend (proxy not registered):', finalUrl);
-            console.log('[ASB-DEBUG] AuthProvider: ⚠️ App proxy will be enabled once registered via Shopify CLI');
+            finalUrl = `/apps/ai-search-booster${apiPath}`;
+            console.log('[ASB-DEBUG] AuthProvider: Prod - using app proxy path:', finalUrl);
+            console.log('[ASB-DEBUG] AuthProvider: ⚠️ If requests fail, app proxy needs manual registration');
           }
         }
         
         console.log('[ASB-DEBUG] AuthProvider: Final URL for request:', finalUrl);
         
         try {
-          // For direct backend calls, use simple CORS mode (TEMPORARY until proxy registered)
-          const fetchOptions = finalUrl.startsWith('https://') ? {
-            method: 'GET',
-            mode: 'cors',
-            credentials: 'omit',
-            headers: {
-              'Accept': 'application/json',
-              'X-Shopify-Shop-Domain': shop || 'aisearch-dev.myshopify.com'
-            }
-          } : options;
+          // Use authenticated fetch for app proxy routes
+          const fetchOptions = finalUrl.startsWith('/apps/') ? 
+            options : 
+            { ...options, mode: 'cors', credentials: 'omit' };
             
-          console.log('[ASB-DEBUG] AuthProvider: Making SIMPLE fetch with options:', fetchOptions);
+          console.log('[ASB-DEBUG] AuthProvider: Making authenticated fetch with options:', fetchOptions);
           
           // Add timeout for hanging requests
           const timeoutPromise = new Promise((_, reject) => {

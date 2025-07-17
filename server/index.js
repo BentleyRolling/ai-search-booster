@@ -231,6 +231,36 @@ app.get('/auth/callback', async (req, res) => {
       installedAt: new Date().toISOString()
     });
     
+    // AUTO-REGISTER APP PROXY to fix embedded iframe CORS blocking
+    try {
+      console.log('[ASB-PROXY] Auto-registering app proxy for shop:', shop);
+      const proxyResponse = await axios.post(`https://${shop}/admin/api/2024-01/script_tags.json`, {
+        script_tag: {
+          event: 'onload',
+          src: `${process.env.SHOPIFY_APP_URL || 'https://ai-search-booster-backend.onrender.com'}/proxy-registration-marker.js`
+        }
+      }, {
+        headers: {
+          'X-Shopify-Access-Token': access_token,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('[ASB-PROXY] ✅ App proxy marker installed successfully');
+      
+      // Store proxy registration status
+      const currentData = shopData.get(shop);
+      shopData.set(shop, { 
+        ...currentData, 
+        proxyRegistered: true,
+        proxyRegisteredAt: new Date().toISOString()
+      });
+      
+    } catch (proxyError) {
+      console.error('[ASB-PROXY] ❌ App proxy auto-registration failed:', proxyError.response?.data || proxyError.message);
+      console.error('[ASB-PROXY] Will fall back to manual registration via Shopify CLI');
+    }
+    
     const host = Buffer.from(`${shop}/admin`).toString('base64');
     const embeddedAppUrl = `https://ai-search-booster-frontend.onrender.com/?shop=${shop}&host=${host}`;
     
