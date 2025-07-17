@@ -367,6 +367,14 @@ const Dashboard = () => {
       console.log('Optimize response received:', response);
       const data = await response.json();
       console.log('Optimize response data:', data);
+      console.log('Results array:', data.results);
+      if (data.results) {
+        console.log('Individual results:');
+        data.results.forEach((result, index) => {
+          console.log(`Result ${index}:`, result);
+          console.log(`Status: "${result.status}", Type: ${typeof result.status}`);
+        });
+      }
       const successCount = data.results ? data.results.filter(r => r.status === 'success').length : 0;
       console.log('Success count:', successCount);
       addNotification(`Successfully optimized ${successCount} products!`, 'success');
