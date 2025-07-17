@@ -44,39 +44,33 @@ export const AuthProvider = ({ children }) => {
         
         let finalUrl = url;
         
-        if (isDevelopment) {
-          // Development: use absolute backend URL
-          const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://ai-search-booster-backend.onrender.com';
-          if (url.startsWith('/api') || (url.startsWith('api') && !url.includes('://'))) {
-            finalUrl = `${BACKEND_URL}${url.startsWith('/') ? url : '/' + url}`;
-            console.log('[ASB-DEBUG] AuthProvider: Dev - absolute backend URL:', finalUrl);
-          }
-        } else {
-          // Production: Use app proxy paths (requires manual registration)
-          if (url.startsWith('/api') || (url.startsWith('api') && !url.includes('://'))) {
-            const apiPath = url.startsWith('/') ? url : '/' + url;
-            finalUrl = `/apps/ai-search-booster${apiPath}`;
-            console.log('[ASB-DEBUG] AuthProvider: Prod - using app proxy path:', finalUrl);
-            console.log('[ASB-DEBUG] AuthProvider: ⚠️ If requests fail, app proxy needs manual registration');
-          }
+        // BYPASS APP PROXY: Use direct backend URL due to password-protected store
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://ai-search-booster-backend.onrender.com';
+        if (url.startsWith('/api') || (url.startsWith('api') && !url.includes('://'))) {
+          const apiPath = url.startsWith('/') ? url : '/' + url;
+          finalUrl = `${BACKEND_URL}${apiPath}`;
+          console.log('[ASB-DEBUG] AuthProvider: Using direct backend URL:', finalUrl);
+          console.log('[ASB-DEBUG] AuthProvider: Bypassing app proxy due to password-protected store');
         }
         
         console.log('[ASB-DEBUG] AuthProvider: Final URL for request:', finalUrl);
         
         try {
-          // Use authenticated fetch for app proxy routes
-          const fetchOptions = finalUrl.startsWith('/apps/') ? 
-            options : 
-            { ...options, mode: 'cors', credentials: 'omit' };
+          // Use direct fetch for external backend URL, authenticated fetch for relative paths
+          const isExternalUrl = finalUrl.includes('://');
+          const fetchOptions = isExternalUrl ? 
+            { ...options, mode: 'cors', credentials: 'omit' } : 
+            options;
             
-          console.log('[ASB-DEBUG] AuthProvider: Making authenticated fetch with options:', fetchOptions);
+          console.log('[ASB-DEBUG] AuthProvider: Making fetch with options:', fetchOptions);
           
           // Add timeout for hanging requests
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Request timeout after 8 seconds')), 8000);
           });
           
-          const result = await Promise.race([fetch(finalUrl, fetchOptions), timeoutPromise]);
+          const fetchFunction = isExternalUrl ? window.fetch : fetch;
+          const result = await Promise.race([fetchFunction(finalUrl, fetchOptions), timeoutPromise]);
           console.log('[ASB-DEBUG] AuthProvider: ✅ Got response!');
           console.log('[ASB-DEBUG] AuthProvider: Response URL:', result.url);
           console.log('[ASB-DEBUG] AuthProvider: Response status:', result.status);
