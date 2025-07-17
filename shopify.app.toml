@@ -31,5 +31,9 @@ uri = "/webhooks/app_uninstalled"
 automatically_update_urls_on_dev = true
 dev_store_url = "aisearch-dev.myshopify.com"
 
+[app_proxy]
+url = "https://ai-search-booster-backend.onrender.com"
+subpath = "apps/ai-search-booster"
+
 [pos]
 embedded = false
