@@ -126,7 +126,8 @@ app.get('/', (req, res) => {
       rollback: 'POST /api/rollback/:type/:id',
       history: 'GET /api/history/:shop',
       metafields: 'GET /api/metafields/:type/:id',
-      llmFeed: 'GET /llm-feed.xml?shop=your-store.myshopify.com'
+      llmFeed: 'GET /llm-feed.xml?shop=your-store.myshopify.com',
+      vector: 'GET /api/vector/:id?type=product&format=openai'
     }
   });
 });
@@ -1748,6 +1749,279 @@ const escapeXml = (unsafe) => {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+};
+
+// API: Vector endpoint for OpenAI embedding format
+app.get('/api/vector/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { type = 'product', format = 'openai' } = req.query;
+    const shop = req.query.shop || req.headers['x-shopify-shop-domain'];
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Missing shop parameter' });
+    }
+    
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
+    
+    let resourceData;
+    let vectorData;
+    
+    if (type === 'product') {
+      // Fetch product data
+      const productRes = await axios.get(
+        `https://${shop}/admin/api/2024-01/products/${id}.json`,
+        { headers: { 'X-Shopify-Access-Token': accessToken } }
+      );
+      
+      const product = productRes.data.product;
+      
+      // Fetch optimization metafields
+      const metafieldsRes = await axios.get(
+        `https://${shop}/admin/api/2024-01/products/${id}/metafields.json?namespace=asb`,
+        { headers: { 'X-Shopify-Access-Token': accessToken } }
+      );
+      
+      const metafields = metafieldsRes.data.metafields;
+      const optimizedContent = metafields.find(m => m.key === 'optimized_content')?.value;
+      const faqData = metafields.find(m => m.key === 'faq_data')?.value;
+      const isOptimized = metafields.find(m => m.key === 'enable_schema')?.value === 'true';
+      
+      resourceData = {
+        id: product.id,
+        type: 'product',
+        title: product.title,
+        description: optimizedContent || product.body_html || '',
+        vendor: product.vendor,
+        product_type: product.product_type,
+        handle: product.handle,
+        url: `https://${shop}/products/${product.handle}`,
+        price: product.variants?.[0]?.price || '0.00',
+        currency: 'USD', // Default, would need to fetch from shop settings
+        availability: product.variants?.[0]?.inventory_quantity > 0 ? 'in_stock' : 'out_of_stock',
+        tags: product.tags ? product.tags.split(',').map(t => t.trim()) : [],
+        images: product.images?.map(img => img.src) || [],
+        variants: product.variants?.map(v => ({
+          id: v.id,
+          title: v.title,
+          price: v.price,
+          sku: v.sku,
+          available: v.inventory_quantity > 0
+        })) || [],
+        faq: faqData ? JSON.parse(faqData) : null,
+        optimized: isOptimized,
+        updated_at: product.updated_at
+      };
+      
+    } else if (type === 'article') {
+      // Fetch article data
+      const articleRes = await axios.get(
+        `https://${shop}/admin/api/2024-01/articles/${id}.json`,
+        { headers: { 'X-Shopify-Access-Token': accessToken } }
+      );
+      
+      const article = articleRes.data.article;
+      
+      // Fetch optimization metafields
+      const metafieldsRes = await axios.get(
+        `https://${shop}/admin/api/2024-01/articles/${id}/metafields.json?namespace=asb`,
+        { headers: { 'X-Shopify-Access-Token': accessToken } }
+      );
+      
+      const metafields = metafieldsRes.data.metafields;
+      const optimizedContent = metafields.find(m => m.key === 'optimized_content')?.value;
+      const faqData = metafields.find(m => m.key === 'faq_data')?.value;
+      const isOptimized = metafields.find(m => m.key === 'enable_schema')?.value === 'true';
+      
+      resourceData = {
+        id: article.id,
+        type: 'article',
+        title: article.title,
+        description: optimizedContent || article.content || '',
+        author: article.author,
+        handle: article.handle,
+        url: `https://${shop}/blogs/${article.blog_id}/${article.handle}`,
+        tags: article.tags ? article.tags.split(',').map(t => t.trim()) : [],
+        summary: article.summary || '',
+        faq: faqData ? JSON.parse(faqData) : null,
+        optimized: isOptimized,
+        updated_at: article.updated_at
+      };
+      
+    } else {
+      return res.status(400).json({ error: 'Invalid type parameter. Must be "product" or "article"' });
+    }
+    
+    // Generate vector data based on format
+    if (format === 'openai') {
+      vectorData = generateOpenAIEmbeddingFormat(resourceData);
+    } else if (format === 'huggingface') {
+      vectorData = generateHuggingFaceFormat(resourceData);
+    } else if (format === 'claude') {
+      vectorData = generateClaudeFormat(resourceData);
+    } else {
+      vectorData = generateGenericFormat(resourceData);
+    }
+    
+    res.json({
+      success: true,
+      format,
+      data: vectorData,
+      metadata: {
+        shop,
+        resource_type: type,
+        resource_id: id,
+        optimized: resourceData.optimized,
+        generated_at: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('Vector endpoint error:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate vector data',
+      message: error.message 
+    });
+  }
+});
+
+// Helper functions for different vector formats
+const generateOpenAIEmbeddingFormat = (data) => {
+  const text = buildEmbeddingText(data);
+  
+  return {
+    object: 'embedding',
+    model: 'text-embedding-ada-002',
+    data: [{
+      object: 'embedding',
+      index: 0,
+      embedding: null, // Would be computed by OpenAI API
+      text: text
+    }],
+    usage: {
+      prompt_tokens: text.split(' ').length,
+      total_tokens: text.split(' ').length
+    },
+    metadata: {
+      id: data.id,
+      type: data.type,
+      title: data.title,
+      url: data.url,
+      optimized: data.optimized
+    }
+  };
+};
+
+const generateHuggingFaceFormat = (data) => {
+  const text = buildEmbeddingText(data);
+  
+  return {
+    inputs: text,
+    parameters: {
+      task: 'feature-extraction',
+      model: 'sentence-transformers/all-MiniLM-L6-v2'
+    },
+    metadata: {
+      id: data.id,
+      type: data.type,
+      title: data.title,
+      url: data.url,
+      optimized: data.optimized
+    }
+  };
+};
+
+const generateClaudeFormat = (data) => {
+  const text = buildEmbeddingText(data);
+  
+  return {
+    content: text,
+    format: 'claude-training',
+    metadata: {
+      id: data.id,
+      type: data.type,
+      title: data.title,
+      url: data.url,
+      optimized: data.optimized,
+      schema: data.type === 'product' ? 'product' : 'article'
+    },
+    structured_data: {
+      title: data.title,
+      description: data.description,
+      url: data.url,
+      ...(data.type === 'product' && {
+        price: data.price,
+        vendor: data.vendor,
+        product_type: data.product_type,
+        variants: data.variants
+      }),
+      ...(data.type === 'article' && {
+        author: data.author,
+        summary: data.summary
+      }),
+      faq: data.faq,
+      tags: data.tags
+    }
+  };
+};
+
+const generateGenericFormat = (data) => {
+  const text = buildEmbeddingText(data);
+  
+  return {
+    text: text,
+    metadata: data,
+    embedding_ready: true,
+    format: 'generic'
+  };
+};
+
+const buildEmbeddingText = (data) => {
+  let text = `${data.title}\n\n`;
+  
+  if (data.description) {
+    text += `${data.description}\n\n`;
+  }
+  
+  if (data.type === 'product') {
+    text += `Vendor: ${data.vendor}\n`;
+    text += `Product Type: ${data.product_type}\n`;
+    text += `Price: ${data.price}\n`;
+    text += `Availability: ${data.availability}\n`;
+    
+    if (data.variants && data.variants.length > 0) {
+      text += `Variants: ${data.variants.map(v => v.title).join(', ')}\n`;
+    }
+  } else if (data.type === 'article') {
+    text += `Author: ${data.author}\n`;
+    if (data.summary) {
+      text += `Summary: ${data.summary}\n`;
+    }
+  }
+  
+  if (data.tags && data.tags.length > 0) {
+    text += `Tags: ${data.tags.join(', ')}\n`;
+  }
+  
+  if (data.faq && data.faq.questions) {
+    text += `\nFrequently Asked Questions:\n`;
+    data.faq.questions.forEach(faq => {
+      text += `Q: ${faq.question}\nA: ${faq.answer}\n\n`;
+    });
+  }
+  
+  text += `\nURL: ${data.url}`;
+  
+  return text.trim();
 };
 
 // Health check
