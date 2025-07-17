@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
 
@@ -29,9 +29,28 @@ const Dashboard = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
   const [testResults, setTestResults] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [optimizationProgress, setOptimizationProgress] = useState(null);
 
   // Always use relative paths - AuthContext will convert to absolute backend URLs
   const API_BASE = '';
+
+  // Notification system
+  const addNotification = (message, type = 'info', duration = 5000) => {
+    const id = Date.now().toString();
+    const notification = { id, message, type, timestamp: new Date() };
+    setNotifications(prev => [...prev, notification]);
+    
+    if (duration > 0) {
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+      }, duration);
+    }
+  };
+
+  const removeNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   useEffect(() => {
     try {
@@ -300,11 +319,14 @@ const Dashboard = () => {
 
   const optimizeProducts = async () => {
     if (selectedProducts.length === 0) {
-      alert('Please select products to optimize');
+      addNotification('Please select products to optimize', 'warning');
       return;
     }
     
     setOptimizing(true);
+    setOptimizationProgress({ type: 'products', current: 0, total: selectedProducts.length });
+    addNotification(`Starting optimization of ${selectedProducts.length} products...`, 'info');
+    
     try {
       const response = await authFetch(`${API_BASE}/api/optimize/products?shop=${shop}`, {
         method: 'POST',
@@ -320,25 +342,30 @@ const Dashboard = () => {
         })
       });
       const data = await response.json();
-      alert(`Successfully optimized ${data.results.filter(r => r.status === 'success').length} products!`);
+      const successCount = data.results.filter(r => r.status === 'success').length;
+      addNotification(`Successfully optimized ${successCount} products!`, 'success');
       fetchStatus(shop);
       fetchHistory(shop);
       fetchUsage(shop);
       setSelectedProducts([]);
     } catch (error) {
-      alert('Failed to optimize products');
+      addNotification('Failed to optimize products. Please try again.', 'error');
     } finally {
       setOptimizing(false);
+      setOptimizationProgress(null);
     }
   };
 
   const optimizeBlogs = async () => {
     if (selectedBlogs.length === 0) {
-      alert('Please select blogs to optimize');
+      addNotification('Please select blogs to optimize', 'warning');
       return;
     }
     
     setOptimizing(true);
+    setOptimizationProgress({ type: 'blogs', current: 0, total: selectedBlogs.length });
+    addNotification(`Starting optimization of ${selectedBlogs.length} blogs...`, 'info');
+    
     try {
       const response = await authFetch(`${API_BASE}/api/optimize/blogs?shop=${shop}`, {
         method: 'POST',
@@ -354,14 +381,15 @@ const Dashboard = () => {
         })
       });
       const data = await response.json();
-      alert('Blogs optimized successfully!');
+      addNotification('Blogs optimized successfully!', 'success');
       fetchHistory(shop);
       fetchUsage(shop);
       setSelectedBlogs([]);
     } catch (error) {
-      alert('Failed to optimize blogs');
+      addNotification('Failed to optimize blogs. Please try again.', 'error');
     } finally {
       setOptimizing(false);
+      setOptimizationProgress(null);
     }
   };
 
@@ -390,7 +418,30 @@ const Dashboard = () => {
       const data = await response.json();
       setPreview(data);
     } catch (error) {
-      alert('Failed to generate preview');
+      addNotification('Failed to generate preview. Please try again.', 'error');
+    }
+  };
+
+  const previewBlogOptimization = async (blog) => {
+    try {
+      const response = await authFetch(`${API_BASE}/api/optimize/preview?shop=${shop}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shop,
+          content: blog,
+          type: 'blog',
+          settings: {
+            targetLLM: settings.targetLLM,
+            keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
+            tone: settings.tone
+          }
+        })
+      });
+      const data = await response.json();
+      setPreview(data);
+    } catch (error) {
+      addNotification('Failed to generate blog preview. Please try again.', 'error');
     }
   };
 
@@ -408,12 +459,12 @@ const Dashboard = () => {
         body: JSON.stringify({ shop, version })
       });
       const data = await response.json();
-      alert(data.message);
+      addNotification(data.message, 'success');
       fetchStatus(shop);
       fetchHistory(shop);
       fetchUsage(shop);
     } catch (error) {
-      alert('Failed to rollback');
+      addNotification('Failed to rollback. Please try again.', 'error');
     }
   };
 
@@ -625,6 +676,79 @@ const Dashboard = () => {
           </div>
         </div>
       </header>
+
+      {/* Notifications */}
+      {notifications.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`p-4 rounded-lg shadow-lg border-l-4 ${
+                notification.type === 'success' ? 'bg-green-50 border-green-400' :
+                notification.type === 'error' ? 'bg-red-50 border-red-400' :
+                notification.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
+                'bg-blue-50 border-blue-400'
+              }`}
+            >
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {notification.type === 'success' && <CheckCircle className="w-5 h-5 text-green-400" />}
+                  {notification.type === 'error' && <AlertCircle className="w-5 h-5 text-red-400" />}
+                  {notification.type === 'warning' && <AlertCircle className="w-5 h-5 text-yellow-400" />}
+                  {notification.type === 'info' && <Info className="w-5 h-5 text-blue-400" />}
+                </div>
+                <div className="ml-3 flex-1">
+                  <p className={`text-sm font-medium ${
+                    notification.type === 'success' ? 'text-green-800' :
+                    notification.type === 'error' ? 'text-red-800' :
+                    notification.type === 'warning' ? 'text-yellow-800' :
+                    'text-blue-800'
+                  }`}>
+                    {notification.message}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0">
+                  <button
+                    onClick={() => removeNotification(notification.id)}
+                    className={`rounded-md inline-flex text-gray-400 hover:text-gray-600 focus:outline-none ${
+                      notification.type === 'success' ? 'hover:text-green-600' :
+                      notification.type === 'error' ? 'hover:text-red-600' :
+                      notification.type === 'warning' ? 'hover:text-yellow-600' :
+                      'hover:text-blue-600'
+                    }`}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Progress Bar for Optimization */}
+      {optimizationProgress && (
+        <div className="bg-white border-b shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center space-x-4">
+              <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  Optimizing {optimizationProgress.type}... ({optimizationProgress.current}/{optimizationProgress.total})
+                </p>
+                <div className="mt-2 bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${(optimizationProgress.current / optimizationProgress.total) * 100}%` 
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings Panel */}
       {showSettings && (
@@ -892,6 +1016,16 @@ const Dashboard = () => {
                               Created: {new Date(blog.created_at).toLocaleDateString()}
                             </p>
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              previewBlogOptimization(blog);
+                            }}
+                            className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors flex items-center space-x-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span>Preview</span>
+                          </button>
                         </div>
                       </div>
                     ))}
