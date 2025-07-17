@@ -4,6 +4,7 @@ import axios from 'axios';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import { initCitationJobs } from './jobs/citationScheduler.js';
 
 dotenv.config();
 
@@ -2362,6 +2363,9 @@ app.listen(PORT, () => {
   console.log(`- Anthropic API: ${ANTHROPIC_API_KEY ? '✓' : '✗'}`);
   console.log(`- Versioned Optimization: ${VERSIONED_OPTIMIZATION ? '✓' : '✗'}`);
   console.log('- GDPR Compliance webhooks: ✓');
+  
+  // Initialize citation monitoring jobs
+  initCitationJobs();
 });
 
 export default app;

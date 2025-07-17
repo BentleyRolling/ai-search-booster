@@ -1,0 +1,53 @@
+name: Citation Monitoring Health Check
+
+on:
+  schedule:
+    # Run every 6 hours to check citation monitoring health
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+
+jobs:
+  citation-health-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check Citation Monitoring Health
+        run: |
+          echo "🔍 Checking citation monitoring health..."
+          
+          # Health check endpoint
+          HEALTH_URL="https://ai-search-booster-backend.onrender.com/health"
+          
+          # Check if server is healthy
+          if curl -f "$HEALTH_URL" > /dev/null 2>&1; then
+            echo "✅ Server is healthy"
+          else
+            echo "❌ Server health check failed"
+            exit 1
+          fi
+          
+          echo "📊 Citation monitoring health check completed"
+      
+      - name: Log Health Check
+        run: |
+          echo "Health check completed at $(date)"
+          echo "Next scheduled run: $(date -d '+6 hours')"
+
+  citation-metrics:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Fetch Citation Metrics
+        run: |
+          echo "📈 Fetching citation monitoring metrics..."
+          
+          # This would connect to monitoring endpoints in production
+          # For now, we log the monitoring check
+          echo "Citation monitoring metrics:"
+          echo "- Active monitoring jobs: TBD"
+          echo "- Citations found today: TBD"
+          echo "- System uptime: TBD"
+          
+          echo "📊 Citation metrics check completed"
