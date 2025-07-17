@@ -466,23 +466,114 @@ const Dashboard = () => {
   const rollback = async (type, id, version = null) => {
     const message = version 
       ? `Roll back to version ${version}?` 
-      : 'Remove all optimizations and restore original content?';
+      : 'Remove all optimizations and restore original content?\n\nThis will:\n• Delete all draft and published optimizations\n• Restore the original content\n• Remove all AI-generated FAQs\n• Disable LLM schema output\n\nThis action cannot be undone.';
     
     if (!confirm(message)) return;
     
     try {
+      setOptimizing(true);
       const response = await authFetch(`${API_BASE}/api/rollback/${type}/${id}?shop=${shop}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ shop, version })
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       addNotification(data.message, 'success');
+      
+      // Update the product/blog status to reflect the rollback
+      if (type === 'product') {
+        setProducts(prev => prev.map(p => 
+          p.id.toString() === id.toString() ? { ...p, optimized: false } : p
+        ));
+      } else if (type === 'blog') {
+        setBlogs(prev => prev.map(b => 
+          b.id.toString() === id.toString() ? { ...b, optimized: false } : b
+        ));
+      }
+      
+      // Refresh data
       fetchStatus(shop);
       fetchHistory(shop);
       fetchUsage(shop);
     } catch (error) {
+      console.error('Rollback error:', error);
       addNotification('Failed to rollback. Please try again.', 'error');
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
+  const rollbackAllOptimizations = async (type) => {
+    const itemsToRollback = type === 'product' 
+      ? products.filter(p => p.optimized)
+      : blogs.filter(b => b.optimized);
+    
+    if (itemsToRollback.length === 0) {
+      addNotification('No optimized items to rollback', 'info');
+      return;
+    }
+    
+    const message = `Rollback ALL ${itemsToRollback.length} optimized ${type}s?\n\nThis will:\n• Delete all draft and published optimizations\n• Restore original content for all items\n• Remove all AI-generated FAQs\n• Disable LLM schema output\n\nThis action cannot be undone.`;
+    
+    if (!confirm(message)) return;
+    
+    try {
+      setOptimizing(true);
+      const results = [];
+      
+      for (const item of itemsToRollback) {
+        try {
+          const response = await authFetch(`${API_BASE}/api/rollback/${type}/${item.id}?shop=${shop}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shop })
+          });
+          
+          if (response.ok) {
+            results.push({ id: item.id, status: 'success' });
+            
+            // Update local state
+            if (type === 'product') {
+              setProducts(prev => prev.map(p => 
+                p.id === item.id ? { ...p, optimized: false } : p
+              ));
+            } else {
+              setBlogs(prev => prev.map(b => 
+                b.id === item.id ? { ...b, optimized: false } : b
+              ));
+            }
+          } else {
+            results.push({ id: item.id, status: 'error' });
+          }
+        } catch (error) {
+          results.push({ id: item.id, status: 'error' });
+        }
+      }
+      
+      const successCount = results.filter(r => r.status === 'success').length;
+      const errorCount = results.filter(r => r.status === 'error').length;
+      
+      if (successCount > 0) {
+        addNotification(`Successfully rolled back ${successCount} ${type}s`, 'success');
+      }
+      if (errorCount > 0) {
+        addNotification(`Failed to rollback ${errorCount} ${type}s`, 'error');
+      }
+      
+      // Refresh data
+      fetchStatus(shop);
+      fetchHistory(shop);
+      fetchUsage(shop);
+    } catch (error) {
+      console.error('Rollback all error:', error);
+      addNotification('Failed to rollback optimizations. Please try again.', 'error');
+    } finally {
+      setOptimizing(false);
     }
   };
 
@@ -971,6 +1062,15 @@ const Dashboard = () => {
                         </>
                       )}
                     </button>
+                    <button
+                      onClick={() => rollbackAllOptimizations('product')}
+                      disabled={optimizing || !products.some(p => p.optimized)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      title="Rollback all product optimizations"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span>Rollback All</span>
+                    </button>
                   </div>
                 </div>
                 
@@ -1002,6 +1102,24 @@ const Dashboard = () => {
                               <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
                                 {product.product_type}
                               </span>
+                            )}
+                            {product.optimized && (
+                              <div className="mt-2 flex items-center space-x-2">
+                                <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                  ✓ Optimized
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    rollback('product', product.id);
+                                  }}
+                                  className="text-red-600 hover:text-red-800 text-xs flex items-center space-x-1"
+                                  title="Rollback to original content"
+                                >
+                                  <RotateCcw className="w-3 h-3" />
+                                  <span>Rollback</span>
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>

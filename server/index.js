@@ -1156,67 +1156,83 @@ app.post('/api/rollback/:type/:id', async (req, res) => {
     
     const { accessToken } = shopInfo;
     
+    const endpoint = type === 'product' 
+      ? `products/${id}/metafields`
+      : `articles/${id}/metafields`;
+    
+    // Get all metafields for this resource
+    const metafieldsResponse = await axios.get(
+      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=asb`,
+      {
+        headers: { 'X-Shopify-Access-Token': accessToken }
+      }
+    );
+    
+    const metafields = metafieldsResponse.data.metafields;
+    const originalBackup = metafields.find(m => m.key === 'original_backup');
+    
+    if (!originalBackup) {
+      return res.status(404).json({ error: 'No original backup found for this resource' });
+    }
+    
+    const originalData = JSON.parse(originalBackup.value);
+    
+    // Restore original content (if applicable)
     if (type === 'product') {
-      // Get original backup from metafields
-      const metafieldsResponse = await axios.get(
-        `https://${shop}/admin/api/2024-01/products/${id}/metafields.json?namespace=ai_search_booster&key=original_backup`,
+      // For products, we can restore the actual product content
+      const updateData = {
+        product: {
+          id: parseInt(id),
+          title: originalData.title,
+          body_html: originalData.description
+        }
+      };
+      
+      await axios.put(
+        `https://${shop}/admin/api/2024-01/products/${id}.json`,
+        updateData,
         {
           headers: { 'X-Shopify-Access-Token': accessToken }
         }
       );
-      
-      if (metafieldsResponse.data.metafields.length > 0) {
-        const originalData = JSON.parse(metafieldsResponse.data.metafields[0].value);
-        
-        // Restore original product content
-        const updateData = {
-          product: {
-            id: parseInt(id),
-            title: originalData.title,
-            body_html: originalData.body_html,
-            vendor: originalData.vendor,
-            product_type: originalData.product_type
-          }
-        };
-        
-        await axios.put(
-          `https://${shop}/admin/api/2024-01/products/${id}.json`,
-          updateData,
-          {
-            headers: { 'X-Shopify-Access-Token': accessToken }
-          }
-        );
-        
-        // Remove optimization metadata
-        const optimizationMetafields = await axios.get(
-          `https://${shop}/admin/api/2024-01/products/${id}/metafields.json?namespace=ai_search_booster&key=optimization_data`,
-          {
-            headers: { 'X-Shopify-Access-Token': accessToken }
-          }
-        );
-        
-        for (const metafield of optimizationMetafields.data.metafields) {
+    }
+    
+    // Remove all optimization metafields (both draft and live)
+    const optimizationKeys = [
+      'optimized_content',
+      'optimized_content_draft',
+      'faq_data',
+      'faq_data_draft',
+      'optimization_settings',
+      'optimization_settings_draft',
+      'enable_schema',
+      'published_timestamp',
+      'draft_timestamp'
+    ];
+    
+    for (const metafield of metafields) {
+      if (optimizationKeys.includes(metafield.key)) {
+        try {
           await axios.delete(
             `https://${shop}/admin/api/2024-01/metafields/${metafield.id}.json`,
             {
               headers: { 'X-Shopify-Access-Token': accessToken }
             }
           );
+        } catch (error) {
+          console.error(`Error deleting metafield ${metafield.key}:`, error);
         }
-        
-        res.json({
-          message: `Successfully rolled back product ${id} to original version`,
-          type,
-          id,
-          version: 'original',
-          restoredData: originalData
-        });
-      } else {
-        res.status(404).json({ error: 'No original backup found for this product' });
       }
-    } else {
-      res.status(400).json({ error: 'Rollback for articles not implemented yet' });
     }
+    
+    res.json({
+      message: `Successfully rolled back ${type} ${id} to original version`,
+      type,
+      id,
+      version: 'original',
+      restoredData: originalData,
+      rollbackTimestamp: new Date().toISOString()
+    });
   } catch (error) {
     console.error('Rollback error:', error);
     res.status(500).json({ error: 'Failed to rollback: ' + error.message });
