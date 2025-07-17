@@ -1453,6 +1453,15 @@ const Dashboard = () => {
                         </>
                       )}
                     </button>
+                    <button
+                      onClick={() => rollbackAllOptimizations('blog')}
+                      disabled={optimizing || !blogs.some(b => b.optimized)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      title="Rollback all blog optimizations"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span>Rollback All</span>
+                    </button>
                   </div>
                 </div>
                 
