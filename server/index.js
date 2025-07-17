@@ -10,16 +10,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - Enhanced CORS for Shopify embedded apps
+// Middleware - Permissive CORS for embedded iframe (TEMPORARY until proxy registered)
 const corsOptions = {
-  origin: [
-    'https://ai-search-booster-frontend.onrender.com',
-    'https://aisearch-dev.myshopify.com',
-    /\.myshopify\.com$/,
-    /\.shopify\.com$/,
-    'http://localhost:3000',
-    'http://localhost:3001'
-  ],
+  origin: (origin, callback) => {
+    console.log('[ASB-CORS] Origin check:', origin);
+    // Allow all origins for now - will revert to restricted list once proxy works
+    callback(null, true);
+  },
   credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
@@ -28,10 +25,14 @@ const corsOptions = {
     'X-Shopify-Shop-Domain',
     'X-Requested-With',
     'Accept',
-    'Origin'
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
   ],
   exposedHeaders: ['Content-Length', 'Date'],
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  // Chrome 115+ private network access
+  preflightContinue: false
 };
 
 // Add CORS debugging
@@ -43,6 +44,8 @@ app.use((req, res, next) => {
 });
 
 app.use(cors(corsOptions));
+// Explicit OPTIONS handler for preflight requests
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 
 // Store for shop data (in production, use a database)

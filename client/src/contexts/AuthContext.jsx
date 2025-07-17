@@ -65,12 +65,18 @@ export const AuthProvider = ({ children }) => {
         console.log('[ASB-DEBUG] AuthProvider: Final URL for request:', finalUrl);
         
         try {
-          // For direct backend calls, use CORS mode with timeout
-          const fetchOptions = finalUrl.startsWith('https://') ? 
-            { ...options, mode: 'cors', credentials: 'omit' } : 
-            options;
+          // For direct backend calls, use simple CORS mode (TEMPORARY until proxy registered)
+          const fetchOptions = finalUrl.startsWith('https://') ? {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
+            headers: {
+              'Accept': 'application/json',
+              'X-Shopify-Shop-Domain': shop || 'aisearch-dev.myshopify.com'
+            }
+          } : options;
             
-          console.log('[ASB-DEBUG] AuthProvider: Making fetch request with options:', fetchOptions);
+          console.log('[ASB-DEBUG] AuthProvider: Making SIMPLE fetch with options:', fetchOptions);
           
           // Add timeout for hanging requests
           const timeoutPromise = new Promise((_, reject) => {
