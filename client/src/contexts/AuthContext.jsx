@@ -24,14 +24,42 @@ export const AuthProvider = ({ children }) => {
       
       const fetch = authenticatedFetch(app);
       
-      // Wrap the fetch to add logging
+      // Wrap the fetch to add logging and handle URL routing
       const wrappedFetch = async (url, options = {}) => {
         console.log('[ASB-DEBUG] AuthProvider: wrappedFetch called with URL:', url);
+        console.log('[ASB-DEBUG] AuthProvider: Current location:', window.location.href);
+        console.log('[ASB-DEBUG] AuthProvider: Environment mode:', import.meta.env.MODE);
         console.log('[ASB-DEBUG] AuthProvider: wrappedFetch options:', options);
         
+        // Determine the correct API base URL
+        const isDevelopment = import.meta.env.MODE === 'development' || 
+                             window.location.hostname === 'localhost' || 
+                             window.location.hostname === '127.0.0.1';
+        
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://ai-search-booster-backend.onrender.com';
+        
+        console.log('[ASB-DEBUG] AuthProvider: isDevelopment:', isDevelopment);
+        console.log('[ASB-DEBUG] AuthProvider: BACKEND_URL:', BACKEND_URL);
+        
+        let finalUrl = url;
+        
+        // If it's a relative URL starting with /api, convert to absolute backend URL
+        if (url.startsWith('/api') || (url.startsWith('api') && !url.includes('://'))) {
+          finalUrl = `${BACKEND_URL}${url.startsWith('/') ? url : '/' + url}`;
+          console.log('[ASB-DEBUG] AuthProvider: Converted relative URL to absolute:', finalUrl);
+        } else if (url.startsWith('http') && !url.includes(BACKEND_URL)) {
+          // If it's an absolute URL but not to our backend, it might be wrong
+          console.warn('[ASB-DEBUG] AuthProvider: Unexpected absolute URL:', url);
+        }
+        
+        console.log('[ASB-DEBUG] AuthProvider: Final URL for request:', finalUrl);
+        
         try {
-          const result = await fetch(url, options);
+          const result = await fetch(finalUrl, options);
           console.log('[ASB-DEBUG] AuthProvider: wrappedFetch result:', result);
+          console.log('[ASB-DEBUG] AuthProvider: Response URL:', result.url);
+          console.log('[ASB-DEBUG] AuthProvider: Response status:', result.status);
+          console.log('[ASB-DEBUG] AuthProvider: Response headers:', Object.fromEntries(result.headers.entries()));
           return result;
         } catch (error) {
           console.error('[ASB-DEBUG] AuthProvider: wrappedFetch error:', error);

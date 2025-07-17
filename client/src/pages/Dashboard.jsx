@@ -27,10 +27,8 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('products');
   const [testResults, setTestResults] = useState(null);
 
-  // Use relative paths for Shopify app proxy in production, absolute URLs for local dev
-  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? (import.meta.env.VITE_BACKEND_URL || 'https://ai-search-booster-backend.onrender.com')
-    : ''; // Relative paths for production (Shopify app proxy)
+  // Always use relative paths - AuthContext will convert to absolute backend URLs
+  const API_BASE = '';
 
   useEffect(() => {
     // Get shop from URL params
@@ -210,11 +208,12 @@ const Dashboard = () => {
 
   // Test function to verify app proxy routing
   const testProxyRouting = async () => {
-    console.log('\n=== TESTING APP PROXY ROUTING ===');
-    console.log('1. Current environment detection:');
+    console.log('\n=== TESTING API ROUTING ===');
+    console.log('1. Environment detection:');
     console.log('   - hostname:', window.location.hostname);
     console.log('   - API_BASE:', API_BASE);
-    console.log('   - Using relative paths?', API_BASE === '');
+    console.log('   - import.meta.env.MODE:', import.meta.env.MODE);
+    console.log('   - import.meta.env.VITE_BACKEND_URL:', import.meta.env.VITE_BACKEND_URL);
     
     if (!isReady || !authFetch) {
       console.log('⚠️ Cannot test: Auth not ready yet');
@@ -223,14 +222,15 @@ const Dashboard = () => {
     
     const testUrl = `${API_BASE}/api/products?shop=${shop}`;
     console.log('2. Testing API call:');
-    console.log('   - URL:', testUrl);
-    console.log('   - Expected in Network tab:', API_BASE === '' ? '/apps/ai-search-booster/api/products' : testUrl);
+    console.log('   - Relative URL passed to authFetch:', testUrl);
+    console.log('   - Should be converted by AuthContext to backend URL');
     
     try {
       console.log('3. Making authenticated request...');
       const response = await authFetch(testUrl);
       console.log('4. Response received:');
       console.log('   - Status:', response.status);
+      console.log('   - Response URL (where request actually went):', response.url);
       console.log('   - Headers:', Object.fromEntries(response.headers.entries()));
       
       if (response.ok) {
@@ -238,8 +238,16 @@ const Dashboard = () => {
         console.log('5. ✅ SUCCESS - API call worked!');
         console.log('   - Data received:', data);
         console.log('   - Products count:', data.products?.length || 0);
+        
+        // Update products immediately to test the fix
+        if (data.products) {
+          setProducts(data.products);
+          console.log('   - Updated products in state!');
+        }
       } else {
         console.log('5. ❌ FAILED - Response not OK');
+        const text = await response.text();
+        console.log('   - Response body:', text);
       }
     } catch (error) {
       console.log('5. ❌ ERROR - Request failed:', error);
