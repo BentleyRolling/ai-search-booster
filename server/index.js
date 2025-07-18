@@ -1504,7 +1504,7 @@ app.get('/api/products', async (req, res) => {
     const { accessToken } = shopInfo;
     
     const response = await axios.get(
-      `https://${shop}/admin/api/2024-01/products.json?limit=${limit}&page=${page}&fields=id,title,handle,status,created_at,updated_at`,
+      `https://${shop}/admin/api/2024-01/products.json?limit=${limit}&fields=id,title,handle,status,created_at,updated_at`,
       {
         headers: { 'X-Shopify-Access-Token': accessToken }
       }
