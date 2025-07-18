@@ -186,6 +186,7 @@ app.get('/auth', (req, res) => {
     return res.status(400).json({ error: 'Missing shop parameter' });
   }
   
+  console.log('[OAUTH] Starting auth flow for shop:', shop);
   const nonce = crypto.randomBytes(16).toString('hex');
   shopData.set(shop, { nonce });
   
@@ -195,6 +196,7 @@ app.get('/auth', (req, res) => {
     `redirect_uri=${REDIRECT_URI}&` +
     `state=${nonce}`;
   
+  console.log('[OAUTH] Redirecting to:', authUrl);
   res.redirect(authUrl);
 });
 
@@ -1528,7 +1530,14 @@ app.get('/api/products', async (req, res) => {
     });
   } catch (error) {
     console.error('Products error:', error);
-    res.status(500).json({ error: 'Failed to fetch products: ' + error.message });
+    console.error('Error response data:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+    console.error('Error headers:', error.response?.headers);
+    res.status(500).json({ 
+      error: 'Failed to fetch products: ' + error.message,
+      shopifyError: error.response?.data,
+      status: error.response?.status
+    });
   }
 });
 
