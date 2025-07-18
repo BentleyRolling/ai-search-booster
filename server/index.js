@@ -487,7 +487,16 @@ Return ONLY a valid JSON object with keys: optimizedTitle, optimizedDescription,
 Make sure the content is engaging, keyword-rich, and optimized for search engines and AI understanding.`;
   
   try {
+    console.log('[AI-OPTIMIZATION] Starting optimization:', {
+      type,
+      hasOpenAI: !!OPENAI_API_KEY,
+      hasAnthropic: !!ANTHROPIC_API_KEY,
+      mockMode: MOCK_MODE,
+      contentTitle: content.title || content.name
+    });
+    
     if (OPENAI_API_KEY) {
+      console.log('[AI-OPTIMIZATION] Using OpenAI API');
       const response = await axios.post('https://api.openai.com/v1/chat/completions', {
         model: 'gpt-3.5-turbo',
         messages: [{ role: 'user', content: prompt }],
@@ -501,6 +510,7 @@ Make sure the content is engaging, keyword-rich, and optimized for search engine
       });
       
       const aiResponse = response.data.choices[0].message.content;
+      console.log('[AI-OPTIMIZATION] OpenAI response received:', aiResponse.substring(0, 200) + '...');
       return JSON.parse(aiResponse);
     } else if (ANTHROPIC_API_KEY) {
       const response = await axios.post('https://api.anthropic.com/v1/messages', {
@@ -519,6 +529,7 @@ Make sure the content is engaging, keyword-rich, and optimized for search engine
       return JSON.parse(aiResponse);
     } else {
       // Fallback when no AI API keys are available
+      console.log('[AI-OPTIMIZATION] No AI API keys available, using fallback');
       return {
         optimizedTitle: content.title || content.name,
         optimizedDescription: content.description || content.body_html || content.content || 'A premium product from our collection.',
@@ -539,7 +550,8 @@ Make sure the content is engaging, keyword-rich, and optimized for search engine
       };
     }
   } catch (error) {
-    console.error('AI optimization error:', error);
+    console.error('[AI-OPTIMIZATION] AI optimization error:', error);
+    console.error('[AI-OPTIMIZATION] Error details:', error.response?.data);
     // Return fallback on error
     return {
       optimizedTitle: content.title || content.name,
