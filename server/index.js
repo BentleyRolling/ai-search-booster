@@ -1416,9 +1416,9 @@ app.get('/api/status', simpleVerifyShop, async (req, res) => {
 });
 
 // API: Get products
-app.get('/api/products', async (req, res) => {
+app.get('/api/products', simpleVerifyShop, async (req, res) => {
   try {
-    const shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
+    const { shop } = req;
     const { limit = 50, page = 1 } = req.query;
     
     // Log proxy detection for debugging
