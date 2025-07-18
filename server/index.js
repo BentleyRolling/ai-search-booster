@@ -1416,9 +1416,25 @@ app.get('/api/status', simpleVerifyShop, async (req, res) => {
 });
 
 // API: Get products
-app.get('/api/products', simpleVerifyShop, async (req, res) => {
+app.get('/api/products', async (req, res) => {
   try {
-    const { shop } = req;
+    // Extract shop from query, body, or session token
+    let shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
+    
+    // For embedded apps, check session token from Authorization header
+    const sessionToken = req.headers.authorization;
+    if (sessionToken && !shop) {
+      // Extract shop from session token if needed
+      shop = req.headers['x-shopify-shop-domain'];
+    }
+    
+    console.log('[PRODUCTS-API] Request details:', {
+      shop,
+      hasSessionToken: !!sessionToken,
+      userAgent: req.headers['user-agent']?.substring(0, 100),
+      origin: req.headers.origin
+    });
+    
     const { limit = 50, page = 1 } = req.query;
     
     // Log proxy detection for debugging
