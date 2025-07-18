@@ -1200,15 +1200,11 @@ app.get('/api/optimize/status/:type/:id', simpleVerifyShop, async (req, res) => 
 });
 
 // API: Rollback to original content
-app.post('/api/rollback/:type/:id', async (req, res) => {
+app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
   try {
     const { type, id } = req.params;
     const { version = 'original' } = req.body;
-    const shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
-    
-    if (!shop) {
-      return res.status(400).json({ error: 'Missing shop parameter' });
-    }
+    const { shop } = req;
     
     // Get shop info for access token
     const shopInfo = shopData.get(shop);
