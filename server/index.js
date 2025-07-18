@@ -1728,7 +1728,7 @@ app.get('/api/blogs', simpleVerifyShop, async (req, res) => {
     const { accessToken } = shopInfo;
     
     const response = await axios.get(
-      `https://${shop}/admin/api/2024-01/blogs.json?limit=${limit}&page=${page}&fields=id,title,handle,created_at,updated_at`,
+      `https://${shop}/admin/api/2024-01/blogs.json?limit=${limit}&fields=id,title,handle,created_at,updated_at`,
       {
         headers: { 'X-Shopify-Access-Token': accessToken }
       }
