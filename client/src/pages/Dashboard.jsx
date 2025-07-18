@@ -19,8 +19,10 @@ const Dashboard = () => {
   const [history, setHistory] = useState([]);
   const [products, setProducts] = useState([]);
   const [blogs, setBlogs] = useState([]);
+  const [pages, setPages] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedBlogs, setSelectedBlogs] = useState([]);
+  const [selectedPages, setSelectedPages] = useState([]);
   const [usage, setUsage] = useState(null);
   const [settings, setSettings] = useState({
     targetLLM: 'general',
@@ -100,6 +102,7 @@ const Dashboard = () => {
             fetchHistory(shopParam),
             fetchProducts(shopParam),
             fetchBlogs(shopParam),
+            fetchPages(shopParam),
             fetchUsage(shopParam)
           ]).then(() => {
             clearTimeout(loadingTimeout);
@@ -263,6 +266,22 @@ const Dashboard = () => {
     }
   };
 
+  const fetchPages = async (shopName) => {
+    try {
+      console.log('Dashboard: Fetching pages for shop:', shopName);
+      const response = await authFetch(`${API_BASE}/api/pages?shop=${shopName}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log('Dashboard: Pages data received:', data);
+      setPages(data.pages || []);
+    } catch (error) {
+      console.error('Failed to fetch pages:', error);
+      setPages([]);
+    }
+  };
+
   const fetchUsage = async (shopName) => {
     try {
       console.log('Dashboard: Fetching usage for shop:', shopName);
@@ -380,7 +399,10 @@ const Dashboard = () => {
       const successCount = data.results ? data.results.filter(r => r.status === 'success').length : 0;
       console.log('Success count:', successCount);
       addNotification(`Successfully optimized ${successCount} products!`, 'success');
+      
+      // Refresh all data to update status
       fetchStatus(shop);
+      fetchProducts(shop);
       fetchHistory(shop);
       fetchUsage(shop);
       setSelectedProducts([]);

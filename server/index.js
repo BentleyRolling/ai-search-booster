@@ -1091,6 +1091,157 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
   }
 });
 
+// API: Optimize pages
+app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (req, res) => {
+  try {
+    const { pageIds, settings } = req.body;
+    const { shop } = req;
+    
+    console.log(`[PAGES-OPTIMIZE] Starting optimization for shop: ${shop}, pages: ${pageIds}`);
+    
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
+    const results = [];
+    
+    // Process each page ID
+    for (const pageId of pageIds) {
+      try {
+        console.log(`[PAGES-OPTIMIZE] Processing page ${pageId}`);
+        
+        // Fetch page from Shopify API
+        const pageResponse = await axios.get(
+          `https://${shop}/admin/api/2024-01/pages/${pageId}.json`,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        const page = pageResponse.data.page;
+        console.log(`Found page: ${page.title}`);
+        
+        // Store original as backup if not already stored
+        const metafieldsResponse = await axios.get(
+          `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json?namespace=ai_search_booster&key=original_backup`,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        if (metafieldsResponse.data.metafields.length === 0) {
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'ai_search_booster',
+                key: 'original_backup',
+                value: JSON.stringify({
+                  title: page.title,
+                  body_html: page.body_html,
+                  handle: page.handle
+                }),
+                type: 'json'
+              }
+            },
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
+            }
+          );
+        }
+        
+        // Optimize content using AI
+        console.log(`[PAGES-OPTIMIZE] Starting AI optimization for page ${pageId}`);
+        const optimized = await optimizeContent(page, 'page', settings);
+        console.log(`[PAGES-OPTIMIZE] AI optimization completed for page ${pageId}`);
+        
+        // Update page with optimized content
+        const updateData = {
+          page: {
+            id: pageId
+          }
+        };
+        
+        // Only update if we have optimized content
+        if (optimized.optimizedTitle) {
+          updateData.page.title = optimized.optimizedTitle;
+        }
+        if (optimized.optimizedDescription) {
+          updateData.page.body_html = optimized.optimizedDescription;
+        }
+        
+        // Update page in Shopify
+        console.log(`[PAGES-OPTIMIZE] Updating page ${pageId} in Shopify`);
+        await axios.put(
+          `https://${shop}/admin/api/2024-01/pages/${pageId}.json`,
+          updateData,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        console.log(`[PAGES-OPTIMIZE] Page ${pageId} updated successfully`);
+        
+        // Store optimization metadata
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json`,
+          {
+            metafield: {
+              namespace: 'ai_search_booster',
+              key: 'optimization_data',
+              value: JSON.stringify({
+                optimized,
+                settings,
+                timestamp: new Date().toISOString()
+              }),
+              type: 'json'
+            }
+          },
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        results.push({
+          pageId,
+          status: 'success',
+          optimized,
+          originalTitle: page.title,
+          newTitle: optimized.optimizedTitle || page.title
+        });
+      } catch (error) {
+        console.error(`Error optimizing page ${pageId}:`, error.message);
+        console.error('Full error details:', error);
+        results.push({
+          pageId,
+          status: 'error',
+          error: error.message || 'Unknown error occurred'
+        });
+      }
+    }
+    
+    console.log(`Page optimization completed: ${results.filter(r => r.status === 'success').length} successful, ${results.filter(r => r.status === 'error').length} failed`);
+    
+    res.json({
+      shop,
+      results,
+      summary: {
+        total: results.length,
+        successful: results.filter(r => r.status === 'success').length,
+        failed: results.filter(r => r.status === 'error').length
+      }
+    });
+  } catch (error) {
+    console.error('Page optimization error:', error);
+    res.status(500).json({ error: 'Failed to optimize pages: ' + error.message });
+  }
+});
+
 // API: Optimize blogs
 app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (req, res) => {
   try {
@@ -1427,9 +1578,11 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
       });
     }
     
-    // Handle product rollback (existing logic)
+    // Handle product and page rollback (existing logic)
     const endpoint = type === 'product' 
       ? `products/${id}/metafields`
+      : type === 'page'
+      ? `pages/${id}/metafields`
       : `articles/${id}/metafields`;
     
     console.log(`[ROLLBACK] Getting metafields for ${type} ${id}`);
@@ -1465,6 +1618,24 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
       console.log(`Restoring product ${id} with data:`, updateData);
       await axios.put(
         `https://${shop}/admin/api/2024-01/products/${id}.json`,
+        updateData,
+        {
+          headers: { 'X-Shopify-Access-Token': accessToken }
+        }
+      );
+    } else if (type === 'page') {
+      // For pages, restore the original content
+      const updateData = {
+        page: {
+          id: parseInt(id),
+          title: originalData.title,
+          body_html: originalData.body_html
+        }
+      };
+      
+      console.log(`Restoring page ${id} with data:`, updateData);
+      await axios.put(
+        `https://${shop}/admin/api/2024-01/pages/${id}.json`,
         updateData,
         {
           headers: { 'X-Shopify-Access-Token': accessToken }
@@ -1850,6 +2021,97 @@ app.get('/api/products', async (req, res) => {
       shopifyError: error.response?.data,
       status: error.response?.status
     });
+  }
+});
+
+// API: Get pages
+app.get('/api/pages', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req;
+    const { limit = 50, page = 1 } = req.query;
+    
+    // Check if shop has valid access token from OAuth flow
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      console.log('No valid OAuth token, returning mock data for pages:', shop);
+      // Return mock data when no OAuth token
+      const pages = [
+        {
+          id: 1,
+          title: 'About Us',
+          handle: 'about',
+          body_html: '<h1>About Our Store</h1><p>We are a premium retailer...</p>',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          optimized: false
+        },
+        {
+          id: 2,
+          title: 'Shipping FAQ',
+          handle: 'shipping-faq',
+          body_html: '<h1>Shipping Information</h1><p>We ship worldwide...</p>',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          optimized: false
+        }
+      ];
+      
+      return res.json({
+        pages,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: pages.length
+        }
+      });
+    }
+    
+    // Fetch real pages from Shopify API
+    console.log('Fetching real pages from Shopify for shop:', shop);
+    const { accessToken } = shopInfo;
+    
+    const response = await axios.get(
+      `https://${shop}/admin/api/2024-01/pages.json?limit=${limit}&fields=id,title,handle,body_html,created_at,updated_at`,
+      {
+        headers: { 'X-Shopify-Access-Token': accessToken }
+      }
+    );
+    
+    // Check metafields for optimization status
+    const shopifyPages = await Promise.all(response.data.pages.map(async (page) => {
+      let optimized = false;
+      try {
+        const metafieldsRes = await axios.get(
+          `https://${shop}/admin/api/2024-01/pages/${page.id}/metafields.json?namespace=ai_search_booster`,
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+        optimized = metafieldsRes.data.metafields.some(m => m.key === 'optimization_data');
+      } catch (metaError) {
+        console.log(`Could not fetch metafields for page ${page.id}:`, metaError.message);
+      }
+      
+      return {
+        id: page.id,
+        title: page.title,
+        handle: page.handle,
+        body_html: page.body_html,
+        created_at: page.created_at,
+        updated_at: page.updated_at,
+        optimized
+      };
+    }));
+    
+    res.json({
+      pages: shopifyPages,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: shopifyPages.length
+      }
+    });
+  } catch (error) {
+    console.error('Pages error:', error);
+    res.status(500).json({ error: 'Failed to fetch pages' });
   }
 });
 
