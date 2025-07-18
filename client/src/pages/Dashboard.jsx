@@ -1481,7 +1481,7 @@ const Dashboard = () => {
                 {blogs.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No blogs found</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {blogs.map((blog) => (
                       <div
                         key={blog.id}
@@ -1492,7 +1492,7 @@ const Dashboard = () => {
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-start space-x-3">
                           <input
                             type="checkbox"
                             checked={selectedBlogs.includes(blog.id.toString())}
@@ -1504,6 +1504,59 @@ const Dashboard = () => {
                             <p className="text-sm text-gray-500 mt-1">
                               Created: {new Date(blog.created_at).toLocaleDateString()}
                             </p>
+                            {blog.articles && blog.articles.length > 0 && (
+                              <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                                {blog.articles.length} article{blog.articles.length !== 1 ? 's' : ''}
+                              </span>
+                            )}
+                            <div className="mt-2 flex items-center space-x-2 flex-wrap">
+                              {blog.optimized && (
+                                <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                  ✓ Optimized
+                                </span>
+                              )}
+                              
+                              {/* Draft Actions */}
+                              <div className="flex items-center space-x-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePreviewDraft('blog', blog.id);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-800 text-xs flex items-center space-x-1"
+                                  title="Preview draft content"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                  <span>Preview</span>
+                                </button>
+                                
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    publishDraft('blog', blog.id);
+                                  }}
+                                  className="text-green-600 hover:text-green-800 text-xs flex items-center space-x-1"
+                                  title="Publish draft optimization"
+                                >
+                                  <CheckCircle className="w-3 h-3" />
+                                  <span>Publish</span>
+                                </button>
+                                
+                                {blog.optimized && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      rollback('blog', blog.id);
+                                    }}
+                                    className="text-red-600 hover:text-red-800 text-xs flex items-center space-x-1"
+                                    title="Rollback to original content"
+                                  >
+                                    <RotateCcw className="w-3 h-3" />
+                                    <span>Rollback</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
