@@ -1223,7 +1223,7 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
     
     // Get all metafields for this resource
     const metafieldsResponse = await axios.get(
-      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=asb`,
+      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=ai_search_booster`,
       {
         headers: { 'X-Shopify-Access-Token': accessToken }
       }

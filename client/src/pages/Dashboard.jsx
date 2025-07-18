@@ -498,11 +498,7 @@ const Dashboard = () => {
   };
 
   const rollback = async (type, id, version = null) => {
-    const message = version 
-      ? `Roll back to version ${version}?` 
-      : 'Remove all optimizations and restore original content?\n\nThis will:\n• Delete all draft and published optimizations\n• Restore the original content\n• Remove all AI-generated FAQs\n• Disable LLM schema output\n\nThis action cannot be undone.';
-    
-    if (!confirm(message)) return;
+    addNotification('Processing rollback...', 'info');
     
     try {
       setOptimizing(true);
