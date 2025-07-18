@@ -457,8 +457,9 @@ const Dashboard = () => {
         addNotification('No blogs were optimized. Please check your selection.', 'warning');
       }
       
-      // Refresh status and clear selection
+      // Refresh status, blogs data, and clear selection
       fetchStatus(shop);
+      fetchBlogs(shop);
       setSelectedBlogs([]);
     } catch (error) {
       console.error('Blog optimization error:', error);
@@ -1490,14 +1491,14 @@ const Dashboard = () => {
                               </div>
                               
                               {/* Action Buttons */}
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-1 flex-wrap gap-1">
                                 {product.hasDraft && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handlePreviewDraft('product', product.id);
                                     }}
-                                    className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
                                     title="Preview draft content"
                                   >
                                     <Eye className="w-3 h-3" />
@@ -1511,7 +1512,7 @@ const Dashboard = () => {
                                       e.stopPropagation();
                                       publishDraft('product', product.id);
                                     }}
-                                    className="px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
                                     title="Publish draft optimization"
                                   >
                                     <CheckCircle className="w-3 h-3" />
@@ -1525,7 +1526,7 @@ const Dashboard = () => {
                                       e.stopPropagation();
                                       rollback('product', product.id);
                                     }}
-                                    className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
                                     title="Rollback to original content"
                                   >
                                     <RotateCcw className="w-3 h-3" />
@@ -1663,14 +1664,18 @@ const Dashboard = () => {
                               </div>
                               
                               {/* Action Buttons */}
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-1 flex-wrap gap-1">
                                 {blog.hasDraft && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handlePreviewDraft('blog', blog.id);
+                                      // Preview the first article with draft
+                                      const articleWithDraft = blog.articles?.find(a => a.hasDraft);
+                                      if (articleWithDraft) {
+                                        handlePreviewDraft('blog', articleWithDraft.id);
+                                      }
                                     }}
-                                    className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
                                     title="Preview draft content"
                                   >
                                     <Eye className="w-3 h-3" />
@@ -1682,10 +1687,22 @@ const Dashboard = () => {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      publishDraft('blog', blog.id);
+                                      // Publish all articles in this blog that have drafts
+                                      const articlesWithDrafts = blog.articles?.filter(a => a.hasDraft) || [];
+                                      if (articlesWithDrafts.length > 0) {
+                                        if (confirm(`Publish ${articlesWithDrafts.length} article drafts in this blog?\n\nThis will make the draft content live on your store.`)) {
+                                          Promise.all(articlesWithDrafts.map(a => publishDraft('blog', a.id)))
+                                            .then(() => {
+                                              addNotification(`Successfully published ${articlesWithDrafts.length} article drafts`, 'success');
+                                              fetchBlogs(shop);
+                                              fetchStatus(shop);
+                                            })
+                                            .catch(err => addNotification('Some articles failed to publish', 'error'));
+                                        }
+                                      }
                                     }}
-                                    className="px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
-                                    title="Publish draft optimization"
+                                    className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    title="Publish all draft articles in this blog"
                                   >
                                     <CheckCircle className="w-3 h-3" />
                                     <span>Publish</span>
@@ -1696,10 +1713,22 @@ const Dashboard = () => {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      rollback('blog', blog.id);
+                                      // Rollback all articles in this blog that are optimized
+                                      const optimizedArticles = blog.articles?.filter(a => a.optimized) || [];
+                                      if (optimizedArticles.length > 0) {
+                                        if (confirm(`Rollback ${optimizedArticles.length} optimized articles in this blog?\n\nThis will restore the original content.`)) {
+                                          Promise.all(optimizedArticles.map(a => rollback('blog', a.id)))
+                                            .then(() => {
+                                              addNotification(`Successfully rolled back ${optimizedArticles.length} articles`, 'success');
+                                              fetchBlogs(shop);
+                                              fetchStatus(shop);
+                                            })
+                                            .catch(err => addNotification('Some articles failed to rollback', 'error'));
+                                        }
+                                      }
                                     }}
-                                    className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
-                                    title="Rollback to original content"
+                                    className="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    title="Rollback all optimized articles in this blog"
                                   >
                                     <RotateCcw className="w-3 h-3" />
                                     <span>Rollback</span>
