@@ -393,34 +393,52 @@ const Dashboard = () => {
     addNotification(`Starting optimization of ${selectedProducts.length} products...`, 'info');
     
     try {
-      console.log('Making optimize request to:', `${API_BASE}/api/optimize/products?shop=${shop}`);
-      const response = await authFetch(`${API_BASE}/api/optimize/products?shop=${shop}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          shop,
-          productIds: selectedProducts,
-          settings: {
-            targetLLM: settings.targetLLM,
-            keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
-            tone: settings.tone
+      let successCount = 0;
+      let failedCount = 0;
+      
+      // Process each product individually to show real progress
+      for (let i = 0; i < selectedProducts.length; i++) {
+        const productId = selectedProducts[i];
+        setOptimizationProgress({ type: 'products', current: i, total: selectedProducts.length });
+        
+        try {
+          console.log(`Optimizing product ${i + 1}/${selectedProducts.length}: ${productId}`);
+          const response = await authFetch(`${API_BASE}/api/optimize/products?shop=${shop}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              shop,
+              productIds: [productId], // Send one product at a time
+              settings: {
+                targetLLM: settings.targetLLM,
+                keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
+                tone: settings.tone
+              }
+            })
+          });
+          
+          const data = await response.json();
+          if (data.results && data.results[0]?.status === 'success') {
+            successCount++;
+          } else {
+            failedCount++;
           }
-        })
-      });
-      console.log('Optimize response received:', response);
-      const data = await response.json();
-      console.log('Optimize response data:', data);
-      console.log('Results array:', data.results);
-      if (data.results) {
-        console.log('Individual results:');
-        data.results.forEach((result, index) => {
-          console.log(`Result ${index}:`, result);
-          console.log(`Status: "${result.status}", Type: ${typeof result.status}`);
-        });
+        } catch (itemError) {
+          console.error(`Failed to optimize product ${productId}:`, itemError);
+          failedCount++;
+        }
       }
-      const successCount = data.results ? data.results.filter(r => r.status === 'success').length : 0;
-      console.log('Success count:', successCount);
-      addNotification(`Successfully optimized ${successCount} products!`, 'success');
+      
+      // Update progress to show completion
+      setOptimizationProgress({ type: 'products', current: selectedProducts.length, total: selectedProducts.length });
+      
+      // Show final results
+      if (successCount > 0) {
+        addNotification(`Successfully optimized ${successCount} products!`, 'success');
+      }
+      if (failedCount > 0) {
+        addNotification(`${failedCount} products failed to optimize`, 'error');
+      }
       
       // Refresh all data to update status
       fetchStatus(shop);
@@ -433,7 +451,7 @@ const Dashboard = () => {
       addNotification('Failed to optimize products. Please try again.', 'error');
     } finally {
       setOptimizing(false);
-      setOptimizationProgress(null);
+      setTimeout(() => setOptimizationProgress(null), 1000); // Keep progress visible for a moment
     }
   };
 
@@ -448,35 +466,57 @@ const Dashboard = () => {
     addNotification(`Starting optimization of ${selectedBlogs.length} blogs...`, 'info');
     
     try {
-      const response = await authFetch(`${API_BASE}/api/optimize/blogs?shop=${shop}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          shop,
-          blogIds: selectedBlogs,
-          settings: {
-            targetLLM: settings.targetLLM,
-            keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
-            tone: settings.tone
-          }
-        })
-      });
+      let successCount = 0;
+      let failedCount = 0;
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Process each blog individually to show real progress
+      for (let i = 0; i < selectedBlogs.length; i++) {
+        const blogId = selectedBlogs[i];
+        setOptimizationProgress({ type: 'blogs', current: i, total: selectedBlogs.length });
+        
+        try {
+          console.log(`Optimizing blog ${i + 1}/${selectedBlogs.length}: ${blogId}`);
+          const response = await authFetch(`${API_BASE}/api/optimize/blogs?shop=${shop}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              shop,
+              blogIds: [blogId], // Send one blog at a time
+              settings: {
+                targetLLM: settings.targetLLM,
+                keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
+                tone: settings.tone
+              }
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          const blogSuccessCount = data.summary?.successful || 0;
+          
+          if (blogSuccessCount > 0) {
+            successCount += blogSuccessCount;
+          } else {
+            failedCount++;
+          }
+        } catch (itemError) {
+          console.error(`Failed to optimize blog ${blogId}:`, itemError);
+          failedCount++;
+        }
       }
       
-      const data = await response.json();
-      console.log('Blog optimization response:', data);
+      // Update progress to show completion
+      setOptimizationProgress({ type: 'blogs', current: selectedBlogs.length, total: selectedBlogs.length });
       
-      // Show success message with results
-      const successCount = data.summary?.successful || 0;
-      const totalCount = data.summary?.total || 0;
-      
+      // Show final results
       if (successCount > 0) {
-        addNotification(`Successfully optimized ${successCount} of ${totalCount} blog articles!`, 'success');
-      } else {
-        addNotification('No blogs were optimized. Please check your selection.', 'warning');
+        addNotification(`Successfully optimized ${successCount} blog articles!`, 'success');
+      }
+      if (failedCount > 0) {
+        addNotification(`${failedCount} blogs failed to optimize`, 'error');
       }
       
       // Refresh status, blogs data, and clear selection
@@ -488,7 +528,7 @@ const Dashboard = () => {
       addNotification('Failed to optimize blogs. Please try again.', 'error');
     } finally {
       setOptimizing(false);
-      setOptimizationProgress(null);
+      setTimeout(() => setOptimizationProgress(null), 1000); // Keep progress visible for a moment
     }
   };
 
@@ -683,12 +723,17 @@ const Dashboard = () => {
   };
 
   const publishDraft = async (type, id) => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       showConfirmation(
         'Publish Draft',
         'This will make the draft content live on your store. Are you sure?',
         async () => {
-          resolve(await performPublishDraft(type, id));
+          try {
+            const result = await performPublishDraft(type, id);
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
         }
       );
     });
