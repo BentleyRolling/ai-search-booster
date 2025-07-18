@@ -148,12 +148,19 @@ app.get('/', (req, res) => {
 
 // OAuth endpoints (keeping your working implementation)
 app.get('/auth/status', (req, res) => {
+  const shop = req.query.shop;
+  const shopInfo = shop ? shopData.get(shop) : null;
+  
   res.json({ 
     message: "Auth routes working!",
     apiKeyConfigured: !!SHOPIFY_API_KEY,
     secretConfigured: !!SHOPIFY_API_SECRET,
     openaiConfigured: !!OPENAI_API_KEY,
     anthropicConfigured: !!ANTHROPIC_API_KEY,
+    shop: shop || 'not provided',
+    shopAuthenticated: !!shopInfo,
+    hasAccessToken: !!(shopInfo && shopInfo.accessToken),
+    shopData: shopInfo ? { installedAt: shopInfo.installedAt, tokenLength: shopInfo.accessToken ? shopInfo.accessToken.length : 0 } : null,
     timestamp: new Date().toISOString()
   });
 });
