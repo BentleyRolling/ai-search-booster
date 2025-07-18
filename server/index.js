@@ -165,6 +165,20 @@ app.get('/auth/status', (req, res) => {
   });
 });
 
+// Debug endpoint to clear shop session
+app.get('/auth/clear', (req, res) => {
+  const shop = req.query.shop;
+  if (!shop) {
+    return res.status(400).json({ error: 'Missing shop parameter' });
+  }
+  
+  shopData.delete(shop);
+  res.json({ 
+    message: `Cleared session data for ${shop}`,
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.get('/auth', (req, res) => {
   const { shop } = req.query;
   
