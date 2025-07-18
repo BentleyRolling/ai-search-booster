@@ -36,6 +36,8 @@ const Dashboard = () => {
   const [draftContent, setDraftContent] = useState(new Map());
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [selectedDraft, setSelectedDraft] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
   
   // Citation monitoring hook
   const { 
@@ -415,12 +417,29 @@ const Dashboard = () => {
           }
         })
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
-      addNotification('Blogs optimized successfully!', 'success');
-      fetchHistory(shop);
-      fetchUsage(shop);
+      console.log('Blog optimization response:', data);
+      
+      // Show success message with results
+      const successCount = data.summary?.successful || 0;
+      const totalCount = data.summary?.total || 0;
+      
+      if (successCount > 0) {
+        addNotification(`Successfully optimized ${successCount} of ${totalCount} blog articles!`, 'success');
+      } else {
+        addNotification('No blogs were optimized. Please check your selection.', 'warning');
+      }
+      
+      // Refresh status and clear selection
+      fetchStatus(shop);
       setSelectedBlogs([]);
     } catch (error) {
+      console.error('Blog optimization error:', error);
       addNotification('Failed to optimize blogs. Please try again.', 'error');
     } finally {
       setOptimizing(false);
@@ -498,44 +517,89 @@ const Dashboard = () => {
   };
 
   const rollback = async (type, id, version = null) => {
-    addNotification('Processing rollback...', 'info');
+    // Show confirmation dialog
+    const itemName = type === 'product' ? 'product' : 'blog article';
     
-    try {
-      setOptimizing(true);
-      const response = await authFetch(`${API_BASE}/api/rollback/${type}/${id}?shop=${shop}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shop, version })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    setConfirmAction({
+      title: `Rollback ${itemName}`,
+      message: `Are you sure you want to rollback this ${itemName}?`,
+      details: [
+        'Restore original content',
+        'Remove all AI optimizations', 
+        'Delete generated FAQs'
+      ],
+      warning: 'This action cannot be undone.',
+      onConfirm: async () => {
+        addNotification('Processing rollback...', 'info');
+        
+        try {
+          setOptimizing(true);
+          const response = await authFetch(`${API_BASE}/api/rollback/${type}/${id}?shop=${shop}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shop, version })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          addNotification(data.message, 'success');
+          
+          // Update the product/blog status to reflect the rollback
+          if (type === 'product') {
+            setProducts(prev => prev.map(p => 
+              p.id.toString() === id.toString() ? { ...p, optimized: false } : p
+            ));
+          } else if (type === 'blog') {
+            setBlogs(prev => prev.map(b => 
+              b.id.toString() === id.toString() ? { ...b, optimized: false } : b
+            ));
+          }
+          
+          // Add delay to allow Shopify API to update, then refresh data
+          const refreshAfterRollback = async () => {
+            console.log('Waiting 4 seconds for Shopify API to update...');
+            await new Promise(resolve => setTimeout(resolve, 4000));
+            
+            console.log('Refreshing data after rollback...');
+            await fetchStatus(shop);
+            await fetchProducts(shop);
+            await fetchBlogs(shop);
+            
+            // Poll for updates if the item still shows as optimized
+            let retries = 0;
+            while (retries < 3) {
+              const currentProduct = products.find(p => p.id.toString() === id.toString());
+              const currentBlog = blogs.find(b => b.id.toString() === id.toString());
+              
+              if ((type === 'product' && currentProduct && !currentProduct.optimized) ||
+                  (type === 'blog' && currentBlog && !currentBlog.optimized)) {
+                console.log('Rollback status updated successfully');
+                break;
+              }
+              
+              console.log(`Retry ${retries + 1}: Status not updated yet, refreshing again...`);
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              await fetchStatus(shop);
+              await fetchProducts(shop);
+              await fetchBlogs(shop);
+              retries++;
+            }
+          };
+          
+          refreshAfterRollback();
+        } catch (error) {
+          console.error('Rollback error:', error);
+          addNotification('Failed to rollback: ' + error.message, 'error');
+        } finally {
+          setOptimizing(false);
+        }
       }
-      
-      const data = await response.json();
-      addNotification(data.message, 'success');
-      
-      // Update the product/blog status to reflect the rollback
-      if (type === 'product') {
-        setProducts(prev => prev.map(p => 
-          p.id.toString() === id.toString() ? { ...p, optimized: false } : p
-        ));
-      } else if (type === 'blog') {
-        setBlogs(prev => prev.map(b => 
-          b.id.toString() === id.toString() ? { ...b, optimized: false } : b
-        ));
-      }
-      
-      // Refresh data
-      fetchStatus(shop);
-      fetchHistory(shop);
-      fetchUsage(shop);
-    } catch (error) {
-      console.error('Rollback error:', error);
-      addNotification('Failed to rollback. Please try again.', 'error');
-    } finally {
-      setOptimizing(false);
-    }
+    });
+    setShowConfirmModal(true);
   };
 
   const saveDraft = async (type, id, content, settings) => {
@@ -961,7 +1025,7 @@ const Dashboard = () => {
 
       {/* Notifications */}
       {notifications.length > 0 && (
-        <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+        <div className="fixed top-4 left-4 z-50 space-y-2 max-w-sm">
           {notifications.map((notification) => (
             <div
               key={notification.id}
@@ -1010,7 +1074,7 @@ const Dashboard = () => {
 
       {/* Citation Notifications */}
       {citations.length > 0 && (
-        <div className="fixed top-20 right-4 z-40 max-w-sm">
+        <div className="fixed top-20 left-4 z-40 max-w-sm">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-lg">
             <div className="flex items-start">
               <div className="flex-shrink-0">
@@ -1763,6 +1827,59 @@ const Dashboard = () => {
                     Publish Draft
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && confirmAction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {confirmAction.title}
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                {confirmAction.message}
+              </p>
+              <div className="mb-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">This will:</p>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  {confirmAction.details.map((detail, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="text-gray-400 mr-2">•</span>
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="p-3 bg-red-50 rounded-md mb-6">
+                <p className="text-sm text-red-800 font-medium">
+                  ⚠️ {confirmAction.warning}
+                </p>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setConfirmAction(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    confirmAction.onConfirm();
+                    setConfirmAction(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
+                >
+                  Rollback
+                </button>
               </div>
             </div>
           </div>

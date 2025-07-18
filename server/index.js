@@ -1328,17 +1328,37 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
     
     // Restore original content (if applicable)
     if (type === 'product') {
-      // For products, we can restore the actual product content
+      // For products, restore the actual product content
       const updateData = {
         product: {
           id: parseInt(id),
           title: originalData.title,
-          body_html: originalData.description
+          body_html: originalData.body_html
         }
       };
       
+      console.log(`Restoring product ${id} with data:`, updateData);
       await axios.put(
         `https://${shop}/admin/api/2024-01/products/${id}.json`,
+        updateData,
+        {
+          headers: { 'X-Shopify-Access-Token': accessToken }
+        }
+      );
+    } else if (type === 'blog') {
+      // For blog articles, restore the original content
+      const updateData = {
+        article: {
+          id: parseInt(id),
+          title: originalData.title,
+          content: originalData.content,
+          summary: originalData.summary || null
+        }
+      };
+      
+      console.log(`Restoring blog article ${id} with data:`, updateData);
+      await axios.put(
+        `https://${shop}/admin/api/2024-01/articles/${id}.json`,
         updateData,
         {
           headers: { 'X-Shopify-Access-Token': accessToken }
@@ -1354,25 +1374,37 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
       'faq_data_draft',
       'optimization_settings',
       'optimization_settings_draft',
+      'optimization_data',
+      'current_version',
       'enable_schema',
       'published_timestamp',
       'draft_timestamp'
     ];
     
+    let deletedCount = 0;
     for (const metafield of metafields) {
       if (optimizationKeys.includes(metafield.key)) {
         try {
+          console.log(`Deleting metafield ${metafield.key} (ID: ${metafield.id})`);
           await axios.delete(
             `https://${shop}/admin/api/2024-01/metafields/${metafield.id}.json`,
             {
               headers: { 'X-Shopify-Access-Token': accessToken }
             }
           );
+          deletedCount++;
         } catch (error) {
-          console.error(`Error deleting metafield ${metafield.key}:`, error);
+          console.error(`Error deleting metafield ${metafield.key}:`, error.message);
         }
       }
     }
+    
+    console.log(`Deleted ${deletedCount} optimization metafields for ${type} ${id}`);
+    
+    console.log(`Successfully rolled back ${type} ${id} to original version`);
+    console.log('Metafields deleted:', optimizationKeys.filter(key => 
+      metafields.some(m => m.key === key)
+    ));
     
     res.json({
       message: `Successfully rolled back ${type} ${id} to original version`,
