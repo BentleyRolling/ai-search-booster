@@ -379,7 +379,7 @@ const getNextVersion = async (shop, resourceType, resourceId, accessToken) => {
       : `articles/${resourceId}/metafields`;
       
     const response = await axios.get(
-      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=ai_search_booster`,
+      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=asb`,
       {
         headers: { 'X-Shopify-Access-Token': accessToken }
       }
@@ -409,19 +409,19 @@ const storeVersionedMetafield = async (shop, resourceType, resourceId, content, 
     
   const metafields = [
     {
-      namespace: 'ai_search_booster',
+      namespace: 'asb',
       key: `optimized_v${version}`,
       value: JSON.stringify(content),
       type: 'json'
     },
     {
-      namespace: 'ai_search_booster',
+      namespace: 'asb',
       key: `optimized_v${version}_timestamp`,
       value: new Date().toISOString(),
       type: 'single_line_text_field'
     },
     {
-      namespace: 'ai_search_booster',
+      namespace: 'asb',
       key: 'current_version',
       value: `optimized_v${version}`,
       type: 'single_line_text_field'
@@ -1031,7 +1031,7 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
         // Store original as backup if not already stored
         console.log(`[PRODUCTS-OPTIMIZE] Checking for existing backup for product ${productId}`);
         const metafieldsResponse = await axios.get(
-          `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json?namespace=ai_search_booster&key=original_backup`,
+          `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json?namespace=asb&key=original_backup`,
           {
             headers: { 'X-Shopify-Access-Token': accessToken },
             timeout: 10000 // 10 second timeout
@@ -1044,7 +1044,7 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
             `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json`,
             {
               metafield: {
-                namespace: 'ai_search_booster',
+                namespace: 'asb',
                 key: 'original_backup',
                 value: JSON.stringify({
                   title: product.title,
@@ -1066,41 +1066,54 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
         const optimized = await optimizeContent(product, 'product', settings);
         console.log(`[PRODUCTS-OPTIMIZE] AI optimization completed for product ${productId}`);
         
-        // Update the product with optimized content
-        const updateData = {
-          product: {
-            id: productId
-          }
-        };
+        // Store optimization as draft metafields (don't update product directly)
+        console.log(`[PRODUCTS-OPTIMIZE] Storing optimization as draft for product ${productId}`);
         
-        // Only update if we have optimized content
-        if (optimized.optimizedTitle) {
-          updateData.product.title = optimized.optimizedTitle;
-        }
-        if (optimized.optimizedDescription) {
-          updateData.product.body_html = optimized.optimizedDescription;
-        }
-        
-        // Update product in Shopify
-        console.log(`[PRODUCTS-OPTIMIZE] Updating product ${productId} in Shopify`);
-        await axios.put(
-          `https://${shop}/admin/api/2024-01/products/${productId}.json`,
-          updateData,
-          {
-            headers: { 'X-Shopify-Access-Token': accessToken }
-          }
-        );
-        console.log(`[PRODUCTS-OPTIMIZE] Product ${productId} updated successfully`);
-        
-        // Store optimization metadata
+        // Store optimized content as draft
         await axios.post(
           `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json`,
           {
             metafield: {
-              namespace: 'ai_search_booster',
-              key: 'optimization_data',
+              namespace: 'asb',
+              key: 'optimized_content_draft',
               value: JSON.stringify({
-                optimized,
+                title: optimized.optimizedTitle,
+                body_html: optimized.optimizedDescription,
+                summary: optimized.summary,
+                llmDescription: optimized.llmDescription
+              }),
+              type: 'json'
+            }
+          },
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        // Store FAQ data as draft
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json`,
+          {
+            metafield: {
+              namespace: 'asb',
+              key: 'faq_data_draft',
+              value: JSON.stringify({ questions: optimized.faqs }),
+              type: 'json'
+            }
+          },
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        // Store optimization settings as draft
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json`,
+          {
+            metafield: {
+              namespace: 'asb',
+              key: 'optimization_settings_draft',
+              value: JSON.stringify({
                 settings,
                 timestamp: new Date().toISOString()
               }),
@@ -1111,6 +1124,8 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
             headers: { 'X-Shopify-Access-Token': accessToken }
           }
         );
+        
+        console.log(`[PRODUCTS-OPTIMIZE] Draft optimization stored for product ${productId}`);
         
         results.push({
           productId,
@@ -1179,7 +1194,7 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
         
         // Store original as backup if not already stored
         const metafieldsResponse = await axios.get(
-          `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json?namespace=ai_search_booster&key=original_backup`,
+          `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json?namespace=asb&key=original_backup`,
           {
             headers: { 'X-Shopify-Access-Token': accessToken }
           }
@@ -1190,7 +1205,7 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
             `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json`,
             {
               metafield: {
-                namespace: 'ai_search_booster',
+                namespace: 'asb',
                 key: 'original_backup',
                 value: JSON.stringify({
                   title: page.title,
@@ -1242,7 +1257,7 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
           `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json`,
           {
             metafield: {
-              namespace: 'ai_search_booster',
+              namespace: 'asb',
               key: 'optimization_data',
               value: JSON.stringify({
                 optimized,
@@ -1329,7 +1344,7 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
           try {
             // Store original as backup if not already stored
             const metafieldsResponse = await axios.get(
-              `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json?namespace=ai_search_booster&key=original_backup`,
+              `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json?namespace=asb&key=original_backup`,
               {
                 headers: { 'X-Shopify-Access-Token': accessToken }
               }
@@ -1340,7 +1355,7 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
                 `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json`,
                 {
                   metafield: {
-                    namespace: 'ai_search_booster',
+                    namespace: 'asb',
                     key: 'original_backup',
                     value: JSON.stringify({
                       title: article.title,
@@ -1360,42 +1375,54 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
             // Optimize content using AI
             const optimized = await optimizeContent(article, 'article', settings);
             
-            // Update the article with optimized content
-            const updateData = {
-              article: {
-                id: article.id
-              }
-            };
+            // Store optimization as draft metafields (don't update article directly)
+            console.log(`[BLOGS-OPTIMIZE] Storing optimization as draft for article ${article.id}`);
             
-            // Only update if we have optimized content
-            if (optimized.optimizedTitle) {
-              updateData.article.title = optimized.optimizedTitle;
-            }
-            if (optimized.optimizedContent) {
-              updateData.article.content = optimized.optimizedContent;
-            }
-            if (optimized.optimizedSummary) {
-              updateData.article.summary = optimized.optimizedSummary;
-            }
-            
-            // Update article in Shopify
-            await axios.put(
-              `https://${shop}/admin/api/2024-01/articles/${article.id}.json`,
-              updateData,
+            // Store optimized content as draft
+            await axios.post(
+              `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json`,
+              {
+                metafield: {
+                  namespace: 'asb',
+                  key: 'optimized_content_draft',
+                  value: JSON.stringify({
+                    title: optimized.optimizedTitle,
+                    content: optimized.optimizedDescription,
+                    summary: optimized.summary,
+                    llmDescription: optimized.llmDescription
+                  }),
+                  type: 'json'
+                }
+              },
               {
                 headers: { 'X-Shopify-Access-Token': accessToken }
               }
             );
             
-            // Store optimization metadata
+            // Store FAQ data as draft
             await axios.post(
               `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json`,
               {
                 metafield: {
-                  namespace: 'ai_search_booster',
-                  key: 'optimization_data',
+                  namespace: 'asb',
+                  key: 'faq_data_draft',
+                  value: JSON.stringify({ questions: optimized.faqs }),
+                  type: 'json'
+                }
+              },
+              {
+                headers: { 'X-Shopify-Access-Token': accessToken }
+              }
+            );
+            
+            // Store optimization settings as draft
+            await axios.post(
+              `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json`,
+              {
+                metafield: {
+                  namespace: 'asb',
+                  key: 'optimization_settings_draft',
                   value: JSON.stringify({
-                    optimized,
                     settings,
                     timestamp: new Date().toISOString()
                   }),
@@ -1406,6 +1433,8 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
                 headers: { 'X-Shopify-Access-Token': accessToken }
               }
             );
+            
+            console.log(`[BLOGS-OPTIMIZE] Draft optimization stored for article ${article.id}`);
             
             results.push({
               articleId: article.id,
@@ -1464,7 +1493,7 @@ app.get('/api/optimize/status/:type/:id', simpleVerifyShop, async (req, res) => 
       : `articles/${id}/metafields`;
       
     const response = await axios.get(
-      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=ai_search_booster`,
+      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=asb`,
       {
         headers: { 'X-Shopify-Access-Token': accessToken }
       }
@@ -1548,7 +1577,7 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
         try {
           // Get metafields for this article
           const metafieldsResponse = await axios.get(
-            `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json?namespace=ai_search_booster`,
+            `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json?namespace=asb`,
             {
               headers: { 'X-Shopify-Access-Token': accessToken }
             }
@@ -1639,7 +1668,7 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
     
     // Get all metafields for this resource
     const metafieldsResponse = await axios.get(
-      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=ai_search_booster`,
+      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=asb`,
       {
         headers: { 'X-Shopify-Access-Token': accessToken }
       }
@@ -1781,7 +1810,7 @@ app.get('/api/metafields/:type/:id', simpleVerifyShop, async (req, res) => {
       : `articles/${id}/metafields`;
       
     const response = await axios.get(
-      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=ai_search_booster`,
+      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=asb`,
       {
         headers: { 'X-Shopify-Access-Token': accessToken }
       }
@@ -1882,7 +1911,7 @@ app.get('/api/status', simpleVerifyShop, async (req, res) => {
         );
         totalBlogs = blogsRes.data.count;
         
-        // Count optimized products by checking metafields
+        // Count optimized products by checking metafields (published + drafts)
         const productsWithMetaRes = await axios.get(
           `https://${shop}/admin/api/2024-01/products.json?limit=250&fields=id`,
           { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
@@ -1892,10 +1921,12 @@ app.get('/api/status', simpleVerifyShop, async (req, res) => {
           productsWithMetaRes.data.products.map(async (product) => {
             try {
               const metafieldsRes = await axios.get(
-                `https://${shop}/admin/api/2024-01/products/${product.id}/metafields.json?namespace=ai_search_booster&key=optimization_data`,
+                `https://${shop}/admin/api/2024-01/products/${product.id}/metafields.json?namespace=asb`,
                 { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
               );
-              return metafieldsRes.data.metafields.length > 0;
+              const metafields = metafieldsRes.data.metafields;
+              // Count as optimized if it has either published optimization_data OR draft content
+              return metafields.some(m => m.key === 'optimization_data' || m.key === 'optimized_content_draft');
             } catch {
               return false;
             }
@@ -1903,6 +1934,44 @@ app.get('/api/status', simpleVerifyShop, async (req, res) => {
         );
         
         optimizedProducts = optimizedChecks.filter(Boolean).length;
+        
+        // Count optimized blogs by checking article metafields (published + drafts)
+        const blogsWithMetaRes = await axios.get(
+          `https://${shop}/admin/api/2024-01/blogs.json?limit=250&fields=id`,
+          { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+        );
+        
+        let optimizedArticleCount = 0;
+        for (const blog of blogsWithMetaRes.data.blogs) {
+          try {
+            const articlesRes = await axios.get(
+              `https://${shop}/admin/api/2024-01/blogs/${blog.id}/articles.json?limit=250&fields=id`,
+              { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+            );
+            
+            const articleOptimizedChecks = await Promise.all(
+              articlesRes.data.articles.map(async (article) => {
+                try {
+                  const metafieldsRes = await axios.get(
+                    `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json?namespace=asb`,
+                    { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+                  );
+                  const metafields = metafieldsRes.data.metafields;
+                  // Count as optimized if it has either published optimization_data OR draft content
+                  return metafields.some(m => m.key === 'optimization_data' || m.key === 'optimized_content_draft');
+                } catch {
+                  return false;
+                }
+              })
+            );
+            
+            optimizedArticleCount += articleOptimizedChecks.filter(Boolean).length;
+          } catch (blogError) {
+            console.log(`Could not fetch articles for blog ${blog.id}:`, blogError.message);
+          }
+        }
+        
+        optimizedBlogs = optimizedArticleCount;
         
       } catch (countError) {
         console.log('Could not fetch counts, using defaults:', countError.message);
@@ -2138,7 +2207,7 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
       let optimized = false;
       try {
         const metafieldsRes = await axios.get(
-          `https://${shop}/admin/api/2024-01/pages/${page.id}/metafields.json?namespace=ai_search_booster`,
+          `https://${shop}/admin/api/2024-01/pages/${page.id}/metafields.json?namespace=asb`,
           { headers: { 'X-Shopify-Access-Token': accessToken } }
         );
         optimized = metafieldsRes.data.metafields.some(m => m.key === 'optimization_data');
