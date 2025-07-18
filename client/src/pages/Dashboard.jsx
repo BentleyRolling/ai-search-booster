@@ -39,7 +39,7 @@ const Dashboard = () => {
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [selectedDraft, setSelectedDraft] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmConfig, setConfirmConfig] = useState(null);
   
   // Citation monitoring hook
   const { 
@@ -52,6 +52,28 @@ const Dashboard = () => {
     stopMonitoring,
     fetchCitationHistory
   } = useCitations(shop);
+
+  // Confirmation modal helper
+  const showConfirmation = (title, message, onConfirm) => {
+    setConfirmConfig({
+      title,
+      message,
+      onConfirm
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmClose = () => {
+    setShowConfirmModal(false);
+    setConfirmConfig(null);
+  };
+
+  const handleConfirmAction = () => {
+    if (confirmConfig?.onConfirm) {
+      confirmConfig.onConfirm();
+    }
+    handleConfirmClose();
+  };
 
   // Always use relative paths - AuthContext will convert to absolute backend URLs
   const API_BASE = '';
@@ -661,7 +683,18 @@ const Dashboard = () => {
   };
 
   const publishDraft = async (type, id) => {
-    if (!confirm('Publish draft optimization?\n\nThis will make the draft content live on your store.')) return;
+    return new Promise((resolve) => {
+      showConfirmation(
+        'Publish Draft',
+        'This will make the draft content live on your store. Are you sure?',
+        async () => {
+          resolve(await performPublishDraft(type, id));
+        }
+      );
+    });
+  };
+
+  const performPublishDraft = async (type, id) => {
     
     try {
       setOptimizing(true);
@@ -1422,11 +1455,15 @@ const Dashboard = () => {
                           addNotification('No drafts to publish', 'info');
                           return;
                         }
-                        if (confirm(`Publish ${drafts.length} draft optimizations?\n\nThis will make the draft content live on your store.`)) {
-                          Promise.all(drafts.map(p => publishDraft('product', p.id)))
-                            .then(() => addNotification(`Successfully published ${drafts.length} drafts`, 'success'))
-                            .catch(err => addNotification('Some drafts failed to publish', 'error'));
-                        }
+                        showConfirmation(
+                          'Publish Drafts',
+                          `Publish ${drafts.length} draft optimizations? This will make the draft content live on your store.`,
+                          () => {
+                            Promise.all(drafts.map(p => performPublishDraft('product', p.id)))
+                              .then(() => addNotification(`Successfully published ${drafts.length} drafts`, 'success'))
+                              .catch(err => addNotification('Some drafts failed to publish', 'error'));
+                          }
+                        );
                       }}
                       disabled={optimizing || !products.some(p => p.hasDraft)}
                       className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
@@ -1450,7 +1487,7 @@ const Dashboard = () => {
                 {products.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No products found</p>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                     {products.map((product) => (
                       <div
                         key={product.id}
@@ -1491,14 +1528,14 @@ const Dashboard = () => {
                               </div>
                               
                               {/* Action Buttons */}
-                              <div className="flex items-center space-x-1 flex-wrap gap-1">
+                              <div className="flex items-center space-x-1 flex-shrink-0">
                                 {product.hasDraft && (
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handlePreviewDraft('product', product.id);
                                     }}
-                                    className="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
                                     title="Preview draft content"
                                   >
                                     <Eye className="w-3 h-3" />
@@ -1512,7 +1549,7 @@ const Dashboard = () => {
                                       e.stopPropagation();
                                       publishDraft('product', product.id);
                                     }}
-                                    className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-1.5 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
                                     title="Publish draft optimization"
                                   >
                                     <CheckCircle className="w-3 h-3" />
@@ -1526,7 +1563,7 @@ const Dashboard = () => {
                                       e.stopPropagation();
                                       rollback('product', product.id);
                                     }}
-                                    className="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
                                     title="Rollback to original content"
                                   >
                                     <RotateCcw className="w-3 h-3" />
@@ -1591,13 +1628,17 @@ const Dashboard = () => {
                           addNotification('No drafts to publish', 'info');
                           return;
                         }
-                        if (confirm(`Publish ${drafts.length} draft optimizations?\n\nThis will make the draft content live on your store.`)) {
-                          Promise.all(drafts.flatMap(b => 
-                            b.articles?.filter(a => a.hasDraft).map(a => publishDraft('blog', a.id)) || []
-                          ))
-                            .then(() => addNotification(`Successfully published blog drafts`, 'success'))
-                            .catch(err => addNotification('Some drafts failed to publish', 'error'));
-                        }
+                        showConfirmation(
+                          'Publish Blog Drafts',
+                          `Publish ${drafts.length} draft optimizations? This will make the draft content live on your store.`,
+                          () => {
+                            Promise.all(drafts.flatMap(b => 
+                              b.articles?.filter(a => a.hasDraft).map(a => performPublishDraft('blog', a.id)) || []
+                            ))
+                              .then(() => addNotification(`Successfully published blog drafts`, 'success'))
+                              .catch(err => addNotification('Some drafts failed to publish', 'error'));
+                          }
+                        );
                       }}
                       disabled={optimizing || !blogs.some(b => b.hasDraft || b.articles?.some(a => a.hasDraft))}
                       className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
@@ -1675,7 +1716,7 @@ const Dashboard = () => {
                                         handlePreviewDraft('blog', articleWithDraft.id);
                                       }
                                     }}
-                                    className="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
                                     title="Preview draft content"
                                   >
                                     <Eye className="w-3 h-3" />
@@ -1690,18 +1731,22 @@ const Dashboard = () => {
                                       // Publish all articles in this blog that have drafts
                                       const articlesWithDrafts = blog.articles?.filter(a => a.hasDraft) || [];
                                       if (articlesWithDrafts.length > 0) {
-                                        if (confirm(`Publish ${articlesWithDrafts.length} article drafts in this blog?\n\nThis will make the draft content live on your store.`)) {
-                                          Promise.all(articlesWithDrafts.map(a => publishDraft('blog', a.id)))
-                                            .then(() => {
-                                              addNotification(`Successfully published ${articlesWithDrafts.length} article drafts`, 'success');
-                                              fetchBlogs(shop);
-                                              fetchStatus(shop);
-                                            })
-                                            .catch(err => addNotification('Some articles failed to publish', 'error'));
-                                        }
+                                        showConfirmation(
+                                          'Publish Blog Articles',
+                                          `Publish ${articlesWithDrafts.length} article drafts in this blog? This will make the draft content live on your store.`,
+                                          () => {
+                                            Promise.all(articlesWithDrafts.map(a => performPublishDraft('blog', a.id)))
+                                              .then(() => {
+                                                addNotification(`Successfully published ${articlesWithDrafts.length} article drafts`, 'success');
+                                                fetchBlogs(shop);
+                                                fetchStatus(shop);
+                                              })
+                                              .catch(err => addNotification('Some articles failed to publish', 'error'));
+                                          }
+                                        );
                                       }
                                     }}
-                                    className="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-1.5 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
                                     title="Publish all draft articles in this blog"
                                   >
                                     <CheckCircle className="w-3 h-3" />
@@ -1716,18 +1761,22 @@ const Dashboard = () => {
                                       // Rollback all articles in this blog that are optimized
                                       const optimizedArticles = blog.articles?.filter(a => a.optimized) || [];
                                       if (optimizedArticles.length > 0) {
-                                        if (confirm(`Rollback ${optimizedArticles.length} optimized articles in this blog?\n\nThis will restore the original content.`)) {
-                                          Promise.all(optimizedArticles.map(a => rollback('blog', a.id)))
-                                            .then(() => {
-                                              addNotification(`Successfully rolled back ${optimizedArticles.length} articles`, 'success');
-                                              fetchBlogs(shop);
-                                              fetchStatus(shop);
-                                            })
-                                            .catch(err => addNotification('Some articles failed to rollback', 'error'));
-                                        }
+                                        showConfirmation(
+                                          'Rollback Blog Articles',
+                                          `Rollback ${optimizedArticles.length} optimized articles in this blog? This will restore the original content.`,
+                                          () => {
+                                            Promise.all(optimizedArticles.map(a => rollback('blog', a.id)))
+                                              .then(() => {
+                                                addNotification(`Successfully rolled back ${optimizedArticles.length} articles`, 'success');
+                                                fetchBlogs(shop);
+                                                fetchStatus(shop);
+                                              })
+                                              .catch(err => addNotification('Some articles failed to rollback', 'error'));
+                                          }
+                                        );
                                       }
                                     }}
-                                    className="px-2 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
                                     title="Rollback all optimized articles in this blog"
                                   >
                                     <RotateCcw className="w-3 h-3" />
@@ -1994,6 +2043,36 @@ const Dashboard = () => {
                   className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
                 >
                   Rollback
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && confirmConfig && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                {confirmConfig.title}
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {confirmConfig.message}
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={handleConfirmClose}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmAction}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                >
+                  Confirm
                 </button>
               </div>
             </div>

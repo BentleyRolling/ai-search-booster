@@ -874,8 +874,63 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
         key: 'published_timestamp',
         value: new Date().toISOString(),
         type: 'single_line_text_field'
+      },
+      {
+        namespace: 'asb',
+        key: 'optimization_data',
+        value: JSON.stringify({
+          optimized: true,
+          settings: draftSettings ? JSON.parse(draftSettings) : {},
+          timestamp: new Date().toISOString()
+        }),
+        type: 'json'
       }
     ];
+    
+    // Parse draft content and update the actual product/article
+    const parsedDraftContent = JSON.parse(draftContent);
+    
+    if (resourceType === 'product') {
+      // Update product content
+      const updateData = {
+        product: {
+          id: resourceId
+        }
+      };
+      
+      if (parsedDraftContent.title) {
+        updateData.product.title = parsedDraftContent.title;
+      }
+      if (parsedDraftContent.body_html) {
+        updateData.product.body_html = parsedDraftContent.body_html;
+      }
+      
+      await axios.put(
+        `https://${shop}/admin/api/2024-01/products/${resourceId}.json`,
+        updateData,
+        { headers: { 'X-Shopify-Access-Token': accessToken } }
+      );
+    } else if (resourceType === 'blog') {
+      // Update article content
+      const updateData = {
+        article: {
+          id: resourceId
+        }
+      };
+      
+      if (parsedDraftContent.title) {
+        updateData.article.title = parsedDraftContent.title;
+      }
+      if (parsedDraftContent.content) {
+        updateData.article.content = parsedDraftContent.content;
+      }
+      
+      await axios.put(
+        `https://${shop}/admin/api/2024-01/articles/${resourceId}.json`,
+        updateData,
+        { headers: { 'X-Shopify-Access-Token': accessToken } }
+      );
+    }
     
     // Save live metafields
     for (const metafield of liveMetafields) {
