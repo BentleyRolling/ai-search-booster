@@ -900,12 +900,20 @@ const Dashboard = () => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center">
             <img 
               src="/logo.png" 
               alt="AI Search Booster Logo" 
               className="w-24 h-24 object-contain"
             />
+            <div className="mt-4 text-center">
+              <h1 className="text-xl font-semibold text-gray-800 mb-1">
+                Make your Shopify store AI‑discoverable - ChatGPT, Gemini, Claude & more.
+              </h1>
+              <p className="text-sm text-gray-600">
+                Automatic JSON‑LD, FAQ, RSS & embeddings. Boost your chances of showing up in AI answers!
+              </p>
+            </div>
           </div>
           <div className="absolute right-4 top-4">
             <div className="flex items-center space-x-2">
