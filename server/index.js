@@ -887,73 +887,62 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
       }
     ];
     
-    // Parse draft content and update the actual product/article
-    console.log('[PUBLISH] Draft content raw:', draftContent);
-    let parsedDraftContent;
-    try {
-      parsedDraftContent = JSON.parse(draftContent);
-      console.log('[PUBLISH] Parsed draft content:', parsedDraftContent);
-    } catch (parseError) {
-      console.error('[PUBLISH] Failed to parse draft content:', parseError);
-      return res.status(400).json({ error: 'Invalid draft content format' });
-    }
+    console.log('[PUBLISH] Publishing draft content for', resourceType, resourceId);
     
-    if (resourceType === 'product') {
-      // Update product content
-      const updateData = {
-        product: {
-          id: resourceId
+    // Update the actual product/article content with the draft content
+    try {
+      const parsedDraftContent = JSON.parse(draftContent);
+      console.log('[PUBLISH] Parsed draft content:', parsedDraftContent);
+      
+      if (resourceType === 'product') {
+        // Update product content
+        const updateData = {
+          product: {
+            id: parseInt(resourceId)
+          }
+        };
+        
+        if (parsedDraftContent.title) {
+          updateData.product.title = parsedDraftContent.title;
         }
-      };
-      
-      if (parsedDraftContent.title) {
-        updateData.product.title = parsedDraftContent.title;
-      }
-      if (parsedDraftContent.body_html) {
-        updateData.product.body_html = parsedDraftContent.body_html;
-      }
-      
-      console.log('[PUBLISH] Updating product with data:', updateData);
-      try {
-        await axios.put(
+        if (parsedDraftContent.body_html) {
+          updateData.product.body_html = parsedDraftContent.body_html;
+        }
+        
+        console.log('[PUBLISH] Updating product with data:', updateData);
+        const updateResponse = await axios.put(
           `https://${shop}/admin/api/2024-01/products/${resourceId}.json`,
           updateData,
           { headers: { 'X-Shopify-Access-Token': accessToken } }
         );
         console.log('[PUBLISH] Product updated successfully');
-      } catch (updateError) {
-        console.error('[PUBLISH] Product update failed:', updateError.message);
-        console.error('[PUBLISH] Product update response:', updateError.response?.data);
-        return res.status(500).json({ error: 'Failed to update product content' });
-      }
-    } else if (resourceType === 'blog') {
-      // Update article content
-      const updateData = {
-        article: {
-          id: resourceId
+      } else if (resourceType === 'blog') {
+        // Update article content
+        const updateData = {
+          article: {
+            id: parseInt(resourceId)
+          }
+        };
+        
+        if (parsedDraftContent.title) {
+          updateData.article.title = parsedDraftContent.title;
         }
-      };
-      
-      if (parsedDraftContent.title) {
-        updateData.article.title = parsedDraftContent.title;
-      }
-      if (parsedDraftContent.content) {
-        updateData.article.content = parsedDraftContent.content;
-      }
-      
-      console.log('[PUBLISH] Updating article with data:', updateData);
-      try {
-        await axios.put(
+        if (parsedDraftContent.content) {
+          updateData.article.content = parsedDraftContent.content;
+        }
+        
+        console.log('[PUBLISH] Updating article with data:', updateData);
+        const updateResponse = await axios.put(
           `https://${shop}/admin/api/2024-01/articles/${resourceId}.json`,
           updateData,
           { headers: { 'X-Shopify-Access-Token': accessToken } }
         );
         console.log('[PUBLISH] Article updated successfully');
-      } catch (updateError) {
-        console.error('[PUBLISH] Article update failed:', updateError.message);
-        console.error('[PUBLISH] Article update response:', updateError.response?.data);
-        return res.status(500).json({ error: 'Failed to update article content' });
       }
+    } catch (contentUpdateError) {
+      console.error('[PUBLISH] Content update error:', contentUpdateError);
+      // Don't fail the entire publish if content update fails - just log the error
+      console.error('[PUBLISH] Content update failed but continuing with metafield updates');
     }
     
     // Save live metafields
@@ -967,6 +956,28 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
       } catch (error) {
         console.error(`Error publishing metafield ${metafield.key}:`, error);
       }
+    }
+    
+    // Clean up draft metafields after successful publish
+    try {
+      const draftMetafieldIds = metafields
+        .filter(m => ['optimized_content_draft', 'faq_data_draft', 'optimization_settings_draft'].includes(m.key))
+        .map(m => m.id);
+      
+      for (const metafieldId of draftMetafieldIds) {
+        try {
+          await axios.delete(
+            `https://${shop}/admin/api/2024-01/${endpoint}/${metafieldId}.json`,
+            { headers: { 'X-Shopify-Access-Token': accessToken } }
+          );
+          console.log(`[PUBLISH] Deleted draft metafield ${metafieldId}`);
+        } catch (deleteError) {
+          console.error(`[PUBLISH] Failed to delete draft metafield ${metafieldId}:`, deleteError);
+        }
+      }
+    } catch (cleanupError) {
+      console.error('[PUBLISH] Draft cleanup error:', cleanupError);
+      // Don't fail the publish if cleanup fails
     }
     
     res.json({

@@ -399,7 +399,7 @@ const Dashboard = () => {
       // Process each product individually to show real progress
       for (let i = 0; i < selectedProducts.length; i++) {
         const productId = selectedProducts[i];
-        setOptimizationProgress({ type: 'products', current: i, total: selectedProducts.length });
+        setOptimizationProgress({ type: 'products', current: i + 1, total: selectedProducts.length });
         
         try {
           console.log(`Optimizing product ${i + 1}/${selectedProducts.length}: ${productId}`);
@@ -429,8 +429,7 @@ const Dashboard = () => {
         }
       }
       
-      // Update progress to show completion
-      setOptimizationProgress({ type: 'products', current: selectedProducts.length, total: selectedProducts.length });
+      // Progress is already at 100% from the loop
       
       // Show final results
       if (successCount > 0) {
@@ -472,7 +471,7 @@ const Dashboard = () => {
       // Process each blog individually to show real progress
       for (let i = 0; i < selectedBlogs.length; i++) {
         const blogId = selectedBlogs[i];
-        setOptimizationProgress({ type: 'blogs', current: i, total: selectedBlogs.length });
+        setOptimizationProgress({ type: 'blogs', current: i + 1, total: selectedBlogs.length });
         
         try {
           console.log(`Optimizing blog ${i + 1}/${selectedBlogs.length}: ${blogId}`);
@@ -508,8 +507,7 @@ const Dashboard = () => {
         }
       }
       
-      // Update progress to show completion
-      setOptimizationProgress({ type: 'blogs', current: selectedBlogs.length, total: selectedBlogs.length });
+      // Progress is already at 100% from the loop
       
       // Show final results
       if (successCount > 0) {
