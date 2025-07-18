@@ -904,9 +904,16 @@ const Dashboard = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-center relative">
               <img 
-                src="/logo-dark-optimized.png" 
+                src="/logo-dark.png" 
                 alt="AI Search Booster Logo" 
                 className="w-32 h-32 object-contain"
+                onError={(e) => {
+                  console.error('Logo failed to load:', e);
+                  e.target.style.display = 'none';
+                  // Show fallback text
+                  e.target.parentElement.innerHTML = '<div class="text-white text-xl font-bold">AI Search Booster</div>';
+                }}
+                onLoad={() => console.log('Logo loaded successfully')}
               />
               <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
                 <div className="flex items-center space-x-2">
