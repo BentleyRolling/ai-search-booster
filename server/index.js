@@ -888,73 +888,25 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
     ];
     
     console.log('[PUBLISH] Publishing draft content for', resourceType, resourceId);
+    console.log('[PUBLISH] Draft content found:', !!draftContent);
+    console.log('[PUBLISH] FAQ data found:', !!draftFaq);
+    console.log('[PUBLISH] Settings found:', !!draftSettings);
     
-    // Update the actual product/article content with the draft content
-    try {
-      const parsedDraftContent = JSON.parse(draftContent);
-      console.log('[PUBLISH] Parsed draft content:', parsedDraftContent);
-      
-      if (resourceType === 'product') {
-        // Update product content
-        const updateData = {
-          product: {
-            id: parseInt(resourceId)
-          }
-        };
-        
-        if (parsedDraftContent.title) {
-          updateData.product.title = parsedDraftContent.title;
-        }
-        if (parsedDraftContent.body_html) {
-          updateData.product.body_html = parsedDraftContent.body_html;
-        }
-        
-        console.log('[PUBLISH] Updating product with data:', updateData);
-        const updateResponse = await axios.put(
-          `https://${shop}/admin/api/2024-01/products/${resourceId}.json`,
-          updateData,
-          { headers: { 'X-Shopify-Access-Token': accessToken } }
-        );
-        console.log('[PUBLISH] Product updated successfully');
-      } else if (resourceType === 'blog') {
-        // Update article content
-        const updateData = {
-          article: {
-            id: parseInt(resourceId)
-          }
-        };
-        
-        if (parsedDraftContent.title) {
-          updateData.article.title = parsedDraftContent.title;
-        }
-        if (parsedDraftContent.content) {
-          updateData.article.content = parsedDraftContent.content;
-        }
-        
-        console.log('[PUBLISH] Updating article with data:', updateData);
-        const updateResponse = await axios.put(
-          `https://${shop}/admin/api/2024-01/articles/${resourceId}.json`,
-          updateData,
-          { headers: { 'X-Shopify-Access-Token': accessToken } }
-        );
-        console.log('[PUBLISH] Article updated successfully');
-      }
-    } catch (contentUpdateError) {
-      console.error('[PUBLISH] Content update error:', contentUpdateError);
-      // Don't fail the entire publish if content update fails - just log the error
-      console.error('[PUBLISH] Content update failed but continuing with metafield updates');
-    }
-    
-    // Save live metafields
+    // Create/update live metafields one by one
     for (const metafield of liveMetafields) {
       try {
+        const metafieldEndpoint = resourceType === 'product' 
+          ? `products/${resourceId}/metafields`
+          : `articles/${resourceId}/metafields`;
+          
         await axios.post(
-          `https://${shop}/admin/api/2024-01/${endpoint}.json`,
+          `https://${shop}/admin/api/2024-01/${metafieldEndpoint}.json`,
           { metafield },
           { headers: { 'X-Shopify-Access-Token': accessToken } }
         );
+        console.log(`[PUBLISH] Created live metafield: ${metafield.key}`);
       } catch (error) {
-        console.error(`Error publishing metafield ${metafield.key}:`, error);
+        console.error(`[PUBLISH] Error creating metafield ${metafield.key}:`, error.response?.data || error.message);
       }
     }
     
@@ -967,12 +919,12 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
       for (const metafieldId of draftMetafieldIds) {
         try {
           await axios.delete(
-            `https://${shop}/admin/api/2024-01/${endpoint}/${metafieldId}.json`,
+            `https://${shop}/admin/api/2024-01/metafields/${metafieldId}.json`,
             { headers: { 'X-Shopify-Access-Token': accessToken } }
           );
           console.log(`[PUBLISH] Deleted draft metafield ${metafieldId}`);
         } catch (deleteError) {
-          console.error(`[PUBLISH] Failed to delete draft metafield ${metafieldId}:`, deleteError);
+          console.error(`[PUBLISH] Failed to delete draft metafield ${metafieldId}:`, deleteError.response?.data || deleteError.message);
         }
       }
     } catch (cleanupError) {
