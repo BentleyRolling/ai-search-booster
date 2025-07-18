@@ -1471,14 +1471,28 @@ app.get('/api/products', async (req, res) => {
       }
     );
     
-    const shopifyProducts = response.data.products.map(product => ({
-      id: product.id,
-      title: product.title,
-      handle: product.handle,
-      status: product.status,
-      created_at: product.created_at,
-      updated_at: product.updated_at,
-      optimized: false // TODO: Check if product has optimization metafields
+    // Check metafields for optimization status
+    const shopifyProducts = await Promise.all(response.data.products.map(async (product) => {
+      let optimized = false;
+      try {
+        const metafieldsRes = await axios.get(
+          `https://${shop}/admin/api/2024-01/products/${product.id}/metafields.json?namespace=ai_search_booster`,
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+        optimized = metafieldsRes.data.metafields.some(m => m.key === 'current_version');
+      } catch (metaError) {
+        console.log(`Could not fetch metafields for product ${product.id}:`, metaError.message);
+      }
+      
+      return {
+        id: product.id,
+        title: product.title,
+        handle: product.handle,
+        status: product.status,
+        created_at: product.created_at,
+        updated_at: product.updated_at,
+        optimized
+      };
     }));
     
     console.log(`Fetched ${shopifyProducts.length} real products from Shopify`);
@@ -1503,37 +1517,115 @@ app.get('/api/blogs', simpleVerifyShop, async (req, res) => {
     const { shop } = req;
     const { limit = 50, page = 1 } = req.query;
     
-    // For now, return mock data since we don't have OAuth token
-    // In production, this would fetch from Shopify API
-    const blogs = [
+    // Check if shop has valid access token from OAuth flow
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      console.log('No valid OAuth token, returning mock data for blogs:', shop);
+      // Return mock data when no OAuth token
+      const blogs = [
+        {
+          id: 1,
+          title: 'Sample Blog 1',
+          handle: 'sample-blog-1',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          articles: [
+            {
+              id: 101,
+              title: 'Sample Article 1',
+              handle: 'sample-article-1',
+              optimized: false
+            }
+          ]
+        }
+      ];
+      
+      return res.json({
+        blogs,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: blogs.length
+        }
+      });
+    }
+    
+    // Fetch real blogs from Shopify API
+    console.log('Fetching real blogs from Shopify for shop:', shop);
+    const { accessToken } = shopInfo;
+    
+    const response = await axios.get(
+      `https://${shop}/admin/api/2024-01/blogs.json?limit=${limit}&page=${page}&fields=id,title,handle,created_at,updated_at`,
       {
-        id: 1,
-        title: 'Sample Blog 1',
-        handle: 'sample-blog-1',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        articles: [
-          {
-            id: 101,
-            title: 'Sample Article 1',
-            handle: 'sample-article-1',
-            optimized: false
-          }
-        ]
+        headers: { 'X-Shopify-Access-Token': accessToken }
       }
-    ];
+    );
+    
+    const shopifyBlogs = await Promise.all(response.data.blogs.map(async (blog) => {
+      // Fetch articles for each blog
+      try {
+        const articlesRes = await axios.get(
+          `https://${shop}/admin/api/2024-01/blogs/${blog.id}/articles.json?limit=10&fields=id,title,handle,created_at,updated_at`,
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+        
+        // Check metafields for optimization status
+        const articles = await Promise.all(articlesRes.data.articles.map(async (article) => {
+          let optimized = false;
+          try {
+            const metafieldsRes = await axios.get(
+              `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json?namespace=ai_search_booster`,
+              { headers: { 'X-Shopify-Access-Token': accessToken } }
+            );
+            optimized = metafieldsRes.data.metafields.some(m => m.key === 'current_version');
+          } catch (metaError) {
+            console.log(`Could not fetch metafields for article ${article.id}:`, metaError.message);
+          }
+          
+          return {
+            id: article.id,
+            title: article.title,
+            handle: article.handle,
+            created_at: article.created_at,
+            updated_at: article.updated_at,
+            optimized
+          };
+        }));
+        
+        return {
+          id: blog.id,
+          title: blog.title,
+          handle: blog.handle,
+          created_at: blog.created_at,
+          updated_at: blog.updated_at,
+          articles
+        };
+      } catch (articleError) {
+        console.error(`Failed to fetch articles for blog ${blog.id}:`, articleError);
+        return {
+          id: blog.id,
+          title: blog.title,
+          handle: blog.handle,
+          created_at: blog.created_at,
+          updated_at: blog.updated_at,
+          articles: []
+        };
+      }
+    }));
+    
+    console.log(`Fetched ${shopifyBlogs.length} real blogs from Shopify`);
     
     res.json({
-      blogs,
+      blogs: shopifyBlogs,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        total: blogs.length
+        total: shopifyBlogs.length
       }
     });
   } catch (error) {
     console.error('Blogs error:', error);
-    res.status(500).json({ error: 'Failed to fetch blogs' });
+    res.status(500).json({ error: 'Failed to fetch blogs: ' + error.message });
   }
 });
 
