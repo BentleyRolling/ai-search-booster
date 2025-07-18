@@ -904,7 +904,7 @@ const Dashboard = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-center relative">
               <img 
-                src="/logo.png" 
+                src={`/logo.png?v=${Date.now()}`} 
                 alt="AI Search Booster Logo" 
                 className="w-32 h-32 object-contain"
               />
