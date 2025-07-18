@@ -506,12 +506,19 @@ Make sure the content is engaging, keyword-rich, and optimized for search engine
         headers: {
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 30000 // 30 second timeout
       });
       
       const aiResponse = response.data.choices[0].message.content;
       console.log('[AI-OPTIMIZATION] OpenAI response received:', aiResponse.substring(0, 200) + '...');
-      return JSON.parse(aiResponse);
+      
+      try {
+        return JSON.parse(aiResponse);
+      } catch (parseError) {
+        console.error('[AI-OPTIMIZATION] Failed to parse OpenAI response:', parseError);
+        throw new Error('Invalid AI response format');
+      }
     } else if (ANTHROPIC_API_KEY) {
       const response = await axios.post('https://api.anthropic.com/v1/messages', {
         model: 'claude-3-sonnet-20240229',
@@ -908,10 +915,12 @@ app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
 });
 
 // API: Optimize products
-app.post('/api/optimize/products', async (req, res) => {
+app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async (req, res) => {
   try {
     const { productIds, settings } = req.body;
-    const shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
+    const { shop } = req;
+    
+    console.log(`[PRODUCTS-OPTIMIZE] Starting optimization for shop: ${shop}, products: ${productIds}`);
     
     if (!shop) {
       return res.status(400).json({ error: 'Missing shop parameter' });
@@ -997,7 +1006,9 @@ app.post('/api/optimize/products', async (req, res) => {
         }
         
         // Optimize content using AI
+        console.log(`[PRODUCTS-OPTIMIZE] Starting AI optimization for product ${productId}`);
         const optimized = await optimizeContent(product, 'product', settings);
+        console.log(`[PRODUCTS-OPTIMIZE] AI optimization completed for product ${productId}`);
         
         // Update the product with optimized content
         const updateData = {
@@ -1015,6 +1026,7 @@ app.post('/api/optimize/products', async (req, res) => {
         }
         
         // Update product in Shopify
+        console.log(`[PRODUCTS-OPTIMIZE] Updating product ${productId} in Shopify`);
         await axios.put(
           `https://${shop}/admin/api/2024-01/products/${productId}.json`,
           updateData,
@@ -1022,6 +1034,7 @@ app.post('/api/optimize/products', async (req, res) => {
             headers: { 'X-Shopify-Access-Token': accessToken }
           }
         );
+        console.log(`[PRODUCTS-OPTIMIZE] Product ${productId} updated successfully`);
         
         // Store optimization metadata
         await axios.post(
@@ -1052,11 +1065,12 @@ app.post('/api/optimize/products', async (req, res) => {
           newTitle: optimized.optimizedTitle || product.title
         });
       } catch (error) {
-        console.error(`Error optimizing product ${productId}:`, error);
+        console.error(`Error optimizing product ${productId}:`, error.message);
+        console.error('Full error details:', error);
         results.push({
           productId,
           status: 'error',
-          error: error.message
+          error: error.message || 'Unknown error occurred'
         });
       }
     }
