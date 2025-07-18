@@ -1695,6 +1695,7 @@ app.get('/api/blogs', simpleVerifyShop, async (req, res) => {
           handle: blog.handle,
           created_at: blog.created_at,
           updated_at: blog.updated_at,
+          optimized: articles.some(article => article.optimized),
           articles
         };
       } catch (articleError) {
@@ -1705,6 +1706,7 @@ app.get('/api/blogs', simpleVerifyShop, async (req, res) => {
           handle: blog.handle,
           created_at: blog.created_at,
           updated_at: blog.updated_at,
+          optimized: false,
           articles: []
         };
       }
