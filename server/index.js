@@ -965,23 +965,29 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
     
     for (const productId of productIds) {
       try {
+        console.log(`[PRODUCTS-OPTIMIZE] Fetching product ${productId} from Shopify`);
         // Fetch product from Shopify API
         const productResponse = await axios.get(
           `https://${shop}/admin/api/2024-01/products/${productId}.json`,
           {
-            headers: { 'X-Shopify-Access-Token': accessToken }
+            headers: { 'X-Shopify-Access-Token': accessToken },
+            timeout: 10000 // 10 second timeout
           }
         );
+        console.log(`[PRODUCTS-OPTIMIZE] Product ${productId} fetched successfully`);
         
         const product = productResponse.data.product;
         
         // Store original as backup if not already stored
+        console.log(`[PRODUCTS-OPTIMIZE] Checking for existing backup for product ${productId}`);
         const metafieldsResponse = await axios.get(
           `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json?namespace=ai_search_booster&key=original_backup`,
           {
-            headers: { 'X-Shopify-Access-Token': accessToken }
+            headers: { 'X-Shopify-Access-Token': accessToken },
+            timeout: 10000 // 10 second timeout
           }
         );
+        console.log(`[PRODUCTS-OPTIMIZE] Backup check completed for product ${productId}`);
         
         if (metafieldsResponse.data.metafields.length === 0) {
           await axios.post(
@@ -1308,6 +1314,8 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
     const { version = 'original' } = req.body;
     const { shop } = req;
     
+    console.log(`[ROLLBACK] Starting rollback for ${type} ${id} in shop ${shop}`);
+    
     // Get shop info for access token
     const shopInfo = shopData.get(shop);
     if (!shopInfo || !shopInfo.accessToken) {
@@ -1319,9 +1327,112 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
     
     const { accessToken } = shopInfo;
     
+    // Handle blog rollback - need to rollback all articles in the blog
+    if (type === 'blog') {
+      console.log(`[ROLLBACK] Rolling back all articles in blog ${id}`);
+      
+      // Get all articles in the blog
+      const articlesResponse = await axios.get(
+        `https://${shop}/admin/api/2024-01/blogs/${id}/articles.json?limit=50&fields=id,title,content,summary`,
+        {
+          headers: { 'X-Shopify-Access-Token': accessToken }
+        }
+      );
+      
+      const articles = articlesResponse.data.articles;
+      console.log(`[ROLLBACK] Found ${articles.length} articles in blog ${id}`);
+      
+      let rolledBackCount = 0;
+      for (const article of articles) {
+        try {
+          // Get metafields for this article
+          const metafieldsResponse = await axios.get(
+            `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json?namespace=ai_search_booster`,
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
+            }
+          );
+          
+          const metafields = metafieldsResponse.data.metafields;
+          const originalBackup = metafields.find(m => m.key === 'original_backup');
+          
+          if (originalBackup) {
+            console.log(`[ROLLBACK] Rolling back article ${article.id}`);
+            const originalData = JSON.parse(originalBackup.value);
+            
+            // Restore original content
+            const updateData = {
+              article: {
+                id: parseInt(article.id),
+                title: originalData.title,
+                content: originalData.content,
+                summary: originalData.summary || null
+              }
+            };
+            
+            await axios.put(
+              `https://${shop}/admin/api/2024-01/articles/${article.id}.json`,
+              updateData,
+              {
+                headers: { 'X-Shopify-Access-Token': accessToken }
+              }
+            );
+            
+            // Remove optimization metafields
+            const optimizationKeys = [
+              'optimized_content',
+              'optimized_content_draft',
+              'faq_data',
+              'faq_data_draft',
+              'optimization_settings',
+              'optimization_settings_draft',
+              'optimization_data',
+              'current_version',
+              'enable_schema',
+              'published_timestamp',
+              'draft_timestamp'
+            ];
+            
+            for (const metafield of metafields) {
+              if (optimizationKeys.includes(metafield.key)) {
+                try {
+                  await axios.delete(
+                    `https://${shop}/admin/api/2024-01/metafields/${metafield.id}.json`,
+                    {
+                      headers: { 'X-Shopify-Access-Token': accessToken }
+                    }
+                  );
+                } catch (deleteError) {
+                  console.error(`Error deleting metafield ${metafield.key}:`, deleteError.message);
+                }
+              }
+            }
+            
+            rolledBackCount++;
+          }
+        } catch (articleError) {
+          console.error(`Error rolling back article ${article.id}:`, articleError.message);
+        }
+      }
+      
+      console.log(`[ROLLBACK] Rolled back ${rolledBackCount} articles in blog ${id}`);
+      
+      return res.json({
+        message: `Successfully rolled back ${rolledBackCount} articles in blog ${id}`,
+        type: 'blog',
+        id,
+        rolledBackCount,
+        totalArticles: articles.length,
+        rollbackTimestamp: new Date().toISOString()
+      });
+    }
+    
+    // Handle product rollback (existing logic)
     const endpoint = type === 'product' 
       ? `products/${id}/metafields`
       : `articles/${id}/metafields`;
+    
+    console.log(`[ROLLBACK] Getting metafields for ${type} ${id}`);
     
     // Get all metafields for this resource
     const metafieldsResponse = await axios.get(
