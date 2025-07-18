@@ -898,57 +898,66 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col items-center justify-center">
-            <img 
-              src="/logo.png" 
-              alt="AI Search Booster Logo" 
-              className="w-24 h-24 object-contain"
-            />
-            <div className="mt-4 text-center">
+      <header className="shadow-sm border-b relative">
+        {/* Black section for logo and icons */}
+        <div className="bg-black">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-center relative">
+              <img 
+                src="/logo-dark.png" 
+                alt="AI Search Booster Logo" 
+                className="w-32 h-32 object-contain"
+              />
+              <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
+                <div className="flex items-center space-x-2">
+                  {/* Citation Badge */}
+                  {stats && stats.total > 0 && (
+                    <div className="flex items-center space-x-2 bg-green-600 text-white px-3 py-1 rounded-full">
+                      <img src="/icons/citation-badge.svg" alt="Citations" className="w-4 h-4" />
+                      <span className="text-sm font-medium">{stats.total} citations</span>
+                    </div>
+                  )}
+                  
+                  {/* Monitoring Status */}
+                  <div className="flex items-center space-x-2">
+                    <Monitor className={`w-5 h-5 ${isMonitoring ? 'text-green-400' : 'text-gray-400'}`} />
+                    <span className={`text-sm ${isMonitoring ? 'text-green-400' : 'text-gray-400'}`}>
+                      {isMonitoring ? 'Monitoring' : 'Not Monitoring'}
+                    </span>
+                  </div>
+                  
+                  {/* Hidden test button - only visible in dev */}
+                  {window.location.hostname === 'localhost' || window.location.search.includes('debug=true') ? (
+                    <button
+                      onClick={runEndToEndTest}
+                      className="px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                      title="Run end-to-end test"
+                    >
+                      Test E2E
+                    </button>
+                  ) : null}
+                  <button
+                    onClick={() => setShowSettings(!showSettings)}
+                    className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
+                  >
+                    <Settings className="w-6 h-6 text-white" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* White section for headline */}
+        <div className="bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="text-center">
               <h1 className="text-xl font-semibold text-gray-800 mb-1">
                 Make your Shopify store AI‑discoverable - ChatGPT, Gemini, Claude & more.
               </h1>
               <p className="text-sm text-gray-600">
                 Automatic JSON‑LD, FAQ, RSS & embeddings. Boost your chances of showing up in AI answers!
               </p>
-            </div>
-          </div>
-          <div className="absolute right-4 top-4">
-            <div className="flex items-center space-x-2">
-              {/* Citation Badge */}
-              {stats && stats.total > 0 && (
-                <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full">
-                  <img src="/icons/citation-badge.svg" alt="Citations" className="w-4 h-4" />
-                  <span className="text-sm font-medium">{stats.total} citations</span>
-                </div>
-              )}
-              
-              {/* Monitoring Status */}
-              <div className="flex items-center space-x-2">
-                <Monitor className={`w-5 h-5 ${isMonitoring ? 'text-green-600' : 'text-gray-400'}`} />
-                <span className={`text-sm ${isMonitoring ? 'text-green-600' : 'text-gray-400'}`}>
-                  {isMonitoring ? 'Monitoring' : 'Not Monitoring'}
-                </span>
-              </div>
-              
-              {/* Hidden test button - only visible in dev */}
-              {window.location.hostname === 'localhost' || window.location.search.includes('debug=true') ? (
-                <button
-                  onClick={runEndToEndTest}
-                  className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-md hover:bg-green-200 transition-colors"
-                  title="Run end-to-end test"
-                >
-                  Test E2E
-                </button>
-              ) : null}
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <Settings className="w-6 h-6 text-gray-600" />
-              </button>
             </div>
           </div>
         </div>
