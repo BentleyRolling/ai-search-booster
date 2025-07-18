@@ -1415,6 +1415,26 @@ const Dashboard = () => {
                       )}
                     </button>
                     <button
+                      onClick={() => {
+                        const drafts = products.filter(p => p.hasDraft);
+                        if (drafts.length === 0) {
+                          addNotification('No drafts to publish', 'info');
+                          return;
+                        }
+                        if (confirm(`Publish ${drafts.length} draft optimizations?\n\nThis will make the draft content live on your store.`)) {
+                          Promise.all(drafts.map(p => publishDraft('product', p.id)))
+                            .then(() => addNotification(`Successfully published ${drafts.length} drafts`, 'success'))
+                            .catch(err => addNotification('Some drafts failed to publish', 'error'));
+                        }
+                      }}
+                      disabled={optimizing || !products.some(p => p.hasDraft)}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      title="Publish all draft optimizations"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Publish Drafts</span>
+                    </button>
+                    <button
                       onClick={() => rollbackAllOptimizations('product')}
                       disabled={optimizing || !products.some(p => p.optimized)}
                       className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
@@ -1455,38 +1475,49 @@ const Dashboard = () => {
                                 {product.product_type}
                               </span>
                             )}
-                            <div className="mt-2 flex items-center space-x-2 flex-wrap">
-                              {product.optimized && (
-                                <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
-                                  ✓ Optimized
-                                </span>
-                              )}
+                            <div className="mt-3 flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                {product.optimized && (
+                                  <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                    ✓ Optimized
+                                  </span>
+                                )}
+                                {product.hasDraft && (
+                                  <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
+                                    📝 Draft Ready
+                                  </span>
+                                )}
+                              </div>
                               
-                              {/* Draft Actions */}
-                              <div className="flex items-center space-x-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePreviewDraft('product', product.id);
-                                  }}
-                                  className="text-blue-600 hover:text-blue-800 text-xs flex items-center space-x-1"
-                                  title="Preview draft content"
-                                >
-                                  <Eye className="w-3 h-3" />
-                                  <span>Preview</span>
-                                </button>
+                              {/* Action Buttons */}
+                              <div className="flex items-center space-x-2">
+                                {product.hasDraft && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePreviewDraft('product', product.id);
+                                    }}
+                                    className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    title="Preview draft content"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    <span>Preview</span>
+                                  </button>
+                                )}
                                 
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    publishDraft('product', product.id);
-                                  }}
-                                  className="text-green-600 hover:text-green-800 text-xs flex items-center space-x-1"
-                                  title="Publish draft optimization"
-                                >
-                                  <CheckCircle className="w-3 h-3" />
-                                  <span>Publish</span>
-                                </button>
+                                {product.hasDraft && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      publishDraft('product', product.id);
+                                    }}
+                                    className="px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    title="Publish draft optimization"
+                                  >
+                                    <CheckCircle className="w-3 h-3" />
+                                    <span>Publish</span>
+                                  </button>
+                                )}
                                 
                                 {product.optimized && (
                                   <button
@@ -1494,7 +1525,7 @@ const Dashboard = () => {
                                       e.stopPropagation();
                                       rollback('product', product.id);
                                     }}
-                                    className="text-red-600 hover:text-red-800 text-xs flex items-center space-x-1"
+                                    className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
                                     title="Rollback to original content"
                                   >
                                     <RotateCcw className="w-3 h-3" />
@@ -1553,6 +1584,28 @@ const Dashboard = () => {
                       )}
                     </button>
                     <button
+                      onClick={() => {
+                        const drafts = blogs.filter(b => b.hasDraft || b.articles?.some(a => a.hasDraft));
+                        if (drafts.length === 0) {
+                          addNotification('No drafts to publish', 'info');
+                          return;
+                        }
+                        if (confirm(`Publish ${drafts.length} draft optimizations?\n\nThis will make the draft content live on your store.`)) {
+                          Promise.all(drafts.flatMap(b => 
+                            b.articles?.filter(a => a.hasDraft).map(a => publishDraft('blog', a.id)) || []
+                          ))
+                            .then(() => addNotification(`Successfully published blog drafts`, 'success'))
+                            .catch(err => addNotification('Some drafts failed to publish', 'error'));
+                        }
+                      }}
+                      disabled={optimizing || !blogs.some(b => b.hasDraft || b.articles?.some(a => a.hasDraft))}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      title="Publish all draft optimizations"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Publish Drafts</span>
+                    </button>
+                    <button
                       onClick={() => rollbackAllOptimizations('blog')}
                       disabled={optimizing || !blogs.some(b => b.optimized)}
                       className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
@@ -1595,38 +1648,49 @@ const Dashboard = () => {
                                 {blog.articles.length} article{blog.articles.length !== 1 ? 's' : ''}
                               </span>
                             )}
-                            <div className="mt-2 flex items-center space-x-2 flex-wrap">
-                              {blog.optimized && (
-                                <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
-                                  ✓ Optimized
-                                </span>
-                              )}
+                            <div className="mt-3 flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                {blog.optimized && (
+                                  <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                    ✓ Optimized
+                                  </span>
+                                )}
+                                {blog.hasDraft && (
+                                  <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
+                                    📝 Draft Ready
+                                  </span>
+                                )}
+                              </div>
                               
-                              {/* Draft Actions */}
-                              <div className="flex items-center space-x-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePreviewDraft('blog', blog.id);
-                                  }}
-                                  className="text-blue-600 hover:text-blue-800 text-xs flex items-center space-x-1"
-                                  title="Preview draft content"
-                                >
-                                  <Eye className="w-3 h-3" />
-                                  <span>Preview</span>
-                                </button>
+                              {/* Action Buttons */}
+                              <div className="flex items-center space-x-2">
+                                {blog.hasDraft && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePreviewDraft('blog', blog.id);
+                                    }}
+                                    className="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    title="Preview draft content"
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                    <span>Preview</span>
+                                  </button>
+                                )}
                                 
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    publishDraft('blog', blog.id);
-                                  }}
-                                  className="text-green-600 hover:text-green-800 text-xs flex items-center space-x-1"
-                                  title="Publish draft optimization"
-                                >
-                                  <CheckCircle className="w-3 h-3" />
-                                  <span>Publish</span>
-                                </button>
+                                {blog.hasDraft && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      publishDraft('blog', blog.id);
+                                    }}
+                                    className="px-3 py-1 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
+                                    title="Publish draft optimization"
+                                  >
+                                    <CheckCircle className="w-3 h-3" />
+                                    <span>Publish</span>
+                                  </button>
+                                )}
                                 
                                 {blog.optimized && (
                                   <button
@@ -1634,7 +1698,7 @@ const Dashboard = () => {
                                       e.stopPropagation();
                                       rollback('blog', blog.id);
                                     }}
-                                    className="text-red-600 hover:text-red-800 text-xs flex items-center space-x-1"
+                                    className="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded-md font-medium flex items-center space-x-1 transition-colors"
                                     title="Rollback to original content"
                                   >
                                     <RotateCcw className="w-3 h-3" />
