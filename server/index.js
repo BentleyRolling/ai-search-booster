@@ -1300,7 +1300,11 @@ app.post('/api/rollback/:type/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Rollback error:', error);
-    res.status(500).json({ error: 'Failed to rollback: ' + error.message });
+    console.error('Error details:', error.response?.data);
+    res.status(500).json({ 
+      error: 'Failed to rollback: ' + error.message,
+      details: error.response?.data
+    });
   }
 });
 
@@ -1415,6 +1419,29 @@ app.get('/api/status', simpleVerifyShop, async (req, res) => {
           { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
         );
         totalBlogs = blogsRes.data.count;
+        
+        // Count optimized products by checking metafields
+        const productsWithMetaRes = await axios.get(
+          `https://${shop}/admin/api/2024-01/products.json?limit=250&fields=id`,
+          { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+        );
+        
+        const optimizedChecks = await Promise.all(
+          productsWithMetaRes.data.products.map(async (product) => {
+            try {
+              const metafieldsRes = await axios.get(
+                `https://${shop}/admin/api/2024-01/products/${product.id}/metafields.json?namespace=ai_search_booster&key=optimization_data`,
+                { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+              );
+              return metafieldsRes.data.metafields.length > 0;
+            } catch {
+              return false;
+            }
+          })
+        );
+        
+        optimizedProducts = optimizedChecks.filter(Boolean).length;
+        
       } catch (countError) {
         console.log('Could not fetch counts, using defaults:', countError.message);
         totalProducts = 1; // Fallback based on what we know
