@@ -1062,85 +1062,161 @@ app.post('/api/optimize/products', async (req, res) => {
 // API: Optimize blogs
 app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (req, res) => {
   try {
-    const { blogIds, articleIds, settings } = req.body;
+    const { blogIds, settings } = req.body;
     const { shop } = req;
     
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
     const results = [];
     
-    // If specific article IDs are provided
-    if (articleIds && articleIds.length > 0) {
-      for (const articleId of articleIds) {
-        try {
-          // Use mock article data instead of Shopify API
-          const article = {
-            id: articleId,
-            title: 'Sample Article ' + articleId,
-            content: 'This is a sample blog article with valuable content about our products and services.',
-            summary: 'A helpful article',
-            author: 'Blog Author',
-            tags: 'tips, advice, products'
-          };
-          
-          // Optimize content
-          const optimized = await optimizeContent(article, 'article', settings);
-          
-          results.push({
-            articleId,
-            blogId: 1,
-            status: 'success',
-            version: 'v1',
-            optimized
-          });
-        } catch (error) {
-          results.push({
-            articleId,
-            status: 'error',
-            error: error.message
-          });
+    // Process each blog ID
+    for (const blogId of blogIds) {
+      try {
+        // Fetch articles from this blog
+        const articlesResponse = await axios.get(
+          `https://${shop}/admin/api/2024-01/blogs/${blogId}/articles.json?limit=50&fields=id,title,content,summary,author,tags,handle,created_at,updated_at`,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        const articles = articlesResponse.data.articles;
+        console.log(`Found ${articles.length} articles in blog ${blogId}`);
+        
+        // Optimize each article in this blog
+        for (const article of articles) {
+          try {
+            // Store original as backup if not already stored
+            const metafieldsResponse = await axios.get(
+              `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json?namespace=ai_search_booster&key=original_backup`,
+              {
+                headers: { 'X-Shopify-Access-Token': accessToken }
+              }
+            );
+            
+            if (metafieldsResponse.data.metafields.length === 0) {
+              await axios.post(
+                `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json`,
+                {
+                  metafield: {
+                    namespace: 'ai_search_booster',
+                    key: 'original_backup',
+                    value: JSON.stringify({
+                      title: article.title,
+                      content: article.content,
+                      summary: article.summary,
+                      tags: article.tags
+                    }),
+                    type: 'json'
+                  }
+                },
+                {
+                  headers: { 'X-Shopify-Access-Token': accessToken }
+                }
+              );
+            }
+            
+            // Optimize content using AI
+            const optimized = await optimizeContent(article, 'article', settings);
+            
+            // Update the article with optimized content
+            const updateData = {
+              article: {
+                id: article.id
+              }
+            };
+            
+            // Only update if we have optimized content
+            if (optimized.optimizedTitle) {
+              updateData.article.title = optimized.optimizedTitle;
+            }
+            if (optimized.optimizedContent) {
+              updateData.article.content = optimized.optimizedContent;
+            }
+            if (optimized.optimizedSummary) {
+              updateData.article.summary = optimized.optimizedSummary;
+            }
+            
+            // Update article in Shopify
+            await axios.put(
+              `https://${shop}/admin/api/2024-01/articles/${article.id}.json`,
+              updateData,
+              {
+                headers: { 'X-Shopify-Access-Token': accessToken }
+              }
+            );
+            
+            // Store optimization metadata
+            await axios.post(
+              `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json`,
+              {
+                metafield: {
+                  namespace: 'ai_search_booster',
+                  key: 'optimization_data',
+                  value: JSON.stringify({
+                    optimized,
+                    settings,
+                    timestamp: new Date().toISOString()
+                  }),
+                  type: 'json'
+                }
+              },
+              {
+                headers: { 'X-Shopify-Access-Token': accessToken }
+              }
+            );
+            
+            results.push({
+              articleId: article.id,
+              blogId,
+              status: 'success',
+              message: `Successfully optimized article: ${article.title}`,
+              optimized
+            });
+            
+          } catch (articleError) {
+            console.error(`Failed to optimize article ${article.id}:`, articleError.message);
+            results.push({
+              articleId: article.id,
+              blogId,
+              status: 'error',
+              error: `Failed to optimize article: ${articleError.message}`
+            });
+          }
         }
+        
+      } catch (blogError) {
+        console.error(`Failed to fetch articles for blog ${blogId}:`, blogError.message);
+        results.push({
+          blogId,
+          status: 'error',
+          error: `Failed to fetch blog articles: ${blogError.message}`
+        });
       }
     }
     
-    // If blog IDs are provided, create mock articles
-    if (blogIds && blogIds.length > 0) {
-      for (const blogId of blogIds) {
-        try {
-          // Mock article for each blog
-          const article = {
-            id: blogId * 100 + 1,
-            title: 'Sample Blog Article for Blog ' + blogId,
-            content: 'This is a sample blog article with valuable content.',
-            summary: 'A helpful article',
-            author: 'Blog Author',
-            tags: 'tips, advice'
-          };
-          
-          const optimized = await optimizeContent(article, 'article', settings);
-          
-          results.push({
-            articleId: article.id,
-            blogId,
-            status: 'success',
-            version: 'v1',
-            optimized
-          });
-        } catch (error) {
-          results.push({
-            blogId,
-            status: 'error',
-            error: error.message
-          });
-        }
-      }
-    }
+    console.log(`Blog optimization completed: ${results.filter(r => r.status === 'success').length} successful, ${results.filter(r => r.status === 'error').length} failed`);
     
     res.json({
-      message: 'Blog optimization complete',
-      results
+      shop,
+      results,
+      summary: {
+        total: results.length,
+        successful: results.filter(r => r.status === 'success').length,
+        failed: results.filter(r => r.status === 'error').length
+      }
     });
   } catch (error) {
     console.error('Blog optimization error:', error);
-    res.status(500).json({ error: 'Failed to optimize blogs' });
+    res.status(500).json({ error: 'Failed to optimize blogs: ' + error.message });
   }
 });
 
