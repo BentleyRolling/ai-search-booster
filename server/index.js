@@ -901,11 +901,32 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
     if (draftContent) {
       try {
         const updateEndpoint = resourceType === 'product' ? 'products' : 'articles';
-        const updatePayload = resourceType === 'product' 
-          ? { product: { id: resourceId, body_html: draftContent } }
-          : { article: { id: resourceId, content: draftContent } };
-          
+        
+        // Parse draft content to extract the optimized content
+        const parsedDraft = JSON.parse(draftContent);
+        const optimizedContent = parsedDraft.body_html || parsedDraft.content || parsedDraft.llmDescription;
+        const optimizedTitle = parsedDraft.title;
+        
         console.log(`[PUBLISH] Updating ${resourceType} content for ID ${resourceId}`);
+        console.log(`[PUBLISH] Optimized content length:`, optimizedContent?.length || 0);
+        console.log(`[PUBLISH] Optimized title:`, optimizedTitle);
+        
+        const updatePayload = resourceType === 'product' 
+          ? { 
+              product: { 
+                id: resourceId, 
+                body_html: optimizedContent,
+                ...(optimizedTitle && { title: optimizedTitle })
+              } 
+            }
+          : { 
+              article: { 
+                id: resourceId, 
+                body_html: optimizedContent,
+                ...(optimizedTitle && { title: optimizedTitle })
+              } 
+            };
+            
         await axios.put(
           `https://${shop}/admin/api/2024-01/${updateEndpoint}/${resourceId}.json`,
           updatePayload,
