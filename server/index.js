@@ -1031,12 +1031,16 @@ app.post('/api/publish/product/:id', simpleVerifyShop, async (req, res) => {
           };
               
           console.log(`[PUBLISH] Updating product content for ID ${resourceId}`);
+          console.log(`[PUBLISH] PUT URL: https://${shop}/admin/api/2024-01/products/${resourceId}.json`);
+          console.log(`[PUBLISH] PUT Payload:`, JSON.stringify(updatePayload, null, 2));
           
-          await axios.put(
+          const putResponse = await axios.put(
             `https://${shop}/admin/api/2024-01/products/${resourceId}.json`,
             updatePayload,
             { headers: { 'X-Shopify-Access-Token': accessToken } }
           );
+          console.log(`[PUBLISH] Shopify PUT Response Status:`, putResponse.status);
+          console.log(`[PUBLISH] Shopify PUT Response Data:`, JSON.stringify(putResponse.data, null, 2));
           console.log(`[PUBLISH] Successfully updated product content and title`);
         } else {
           console.warn(`[PUBLISH] No optimized content found in draft data`);
