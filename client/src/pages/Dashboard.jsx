@@ -41,6 +41,21 @@ const Dashboard = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState(null);
   
+  // Global error handler to prevent error boundary
+  useEffect(() => {
+    const handleUnhandledRejection = (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      addNotification('An unexpected error occurred. Please try again.', 'error');
+      event.preventDefault();
+    };
+    
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+  
   // Citation monitoring hook
   const { 
     citations, 
@@ -749,21 +764,34 @@ const Dashboard = () => {
   const performPublishDraft = async (type, id) => {
     
     try {
+      console.log('[PUBLISH] Starting publish for', type, id);
       setOptimizing(true);
+      
+      const requestBody = { 
+        resourceType: type, 
+        resourceId: id 
+      };
+      console.log('[PUBLISH] Request body:', requestBody);
+      console.log('[PUBLISH] Shop:', shop);
+      console.log('[PUBLISH] API_BASE:', API_BASE);
+      
       const response = await authFetch(`${API_BASE}/api/optimize/publish?shop=${shop}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          resourceType: type, 
-          resourceId: id 
-        })
+        body: JSON.stringify(requestBody)
       });
       
+      console.log('[PUBLISH] Response received:', response.status, response.statusText);
+      console.log('[PUBLISH] Response OK:', response.ok);
+      
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('[PUBLISH] Error response body:', errorText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       
       const data = await response.json();
+      console.log('[PUBLISH] Success response:', data);
       addNotification('Draft published successfully', 'success');
       
       // Update the product/blog status to reflect the publication
@@ -783,8 +811,11 @@ const Dashboard = () => {
       
       return data;
     } catch (error) {
-      console.error('Publish draft error:', error);
-      addNotification('Failed to publish draft. Please try again.', 'error');
+      console.error('[PUBLISH] Error caught:', error);
+      console.error('[PUBLISH] Error type:', typeof error);
+      console.error('[PUBLISH] Error message:', error.message);
+      console.error('[PUBLISH] Error stack:', error.stack);
+      addNotification(`Failed to publish draft: ${error.message}`, 'error');
       throw error;
     } finally {
       setOptimizing(false);
