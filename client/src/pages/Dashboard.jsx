@@ -2080,58 +2080,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Confirmation Modal */}
-      {showConfirmModal && confirmConfig && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {confirmConfig.title}
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                {confirmConfig.message}
-              </p>
-              <div className="mb-4">
-                <p className="text-sm font-medium text-gray-700 mb-2">This will:</p>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  {confirmConfig.details?.map((detail, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="text-gray-400 mr-2">•</span>
-                      {detail}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="p-3 bg-red-50 rounded-md mb-6">
-                <p className="text-sm text-red-800 font-medium">
-                  ⚠️ {confirmConfig.warning}
-                </p>
-              </div>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => {
-                    setShowConfirmModal(false);
-                    setConfirmConfig(null);
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    setShowConfirmModal(false);
-                    confirmConfig.onConfirm();
-                    setConfirmConfig(null);
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
-                >
-                  Rollback
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Confirmation Modal */}
       {showConfirmModal && confirmConfig && (
