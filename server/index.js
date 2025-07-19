@@ -470,6 +470,11 @@ const generateMockOptimization = (content, type) => {
 const optimizeContent = async (content, type, settings = {}) => {
   const { targetLLM = 'general', keywords = [], tone = 'professional' } = settings;
   
+  // Ensure keywords is always an array
+  const keywordsArray = Array.isArray(keywords) ? keywords : 
+                       typeof keywords === 'string' ? keywords.split(',').map(k => k.trim()).filter(k => k) :
+                       [];
+  
   // If in mock mode, use fallback
   if (MOCK_MODE) {
     return {
@@ -498,7 +503,7 @@ const optimizeContent = async (content, type, settings = {}) => {
   const prompt = `You are an expert e-commerce content optimizer. Optimize this ${type} for AI/LLM search visibility and customer engagement.
 
 Target LLM: ${targetLLM}
-Keywords to emphasize: ${keywords.join(', ')}
+Keywords to emphasize: ${keywordsArray.join(', ')}
 Tone: ${tone}
 
 Original content: ${JSON.stringify(content)}
@@ -892,6 +897,27 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
     console.log('[PUBLISH] FAQ data found:', !!draftFaq);
     console.log('[PUBLISH] Settings found:', !!draftSettings);
     
+    // Update the actual product/article content with optimized content
+    if (draftContent) {
+      try {
+        const updateEndpoint = resourceType === 'product' ? 'products' : 'articles';
+        const updatePayload = resourceType === 'product' 
+          ? { product: { id: resourceId, body_html: draftContent } }
+          : { article: { id: resourceId, content: draftContent } };
+          
+        console.log(`[PUBLISH] Updating ${resourceType} content for ID ${resourceId}`);
+        await axios.put(
+          `https://${shop}/admin/api/2024-01/${updateEndpoint}/${resourceId}.json`,
+          updatePayload,
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+        console.log(`[PUBLISH] Successfully updated ${resourceType} content`);
+      } catch (contentError) {
+        console.error(`[PUBLISH] Failed to update ${resourceType} content:`, contentError.response?.data || contentError.message);
+        throw new Error(`Failed to update ${resourceType} content: ${contentError.response?.data?.errors || contentError.message}`);
+      }
+    }
+    
     // Create/update live metafields one by one
     for (const metafield of liveMetafields) {
       try {
@@ -907,6 +933,7 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
         console.log(`[PUBLISH] Created live metafield: ${metafield.key}`);
       } catch (error) {
         console.error(`[PUBLISH] Error creating metafield ${metafield.key}:`, error.response?.data || error.message);
+        // Don't fail the entire publish for metafield errors
       }
     }
     
@@ -942,6 +969,292 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
   } catch (error) {
     console.error('Publish error:', error);
     res.status(500).json({ error: 'Failed to publish draft optimization' });
+  }
+});
+
+// API: RESTful publish endpoints for E2E testing
+app.post('/api/publish/product/:id', simpleVerifyShop, async (req, res) => {
+  try {
+    const { id: resourceId } = req.params;
+    const { shop } = req;
+    
+    // Forward to the main publish endpoint
+    req.body = { resourceType: 'product', resourceId };
+    
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
+    
+    const endpoint = `products/${resourceId}/metafields`;
+    
+    // Get draft metafields
+    const draftResponse = await axios.get(
+      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=asb`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    const metafields = draftResponse.data.metafields;
+    const draftContent = metafields.find(m => m.key === 'optimized_content_draft')?.value;
+    const draftFaq = metafields.find(m => m.key === 'faq_data_draft')?.value;
+    const draftSettings = metafields.find(m => m.key === 'optimization_settings_draft')?.value;
+    
+    if (!draftContent) {
+      return res.status(404).json({ error: 'No draft content found to publish' });
+    }
+    
+    // Parse and update the actual product content with optimized content
+    if (draftContent) {
+      try {
+        // Parse the draft content (stored as JSON object)
+        const draftData = JSON.parse(draftContent);
+        const optimizedContent = draftData.body_html || draftData.llmDescription || draftData.content;
+        const optimizedTitle = draftData.title;
+        
+        console.log(`[PUBLISH] Parsed draft data:`, draftData);
+        console.log(`[PUBLISH] Optimized content length:`, optimizedContent?.length);
+        console.log(`[PUBLISH] Optimized title:`, optimizedTitle);
+        
+        if (optimizedContent) {
+          const updatePayload = { 
+            product: { 
+              id: resourceId, 
+              body_html: optimizedContent,
+              ...(optimizedTitle && { title: optimizedTitle })
+            } 
+          };
+              
+          console.log(`[PUBLISH] Updating product content for ID ${resourceId}`);
+          
+          await axios.put(
+            `https://${shop}/admin/api/2024-01/products/${resourceId}.json`,
+            updatePayload,
+            { headers: { 'X-Shopify-Access-Token': accessToken } }
+          );
+          console.log(`[PUBLISH] Successfully updated product content and title`);
+        } else {
+          console.warn(`[PUBLISH] No optimized content found in draft data`);
+        }
+      } catch (contentError) {
+        console.error(`[PUBLISH] Failed to update product content:`, contentError.response?.data || contentError.message);
+        console.error(`[PUBLISH] Draft content that failed:`, draftContent);
+        throw new Error(`Failed to update product content: ${contentError.response?.data?.errors || contentError.message}`);
+      }
+    }
+    
+    // Create live metafields
+    const liveMetafields = [
+      {
+        namespace: 'asb',
+        key: 'optimized_content',
+        value: draftContent,
+        type: 'multi_line_text_field'
+      },
+      {
+        namespace: 'asb',
+        key: 'faq_data',
+        value: draftFaq,
+        type: 'json'
+      },
+      {
+        namespace: 'asb',
+        key: 'enable_schema',
+        value: 'true',
+        type: 'boolean'
+      },
+      {
+        namespace: 'asb',
+        key: 'published_timestamp',
+        value: new Date().toISOString(),
+        type: 'single_line_text_field'
+      }
+    ];
+    
+    // Create/update live metafields
+    for (const metafield of liveMetafields) {
+      try {
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/products/${resourceId}/metafields.json`,
+          { metafield },
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+        console.log(`[PUBLISH] Created live metafield: ${metafield.key}`);
+      } catch (error) {
+        console.error(`[PUBLISH] Error creating metafield ${metafield.key}:`, error.response?.data || error.message);
+      }
+    }
+    
+    // Clean up draft metafields
+    try {
+      const draftMetafieldIds = metafields
+        .filter(m => ['optimized_content_draft', 'faq_data_draft', 'optimization_settings_draft'].includes(m.key))
+        .map(m => m.id);
+      
+      for (const metafieldId of draftMetafieldIds) {
+        try {
+          await axios.delete(
+            `https://${shop}/admin/api/2024-01/metafields/${metafieldId}.json`,
+            { headers: { 'X-Shopify-Access-Token': accessToken } }
+          );
+          console.log(`[PUBLISH] Deleted draft metafield ${metafieldId}`);
+        } catch (deleteError) {
+          console.error(`[PUBLISH] Failed to delete draft metafield ${metafieldId}:`, deleteError.response?.data || deleteError.message);
+        }
+      }
+    } catch (cleanupError) {
+      console.error('[PUBLISH] Draft cleanup error:', cleanupError);
+    }
+    
+    res.json({
+      message: 'Product draft published successfully',
+      resourceType: 'product',
+      resourceId,
+      published: true,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Product publish error:', error);
+    res.status(500).json({ error: 'Failed to publish product draft' });
+  }
+});
+
+app.post('/api/publish/article/:id', simpleVerifyShop, async (req, res) => {
+  try {
+    const { id: resourceId } = req.params;
+    const { shop } = req;
+    
+    // Similar implementation for articles
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
+    
+    const endpoint = `articles/${resourceId}/metafields`;
+    
+    // Get draft metafields
+    const draftResponse = await axios.get(
+      `https://${shop}/admin/api/2024-01/${endpoint}.json?namespace=asb`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    const metafields = draftResponse.data.metafields;
+    const draftContent = metafields.find(m => m.key === 'optimized_content_draft')?.value;
+    const draftFaq = metafields.find(m => m.key === 'faq_data_draft')?.value;
+    
+    if (!draftContent) {
+      return res.status(404).json({ error: 'No draft content found to publish' });
+    }
+    
+    // Parse and update the actual article content
+    if (draftContent) {
+      try {
+        const draftData = JSON.parse(draftContent);
+        const optimizedContent = draftData.content || draftData.llmDescription;
+        const optimizedTitle = draftData.title;
+        
+        if (optimizedContent) {
+          const updatePayload = { 
+            article: { 
+              id: resourceId, 
+              content: optimizedContent,
+              ...(optimizedTitle && { title: optimizedTitle })
+            } 
+          };
+              
+          await axios.put(
+            `https://${shop}/admin/api/2024-01/articles/${resourceId}.json`,
+            updatePayload,
+            { headers: { 'X-Shopify-Access-Token': accessToken } }
+          );
+          console.log(`[PUBLISH] Successfully updated article content and title`);
+        }
+      } catch (contentError) {
+        console.error(`[PUBLISH] Failed to update article content:`, contentError.response?.data || contentError.message);
+        throw new Error(`Failed to update article content: ${contentError.response?.data?.errors || contentError.message}`);
+      }
+    }
+    
+    // Create live metafields for article
+    const liveMetafields = [
+      {
+        namespace: 'asb',
+        key: 'optimized_content',
+        value: draftContent,
+        type: 'multi_line_text_field'
+      },
+      {
+        namespace: 'asb',
+        key: 'faq_data',
+        value: draftFaq,
+        type: 'json'
+      },
+      {
+        namespace: 'asb',
+        key: 'enable_schema',
+        value: 'true',
+        type: 'boolean'
+      },
+      {
+        namespace: 'asb',
+        key: 'published_timestamp',
+        value: new Date().toISOString(),
+        type: 'single_line_text_field'
+      }
+    ];
+    
+    for (const metafield of liveMetafields) {
+      try {
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/articles/${resourceId}/metafields.json`,
+          { metafield },
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+      } catch (error) {
+        console.error(`[PUBLISH] Error creating article metafield ${metafield.key}:`, error.response?.data || error.message);
+      }
+    }
+    
+    // Clean up draft metafields
+    try {
+      const draftMetafieldIds = metafields
+        .filter(m => ['optimized_content_draft', 'faq_data_draft', 'optimization_settings_draft'].includes(m.key))
+        .map(m => m.id);
+      
+      for (const metafieldId of draftMetafieldIds) {
+        try {
+          await axios.delete(
+            `https://${shop}/admin/api/2024-01/metafields/${metafieldId}.json`,
+            { headers: { 'X-Shopify-Access-Token': accessToken } }
+          );
+        } catch (deleteError) {
+          console.error(`[PUBLISH] Failed to delete article draft metafield ${metafieldId}:`, deleteError.response?.data || deleteError.message);
+        }
+      }
+    } catch (cleanupError) {
+      console.error('[PUBLISH] Article draft cleanup error:', cleanupError);
+    }
+    
+    res.json({
+      message: 'Article draft published successfully',
+      resourceType: 'article',
+      resourceId,
+      published: true,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Article publish error:', error);
+    res.status(500).json({ error: 'Failed to publish article draft' });
   }
 });
 
