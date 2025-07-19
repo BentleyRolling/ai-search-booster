@@ -12,6 +12,7 @@ const API_BASE = process.env.API_BASE || 'http://localhost:3001';
 const SHOP = process.env.SHOP || 'aisearch-dev.myshopify.com';
 const PRODUCT_ID = process.env.PRODUCT_ID || '8292782140634';
 const ARTICLE_ID = process.env.ARTICLE_ID || '9114334006874';
+const BLOG_ID = process.env.BLOG_ID || '92091318319';
 const MOCK_MODE = process.env.MOCK_MODE === 'true';
 
 console.log('🧪 E2E Optimization Pipeline Test');
@@ -19,6 +20,7 @@ console.log(`API_BASE: ${API_BASE}`);
 console.log(`SHOP: ${SHOP}`);
 console.log(`PRODUCT_ID: ${PRODUCT_ID}`);
 console.log(`ARTICLE_ID: ${ARTICLE_ID}`);
+console.log(`BLOG_ID: ${BLOG_ID}`);
 console.log(`MOCK_MODE: ${MOCK_MODE}`);
 console.log('');
 
@@ -247,7 +249,7 @@ class E2ETest {
         headers: { 'Content-Type': 'application/json' },
         data: {
           shop: SHOP,
-          blogIds: [articleId],
+          blogIds: [BLOG_ID],
           settings: {
             targetLLM: 'ChatGPT',
             keywords: 'test, quality, premium',
