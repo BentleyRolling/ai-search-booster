@@ -68,9 +68,14 @@ const Dashboard = () => {
     setConfirmConfig(null);
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     if (confirmConfig?.onConfirm) {
-      confirmConfig.onConfirm();
+      try {
+        await confirmConfig.onConfirm();
+      } catch (error) {
+        console.error('Confirmation action error:', error);
+        addNotification('Operation failed. Please try again.', 'error');
+      }
     }
     handleConfirmClose();
   };
