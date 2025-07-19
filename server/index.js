@@ -1164,14 +1164,14 @@ app.post('/api/publish/article/:id', simpleVerifyShop, async (req, res) => {
     if (draftContent) {
       try {
         const draftData = JSON.parse(draftContent);
-        const optimizedContent = draftData.content || draftData.llmDescription;
+        const optimizedContent = draftData.body_html || draftData.content || draftData.llmDescription;
         const optimizedTitle = draftData.title;
         
         if (optimizedContent) {
           const updatePayload = { 
             article: { 
               id: resourceId, 
-              content: optimizedContent,
+              body_html: optimizedContent,
               ...(optimizedTitle && { title: optimizedTitle })
             } 
           };
@@ -1703,7 +1703,7 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
       try {
         // Fetch articles from this blog
         const articlesResponse = await axios.get(
-          `https://${shop}/admin/api/2024-01/blogs/${blogId}/articles.json?limit=50&fields=id,title,content,summary,author,tags,handle,created_at,updated_at`,
+          `https://${shop}/admin/api/2024-01/blogs/${blogId}/articles.json?limit=50&fields=id,title,body_html,summary,author,tags,handle,created_at,updated_at`,
           {
             headers: { 'X-Shopify-Access-Token': accessToken }
           }
@@ -1732,7 +1732,7 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
                     key: 'original_backup',
                     value: JSON.stringify({
                       title: article.title,
-                      content: article.content,
+                      body_html: article.body_html,
                       summary: article.summary,
                       tags: article.tags
                     }),
@@ -1760,7 +1760,7 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
                   key: 'optimized_content_draft',
                   value: JSON.stringify({
                     title: optimized.optimizedTitle,
-                    content: optimized.optimizedDescription,
+                    body_html: optimized.optimizedDescription,
                     summary: optimized.summary,
                     llmDescription: optimized.llmDescription
                   }),

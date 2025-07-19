@@ -238,7 +238,7 @@ class E2ETest {
       }
       
       console.log(`📝 Found article: ${testArticle.title}`);
-      console.log(`📝 Original content length: ${testArticle.content?.length || 0} chars`);
+      console.log(`📝 Original body_html length: ${testArticle.body_html?.length || 0} chars`);
       
       // Step 3: Optimize the article
       console.log('🤖 Starting article optimization...');
@@ -301,11 +301,11 @@ class E2ETest {
       const shopifyArticle = shopifyResponse.data.article;
       
       console.log(`🔍 Shopify article title: ${shopifyArticle.title}`);
-      console.log(`🔍 Shopify content length: ${shopifyArticle.content?.length || 0} chars`);
+      console.log(`🔍 Shopify body_html length: ${shopifyArticle.body_html?.length || 0} chars`);
       
       // Step 8: Assert changes were made
       const draftContent = JSON.parse(draftData.draft.content);
-      const expectedContent = draftContent.content || draftContent.llmDescription;
+      const expectedContent = draftContent.body_html || draftContent.llmDescription;
       const expectedTitle = draftContent.title;
       
       console.log(`🎯 Expected content length: ${expectedContent?.length || 0} chars`);
@@ -315,10 +315,10 @@ class E2ETest {
         throw new Error(`Article title mismatch: expected "${expectedTitle}", got "${shopifyArticle.title}"`);
       }
       
-      if (expectedContent && !shopifyArticle.content?.includes(expectedContent.substring(0, 50))) {
+      if (expectedContent && !shopifyArticle.body_html?.includes(expectedContent.substring(0, 50))) {
         console.log(`⚠️  Article content mismatch detected`);
         console.log(`Expected: ${expectedContent.substring(0, 100)}...`);
-        console.log(`Actual: ${shopifyArticle.content?.substring(0, 100)}...`);
+        console.log(`Actual: ${shopifyArticle.body_html?.substring(0, 100)}...`);
         throw new Error('Article content was not updated with optimized content');
       }
       
