@@ -1262,6 +1262,20 @@ app.post('/api/publish/article/:id', simpleVerifyShop, async (req, res) => {
   }
 });
 
+// TEMPORARY: Debug endpoint to get access token for E2E testing
+app.get('/api/debug/token', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req;
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ error: 'No access token found' });
+    }
+    res.json({ token: shopInfo.accessToken });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get token' });
+  }
+});
+
 // API: Get draft content for preview
 app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
   try {
