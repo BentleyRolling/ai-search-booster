@@ -1333,6 +1333,23 @@ app.get('/api/debug/shopdata', (req, res) => {
   });
 });
 
+// TEMPORARY: Debug endpoint to clear shop data and force re-auth
+app.post('/api/debug/clear-shop/:shop', (req, res) => {
+  const { shop } = req.params;
+  if (!shop) {
+    return res.status(400).json({ error: 'Missing shop parameter' });
+  }
+  
+  const hadData = shopData.has(shop);
+  shopData.delete(shop);
+  
+  res.json({
+    message: `Shop data cleared for ${shop}`,
+    hadData,
+    authUrl: `${req.protocol}://${req.get('host')}/auth?shop=${shop}`
+  });
+});
+
 // API: Get draft content for preview
 app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
   try {
