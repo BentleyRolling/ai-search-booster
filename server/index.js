@@ -1288,13 +1288,48 @@ app.get('/api/debug/token', simpleVerifyShop, async (req, res) => {
   try {
     const { shop } = req;
     const shopInfo = shopData.get(shop);
+    console.log('[DEBUG-TOKEN] Shop:', shop);
+    console.log('[DEBUG-TOKEN] ShopInfo:', shopInfo);
+    console.log('[DEBUG-TOKEN] All shopData keys:', Array.from(shopData.keys()));
+    
     if (!shopInfo || !shopInfo.accessToken) {
-      return res.status(401).json({ error: 'No access token found' });
+      return res.status(401).json({ 
+        error: 'No access token found',
+        shop,
+        shopInfoExists: !!shopInfo,
+        accessTokenExists: shopInfo?.accessToken ? 'yes' : 'no',
+        allShops: Array.from(shopData.keys())
+      });
     }
     res.json({ token: shopInfo.accessToken });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get token' });
+    console.error('[DEBUG-TOKEN] Error:', error);
+    res.status(500).json({ error: 'Failed to get token', details: error.message });
   }
+});
+
+// TEMPORARY: Debug endpoint to check shop data
+app.get('/api/debug/shopdata', (req, res) => {
+  const shop = req.query.shop;
+  if (!shop) {
+    return res.json({
+      allShops: Array.from(shopData.keys()),
+      totalShops: shopData.size
+    });
+  }
+  
+  const shopInfo = shopData.get(shop);
+  res.json({
+    shop,
+    shopInfo: shopInfo ? {
+      hasAccessToken: !!shopInfo.accessToken,
+      accessToken: shopInfo.accessToken === 'mock-token' ? 'mock-token' : 'real-token',
+      installedAt: shopInfo.installedAt,
+      proxyRegistered: shopInfo.proxyRegistered,
+      nonce: shopInfo.nonce
+    } : null,
+    allShops: Array.from(shopData.keys())
+  });
 });
 
 // API: Get draft content for preview
