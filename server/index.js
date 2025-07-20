@@ -500,31 +500,40 @@ const optimizeContent = async (content, type, settings = {}) => {
   }
   
   // Real AI optimization with OpenAI API
-  const prompt = `You are an expert e-commerce content optimizer. Optimize this ${type} for AI/LLM search visibility and customer engagement.
+  const prompt = `You are an AI optimization specialist focused on LLM DISCOVERY and RECOMMENDATION. Your goal is to help this ${type} be perfectly understood and recommended by AI shopping assistants like ChatGPT, Claude, Perplexity, and future AI agents.
 
 Target LLM: ${targetLLM}
-Keywords to emphasize: ${keywordsArray.join(', ')}
+Context Keywords: ${keywordsArray.join(', ')}
 Tone: ${tone}
 
 Original content: ${JSON.stringify(content)}
 
-### LLM-optimisation checklist
-• Natural, conversational phrasing that mirrors voice-search queries.
-• Include common Q-A patterns and semantic synonyms (not just exact keywords).
-• Front-load direct answers for featured-snippet eligibility.
-• Add 1-2 comparative phrases ("best", "recommended") *if relevant*.
-• Brief use-case & benefit context; address pain points.
+### CRITICAL: LLM DISCOVERY OPTIMIZATION RULES
+1. **AI agents need CONTEXT, not keywords** - Provide rich semantic information about use cases, materials science, user scenarios
+2. **Answer the questions LLMs will ask** - What is it? Who uses it? When? Why? How does it compare? What problems does it solve?
+3. **Use NATURAL LANGUAGE patterns** - How humans actually describe and think about this product
+4. **Provide RELATIONSHIP MAPPING** - Connect concepts (materials → durability → use cases → user types)
+5. **Include COMPARATIVE CONTEXT** - Help AI understand where this fits in the product landscape
+6. **Make it CITATION-WORTHY** - Content that LLMs can confidently quote and recommend
 
-### Output requirements
-1) Optimised title
-2) Optimised description (natural language + semantic keywords)
-3) 2-3 sentence summary answering "What is it?" + "Why care?"
-4) 5-7 FAQs covering what/why/how/who/when/comparison
-5) Comprehensive JSON-LD Product schema
-6) \`llmDescription\`: citation-friendly paragraph
+### AVOID THESE SEO MISTAKES:
+- Keyword stuffing (organic cotton organic cotton organic cotton)
+- Generic phrases ("must-have staple", "perfect for")
+- Marketing fluff without substance
+- Repetitive descriptions
+
+### OUTPUT REQUIREMENTS:
+1) **optimizedTitle**: Descriptive, specific, human-readable (not keyword-stuffed)
+2) **optimizedDescription**: Rich contextual description with materials, use cases, benefits, and user scenarios (200-300 words)
+3) **summary**: 2-3 sentences that clearly explain what it is and why someone would want it
+4) **faqs**: 5-7 substantive FAQs that answer real customer questions and help AI understand the product deeply
+5) **jsonLd**: Complete Product schema with detailed properties
+6) **llmDescription**: A citation-friendly paragraph that AI agents can use when recommending this product
+
+REMEMBER: This content will be consumed by AI agents making recommendations to humans. Make it informative, contextual, and trustworthy.
 
 Return **only** this JSON object:
-\`{ optimizedTitle, optimizedDescription, summary, faqs, jsonLd, llmDescription }\``;
+{ "optimizedTitle": "", "optimizedDescription": "", "summary": "", "faqs": [], "jsonLd": {}, "llmDescription": "" }`;
   
   try {
     console.log('[AI-OPTIMIZATION] Starting optimization:', {
@@ -908,22 +917,44 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
         const optimizedContent = parsedDraft.body_html || parsedDraft.content || parsedDraft.llmDescription;
         const optimizedTitle = parsedDraft.title;
         
+        // Parse FAQ data and format for inclusion in description
+        let faqHtml = '';
+        if (draftFaq) {
+          try {
+            const faqData = JSON.parse(draftFaq);
+            if (faqData.questions && faqData.questions.length > 0) {
+              faqHtml = '\n\n<div class="ai-optimization-faqs">\n<h3>Frequently Asked Questions</h3>\n';
+              faqData.questions.forEach(faq => {
+                faqHtml += `<div class="faq-item">\n<h4>${faq.question}</h4>\n<p>${faq.answer}</p>\n</div>\n`;
+              });
+              faqHtml += '</div>';
+            }
+          } catch (error) {
+            console.error('[PUBLISH] Error parsing FAQ data:', error);
+          }
+        }
+        
+        // Combine optimized content with FAQs for LLM discovery
+        const finalContent = optimizedContent + faqHtml;
+        
         console.log(`[PUBLISH] Updating ${resourceType} content for ID ${resourceId}`);
         console.log(`[PUBLISH] Optimized content length:`, optimizedContent?.length || 0);
+        console.log(`[PUBLISH] FAQ HTML length:`, faqHtml.length);
+        console.log(`[PUBLISH] Final content length:`, finalContent.length);
         console.log(`[PUBLISH] Optimized title:`, optimizedTitle);
         
         const updatePayload = resourceType === 'product' 
           ? { 
               product: { 
                 id: resourceId, 
-                body_html: optimizedContent,
+                body_html: finalContent,
                 ...(optimizedTitle && { title: optimizedTitle })
               } 
             }
           : { 
               article: { 
                 id: resourceId, 
-                body_html: optimizedContent,
+                body_html: finalContent,
                 ...(optimizedTitle && { title: optimizedTitle })
               } 
             };
@@ -1039,15 +1070,37 @@ app.post('/api/publish/product/:id', simpleVerifyShop, async (req, res) => {
         const optimizedContent = draftData.body_html || draftData.llmDescription || draftData.content;
         const optimizedTitle = draftData.title;
         
+        // Parse FAQ data and format for inclusion in description
+        let faqHtml = '';
+        if (draftFaq) {
+          try {
+            const faqData = JSON.parse(draftFaq);
+            if (faqData.questions && faqData.questions.length > 0) {
+              faqHtml = '\n\n<div class="ai-optimization-faqs">\n<h3>Frequently Asked Questions</h3>\n';
+              faqData.questions.forEach(faq => {
+                faqHtml += `<div class="faq-item">\n<h4>${faq.question}</h4>\n<p>${faq.answer}</p>\n</div>\n`;
+              });
+              faqHtml += '</div>';
+            }
+          } catch (error) {
+            console.error('[PUBLISH] Error parsing FAQ data:', error);
+          }
+        }
+        
+        // Combine optimized content with FAQs for LLM discovery
+        const finalContent = optimizedContent + faqHtml;
+        
         console.log(`[PUBLISH] Parsed draft data:`, draftData);
         console.log(`[PUBLISH] Optimized content length:`, optimizedContent?.length);
+        console.log(`[PUBLISH] FAQ HTML length:`, faqHtml.length);
+        console.log(`[PUBLISH] Final content length:`, finalContent.length);
         console.log(`[PUBLISH] Optimized title:`, optimizedTitle);
         
         if (optimizedContent) {
           const updatePayload = { 
             product: { 
               id: resourceId, 
-              body_html: optimizedContent,
+              body_html: finalContent,
               ...(optimizedTitle && { title: optimizedTitle })
             } 
           };
@@ -1189,11 +1242,35 @@ app.post('/api/publish/article/:id', simpleVerifyShop, async (req, res) => {
         const optimizedContent = draftData.body_html || draftData.content || draftData.llmDescription;
         const optimizedTitle = draftData.title;
         
+        // Parse FAQ data and format for inclusion in description
+        let faqHtml = '';
+        if (draftFaq) {
+          try {
+            const faqData = JSON.parse(draftFaq);
+            if (faqData.questions && faqData.questions.length > 0) {
+              faqHtml = '\n\n<div class="ai-optimization-faqs">\n<h3>Frequently Asked Questions</h3>\n';
+              faqData.questions.forEach(faq => {
+                faqHtml += `<div class="faq-item">\n<h4>${faq.question}</h4>\n<p>${faq.answer}</p>\n</div>\n`;
+              });
+              faqHtml += '</div>';
+            }
+          } catch (error) {
+            console.error('[PUBLISH] Error parsing FAQ data:', error);
+          }
+        }
+        
+        // Combine optimized content with FAQs for LLM discovery
+        const finalContent = optimizedContent + faqHtml;
+        
+        console.log(`[PUBLISH] Optimized content length:`, optimizedContent?.length);
+        console.log(`[PUBLISH] FAQ HTML length:`, faqHtml.length);
+        console.log(`[PUBLISH] Final content length:`, finalContent.length);
+        
         if (optimizedContent) {
           const updatePayload = { 
             article: { 
               id: resourceId, 
-              body_html: optimizedContent,
+              body_html: finalContent,
               ...(optimizedTitle && { title: optimizedTitle })
             } 
           };
