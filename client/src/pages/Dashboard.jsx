@@ -759,29 +759,26 @@ const Dashboard = () => {
             fetchHistory(shop),
             fetchUsage(shop)
           ]);
-            
-            // Poll for updates if the item still shows as optimized
-            let retries = 0;
-            while (retries < 3) {
-              const currentProduct = products.find(p => p.id.toString() === id.toString());
-              const currentBlog = blogs.find(b => b.id.toString() === id.toString());
-              
-              if ((type === 'product' && currentProduct && !currentProduct.optimized) ||
-                  (type === 'blog' && currentBlog && !currentBlog.optimized)) {
-                console.log('Rollback status updated successfully');
-                break;
-              }
-              
-              console.log(`Retry ${retries + 1}: Status not updated yet, refreshing again...`);
-              await new Promise(resolve => setTimeout(resolve, 2000));
-              await fetchStatus(shop);
-              await fetchProducts(shop);
-              await fetchBlogs(shop);
-              retries++;
-            }
-          };
           
-          refreshAfterRollback();
+          // Poll for updates if the item still shows as optimized
+          let retries = 0;
+          while (retries < 3) {
+            const currentProduct = products.find(p => p.id.toString() === id.toString());
+            const currentBlog = blogs.find(b => b.id.toString() === id.toString());
+            
+            if ((type === 'product' && currentProduct && !currentProduct.optimized) ||
+                (type === 'blog' && currentBlog && !currentBlog.optimized)) {
+              console.log('Rollback status updated successfully');
+              break;
+            }
+            
+            console.log(`Retry ${retries + 1}: Status not updated yet, refreshing again...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await fetchStatus(shop);
+            await fetchProducts(shop);
+            await fetchBlogs(shop);
+            retries++;
+          }
         } catch (error) {
           console.error('Rollback error:', error);
           addNotification('Failed to rollback: ' + error.message, 'error');
