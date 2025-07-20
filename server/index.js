@@ -2428,12 +2428,25 @@ app.get('/api/status', simpleVerifyShop, async (req, res) => {
         );
         totalProducts = productsRes.data.count;
         
-        // Count real blogs
-        const blogsRes = await axios.get(
-          `https://${shop}/admin/api/2024-01/blogs/count.json`,
+        // Count real articles (not blogs)
+        const blogsListRes = await axios.get(
+          `https://${shop}/admin/api/2024-01/blogs.json?limit=250&fields=id`,
           { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
         );
-        totalBlogs = blogsRes.data.count;
+        
+        let totalArticleCount = 0;
+        for (const blog of blogsListRes.data.blogs) {
+          try {
+            const articlesRes = await axios.get(
+              `https://${shop}/admin/api/2024-01/blogs/${blog.id}/articles/count.json`,
+              { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+            );
+            totalArticleCount += articlesRes.data.count;
+          } catch (error) {
+            console.log(`Could not count articles for blog ${blog.id}:`, error.message);
+          }
+        }
+        totalBlogs = totalArticleCount;
         
         // Count optimized products by checking metafields (published + drafts)
         const productsWithMetaRes = await axios.get(
@@ -2500,7 +2513,7 @@ app.get('/api/status', simpleVerifyShop, async (req, res) => {
       } catch (countError) {
         console.log('Could not fetch counts, using defaults:', countError.message);
         totalProducts = 1; // Fallback based on what we know
-        totalBlogs = 1;
+        totalBlogs = 1; // Total articles fallback
       }
     }
     
