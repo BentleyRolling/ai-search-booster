@@ -19,9 +19,11 @@ const Dashboard = () => {
   const [history, setHistory] = useState([]);
   const [products, setProducts] = useState([]);
   const [blogs, setBlogs] = useState([]);
+  const [articles, setArticles] = useState([]);
   const [pages, setPages] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedBlogs, setSelectedBlogs] = useState([]);
+  const [selectedArticles, setSelectedArticles] = useState([]);
   const [selectedPages, setSelectedPages] = useState([]);
   const [usage, setUsage] = useState(null);
   const [settings, setSettings] = useState({
@@ -226,7 +228,9 @@ const Dashboard = () => {
       console.log('[ASB-DEBUG] Dashboard: Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('[ASB-DEBUG] Dashboard: Error response text:', errorText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       const data = await response.json();
       console.log('[ASB-DEBUG] Dashboard: Products data received:', data);
@@ -235,9 +239,9 @@ const Dashboard = () => {
       console.error('[ASB-DEBUG] Dashboard: fetchProducts error:', error);
       console.error('[ASB-DEBUG] Dashboard: Error stack:', error.stack);
       
-      console.log('[ASB-DEBUG] Dashboard: fetchProducts failed, showing error notification');
-      addNotification('Failed to load products. Please refresh the page.', 'error');
-      setProducts([]);
+      // Don't clear products on fetch error - keep existing products displayed
+      console.log('[ASB-DEBUG] Dashboard: Keeping existing products due to fetch error');
+      addNotification('Failed to refresh products. Data may be outdated.', 'warning');
     }
   };
 
@@ -246,39 +250,35 @@ const Dashboard = () => {
       console.log('Dashboard: Fetching blogs for shop:', shopName);
       const response = await authFetch(`${API_BASE}/api/blogs?shop=${shopName}`);
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Dashboard: Error response text:', errorText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       const data = await response.json();
       console.log('Dashboard: Blogs data received:', data);
       setBlogs(data.blogs || []);
+      
+      // Extract individual articles from blogs for the articles tab
+      const allArticles = [];
+      (data.blogs || []).forEach(blog => {
+        if (blog.articles && blog.articles.length > 0) {
+          blog.articles.forEach(article => {
+            allArticles.push({
+              ...article,
+              blogId: blog.id,
+              blogTitle: blog.title
+            });
+          });
+        }
+      });
+      setArticles(allArticles);
+      console.log('Dashboard: Extracted articles:', allArticles);
     } catch (error) {
       console.error('Failed to fetch blogs:', error);
       
-      // TEMPORARY: Use mock data when app proxy is not working
-      console.log('[ASB-DEBUG] Dashboard: App proxy not working, using mock blogs...');
-      const mockBlogs = [
-        {
-          id: 1,
-          title: "Sample Blog Post 1",
-          handle: "sample-blog-1",
-          status: "published",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          optimized: false
-        },
-        {
-          id: 2,
-          title: "Sample Blog Post 2",
-          handle: "sample-blog-2", 
-          status: "published",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          optimized: false
-        }
-      ];
-      
-      console.log('[ASB-DEBUG] Dashboard: Setting mock blogs:', mockBlogs);
-      setBlogs(mockBlogs);
+      // Don't clear blogs on fetch error - keep existing blogs displayed
+      console.log('Dashboard: Keeping existing blogs due to fetch error');
+      addNotification('Failed to refresh blogs. Data may be outdated.', 'warning');
     }
   };
 
@@ -541,6 +541,99 @@ const Dashboard = () => {
     }
   };
 
+  const optimizeArticles = async () => {
+    if (selectedArticles.length === 0) {
+      addNotification('Please select articles to optimize', 'warning');
+      return;
+    }
+    
+    setOptimizing(true);
+    setOptimizationProgress({ type: 'articles', current: 0, total: selectedArticles.length });
+    addNotification(`Starting optimization of ${selectedArticles.length} articles...`, 'info');
+    
+    try {
+      let successCount = 0;
+      let failedCount = 0;
+      
+      // Group articles by their blog IDs for batch optimization
+      const articlesByBlog = {};
+      selectedArticles.forEach(articleId => {
+        const article = articles.find(a => a.id.toString() === articleId);
+        if (article) {
+          if (!articlesByBlog[article.blogId]) {
+            articlesByBlog[article.blogId] = [];
+          }
+          articlesByBlog[article.blogId].push(article);
+        }
+      });
+      
+      let processedCount = 0;
+      
+      // Process each blog's articles
+      for (const [blogId, blogArticles] of Object.entries(articlesByBlog)) {
+        try {
+          console.log(`Optimizing ${blogArticles.length} articles from blog ${blogId}`);
+          const response = await authFetch(`${API_BASE}/api/optimize/blogs?shop=${shop}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              shop,
+              blogIds: [blogId],
+              settings: {
+                targetLLM: settings.targetLLM,
+                keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
+                tone: settings.tone
+              }
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          const blogSuccessCount = data.summary?.successful || 0;
+          
+          if (blogSuccessCount > 0) {
+            successCount += blogSuccessCount;
+          } else {
+            failedCount += blogArticles.length;
+          }
+          
+          processedCount += blogArticles.length;
+        } catch (itemError) {
+          console.error(`Failed to optimize articles in blog ${blogId}:`, itemError);
+          failedCount += blogArticles.length;
+          processedCount += blogArticles.length;
+        }
+        
+        // Update progress
+        setOptimizationProgress({ type: 'articles', current: processedCount, total: selectedArticles.length });
+      }
+      
+      // Show final results
+      if (successCount > 0) {
+        addNotification(`Successfully optimized ${successCount} articles!`, 'success');
+      }
+      if (failedCount > 0) {
+        addNotification(`${failedCount} articles failed to optimize`, 'error');
+      }
+      
+      // Refresh all data to update status
+      fetchStatus(shop);
+      fetchBlogs(shop);
+      fetchHistory(shop);
+      fetchUsage(shop);
+      setSelectedArticles([]);
+    } catch (error) {
+      console.error('Article optimization error:', error);
+      addNotification('Failed to optimize articles. Please try again.', 'error');
+    } finally {
+      setOptimizing(false);
+      setTimeout(() => setOptimizationProgress(null), 1000);
+    }
+  };
+
   const previewOptimization = async () => {
     setPreviewLoading(true);
     addNotification('Generating product preview...', 'info');
@@ -647,21 +740,25 @@ const Dashboard = () => {
             setProducts(prev => prev.map(p => 
               p.id.toString() === id.toString() ? { ...p, optimized: false } : p
             ));
-          } else if (type === 'blog') {
-            setBlogs(prev => prev.map(b => 
-              b.id.toString() === id.toString() ? { ...b, optimized: false } : b
-            ));
+          } else if (type === 'article') {
+            // For articles, update the specific article within blogs
+            setBlogs(prev => prev.map(blog => ({
+              ...blog,
+              articles: blog.articles?.map(article => 
+                article.id.toString() === id.toString() ? { ...article, optimized: false } : article
+              ) || []
+            })));
           }
           
-          // Add delay to allow Shopify API to update, then refresh data
-          const refreshAfterRollback = async () => {
-            console.log('Waiting 4 seconds for Shopify API to update...');
-            await new Promise(resolve => setTimeout(resolve, 4000));
-            
-            console.log('Refreshing data after rollback...');
-            await fetchStatus(shop);
-            await fetchProducts(shop);
-            await fetchBlogs(shop);
+          // Immediately refresh all data after rollback
+          console.log('Refreshing data after rollback...');
+          await Promise.all([
+            fetchStatus(shop),
+            fetchProducts(shop),
+            fetchBlogs(shop),
+            fetchHistory(shop),
+            fetchUsage(shop)
+          ]);
             
             // Poll for updates if the item still shows as optimized
             let retries = 0;
@@ -932,6 +1029,19 @@ const Dashboard = () => {
         ? prev.filter(id => id !== blogId)
         : [...prev, blogId]
     );
+  };
+
+  const toggleArticleSelection = (articleId) => {
+    console.log('toggleArticleSelection called with:', articleId, typeof articleId);
+    console.log('Current selectedArticles:', selectedArticles);
+    
+    setSelectedArticles(prev => {
+      const newSelection = prev.includes(articleId) 
+        ? prev.filter(id => id !== articleId)
+        : [...prev, articleId];
+      console.log('New selectedArticles:', newSelection);
+      return newSelection;
+    });
   };
 
   // Test function for end-to-end optimization
@@ -1813,9 +1923,78 @@ const Dashboard = () => {
                               Created: {new Date(blog.created_at).toLocaleDateString()}
                             </p>
                             {blog.articles && blog.articles.length > 0 && (
-                              <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                                {blog.articles.length} article{blog.articles.length !== 1 ? 's' : ''}
-                              </span>
+                              <div className="mt-2">
+                                <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                                  {blog.articles.length} article{blog.articles.length !== 1 ? 's' : ''}
+                                </span>
+                                
+                                {/* Individual Articles */}
+                                <div className="mt-3 space-y-2">
+                                  {blog.articles.map((article) => (
+                                    <div key={article.id} className="bg-gray-50 p-3 rounded border">
+                                      <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                          <h5 className="font-medium text-sm text-gray-900 truncate">{article.title}</h5>
+                                          <div className="flex items-center space-x-2 mt-1">
+                                            {article.optimized && (
+                                              <span className="inline-block px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                                ✓ Optimized
+                                              </span>
+                                            )}
+                                            {article.hasDraft && (
+                                              <span className="inline-block px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
+                                                📝 Draft
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Individual Article Actions */}
+                                        <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
+                                          {article.hasDraft && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePreviewDraft('article', article.id);
+                                              }}
+                                              className="px-1 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                              title="Preview article draft"
+                                            >
+                                              <Eye className="w-3 h-3" />
+                                            </button>
+                                          )}
+                                          
+                                          {article.hasDraft && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                publishDraft('article', article.id);
+                                              }}
+                                              className="px-1 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                              title="Publish article draft"
+                                            >
+                                              <CheckCircle className="w-3 h-3" />
+                                            </button>
+                                          )}
+                                          
+                                          {article.optimized && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                rollback('article', article.id);
+                                              }}
+                                              className="px-1 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                              title="Rollback article to original content"
+                                            >
+                                              <RotateCcw className="w-3 h-3" />
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             )}
                             <div className="mt-3 flex items-center justify-between">
                               <div className="flex items-center space-x-2">
@@ -1862,7 +2041,7 @@ const Dashboard = () => {
                                           'Publish Blog Articles',
                                           `Publish ${articlesWithDrafts.length} article drafts in this blog? This will make the draft content live on your store.`,
                                           () => {
-                                            Promise.all(articlesWithDrafts.map(a => performPublishDraft('blog', a.id)))
+                                            Promise.all(articlesWithDrafts.map(a => performPublishDraft('article', a.id)))
                                               .then(() => {
                                                 addNotification(`Successfully published ${articlesWithDrafts.length} article drafts`, 'success');
                                                 fetchBlogs(shop);
