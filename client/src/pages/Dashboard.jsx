@@ -410,10 +410,21 @@ const Dashboard = () => {
             })
           });
           
+          console.log(`Product ${productId} response status:`, response.status);
+          
+          if (!response.ok) {
+            console.error(`Product ${productId} failed with status:`, response.status);
+            failedCount++;
+            continue;
+          }
+          
           const data = await response.json();
+          console.log(`Product ${productId} response data:`, data);
+          
           if (data.results && data.results[0]?.status === 'success') {
             successCount++;
           } else {
+            console.error(`Product ${productId} optimization failed:`, data);
             failedCount++;
           }
         } catch (itemError) {
@@ -515,9 +526,11 @@ const Dashboard = () => {
         addNotification(`${failedCount} blogs failed to optimize`, 'error');
       }
       
-      // Refresh status, blogs data, and clear selection
+      // Refresh all data to update status
       fetchStatus(shop);
       fetchBlogs(shop);
+      fetchHistory(shop);
+      fetchUsage(shop);
       setSelectedBlogs([]);
     } catch (error) {
       console.error('Blog optimization error:', error);
