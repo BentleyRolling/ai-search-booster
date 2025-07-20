@@ -235,35 +235,9 @@ const Dashboard = () => {
       console.error('[ASB-DEBUG] Dashboard: fetchProducts error:', error);
       console.error('[ASB-DEBUG] Dashboard: Error stack:', error.stack);
       
-      // TEMPORARY: Use mock data when app proxy is not working
-      console.log('[ASB-DEBUG] Dashboard: App proxy not working, using mock data...');
-      const mockProducts = [
-        {
-          id: 1,
-          title: "Sample Product 1",
-          handle: "sample-product-1",
-          status: "active",
-          vendor: "Demo Store",
-          product_type: "Sample",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          optimized: false
-        },
-        {
-          id: 2,
-          title: "Sample Product 2", 
-          handle: "sample-product-2",
-          status: "active",
-          vendor: "Demo Store",
-          product_type: "Sample",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          optimized: false
-        }
-      ];
-      
-      console.log('[ASB-DEBUG] Dashboard: Setting mock products:', mockProducts);
-      setProducts(mockProducts);
+      console.log('[ASB-DEBUG] Dashboard: fetchProducts failed, showing error notification');
+      addNotification('Failed to load products. Please refresh the page.', 'error');
+      setProducts([]);
     }
   };
 
@@ -807,6 +781,7 @@ const Dashboard = () => {
       
       // Refresh data
       fetchStatus(shop);
+      fetchProducts(shop);
       fetchHistory(shop);
       
       return data;
