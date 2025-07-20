@@ -1815,285 +1815,143 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Blogs Tab */}
+            {/* Blogs Tab - Individual Articles */}
             {activeTab === 'blogs' && (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Select Blogs to Optimize</h3>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => previewBlogOptimization(blogs[0])}
-                      disabled={previewLoading}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-                    >
-                      {previewLoading ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>Loading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="w-4 h-4" />
-                          <span>Preview</span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={optimizeBlogs}
-                      disabled={optimizing || selectedBlogs.length === 0}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-                    >
-                      {optimizing ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>Optimizing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <BookOpen className="w-4 h-4" />
-                          <span>Optimize Selected</span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => {
-                        const drafts = blogs.filter(b => b.hasDraft || b.articles?.some(a => a.hasDraft));
-                        if (drafts.length === 0) {
-                          addNotification('No drafts to publish', 'info');
-                          return;
-                        }
-                        showConfirmation(
-                          'Publish Blog Drafts',
-                          `Publish ${drafts.length} draft optimizations? This will make the draft content live on your store.`,
-                          () => {
-                            Promise.all(drafts.flatMap(b => 
-                              b.articles?.filter(a => a.hasDraft).map(a => performPublishDraft('blog', a.id)) || []
-                            ))
-                              .then(() => addNotification(`Successfully published blog drafts`, 'success'))
-                              .catch(err => addNotification('Some drafts failed to publish', 'error'));
-                          }
-                        );
-                      }}
-                      disabled={optimizing || !blogs.some(b => b.hasDraft || b.articles?.some(a => a.hasDraft))}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-                      title="Publish all draft optimizations"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      <span>Publish Drafts</span>
-                    </button>
-                    <button
-                      onClick={() => rollbackAllOptimizations('blog')}
-                      disabled={optimizing || !blogs.some(b => b.optimized)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-                      title="Rollback all blog optimizations"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      <span>Rollback All</span>
-                    </button>
-                  </div>
-                </div>
-                
-                {blogs.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No blogs found</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {blogs.map((blog) => (
-                      <div
-                        key={blog.id}
-                        onClick={() => toggleBlogSelection(blog.id.toString())}
-                        className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                          selectedBlogs.includes(blog.id.toString())
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
+              <div className="space-y-6">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold">Select Blog Articles to Optimize</h2>
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={() => optimizeArticles()}
+                        disabled={optimizing || selectedArticles.length === 0}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                       >
-                        <div className="flex items-start space-x-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedBlogs.includes(blog.id.toString())}
-                            onChange={() => {}}
-                            className="mt-1"
-                          />
-                          <div className="flex-1">
-                            <h4 className="font-medium text-gray-900">{blog.title}</h4>
-                            <p className="text-sm text-gray-500 mt-1">
-                              Created: {new Date(blog.created_at).toLocaleDateString()}
-                            </p>
-                            {blog.articles && blog.articles.length > 0 && (
-                              <div className="mt-2">
-                                <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                                  {blog.articles.length} article{blog.articles.length !== 1 ? 's' : ''}
-                                </span>
-                                
-                                {/* Individual Articles */}
-                                <div className="mt-3 space-y-2">
-                                  {blog.articles.map((article) => (
-                                    <div key={article.id} className="bg-gray-50 p-3 rounded border">
-                                      <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                          <h5 className="font-medium text-sm text-gray-900 truncate">{article.title}</h5>
-                                          <div className="flex items-center space-x-2 mt-1">
-                                            {article.optimized && (
-                                              <span className="inline-block px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded font-medium">
-                                                ✓ Optimized
-                                              </span>
-                                            )}
-                                            {article.hasDraft && (
-                                              <span className="inline-block px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
-                                                📝 Draft
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                        
-                                        {/* Individual Article Actions */}
-                                        <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-                                          {article.hasDraft && (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handlePreviewDraft('article', article.id);
-                                              }}
-                                              className="px-1 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
-                                              title="Preview article draft"
-                                            >
-                                              <Eye className="w-3 h-3" />
-                                            </button>
-                                          )}
-                                          
-                                          {article.hasDraft && (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                publishDraft('article', article.id);
-                                              }}
-                                              className="px-1 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
-                                              title="Publish article draft"
-                                            >
-                                              <CheckCircle className="w-3 h-3" />
-                                            </button>
-                                          )}
-                                          
-                                          {article.optimized && (
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                rollback('article', article.id);
-                                              }}
-                                              className="px-1 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
-                                              title="Rollback article to original content"
-                                            >
-                                              <RotateCcw className="w-3 h-3" />
-                                            </button>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            <div className="mt-3 flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                {blog.optimized && (
-                                  <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
-                                    ✓ Optimized
-                                  </span>
-                                )}
-                                {blog.hasDraft && (
-                                  <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
-                                    📝 Draft Ready
-                                  </span>
-                                )}
-                              </div>
+                        {optimizing ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Optimizing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <BookOpen className="w-4 h-4" />
+                            <span>Optimize Selected ({selectedArticles.length})</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => publishAllDrafts('article')}
+                        disabled={optimizing || !articles.some(a => a.hasDraft)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        title="Publish all article drafts"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Publish Drafts</span>
+                      </button>
+                      <button
+                        onClick={() => rollbackAllOptimizations('article')}
+                        disabled={optimizing || !articles.some(a => a.optimized)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        title="Rollback all article optimizations"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>Rollback All</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {articles.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No blog articles found</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {articles.map((article) => (
+                        <div
+                          key={article.id}
+                          onClick={() => toggleArticleSelection(article.id.toString())}
+                          className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                            selectedArticles.includes(article.id.toString())
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedArticles.includes(article.id.toString())}
+                              onChange={() => {}}
+                              className="mt-1"
+                            />
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{article.title}</h4>
+                              <p className="text-sm text-gray-500 mt-1">Blog: {article.blogTitle}</p>
+                              <p className="text-sm text-gray-500">Created: {new Date(article.created_at).toLocaleDateString()}</p>
                               
-                              {/* Action Buttons */}
-                              <div className="flex items-center space-x-1 flex-wrap gap-1">
-                                {blog.hasDraft && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      // Preview the first article with draft
-                                      const articleWithDraft = blog.articles?.find(a => a.hasDraft);
-                                      if (articleWithDraft) {
-                                        handlePreviewDraft('blog', articleWithDraft.id);
-                                      }
-                                    }}
-                                    className="px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
-                                    title="Preview draft content"
-                                  >
-                                    <Eye className="w-3 h-3" />
-                                    <span>Preview</span>
-                                  </button>
-                                )}
+                              <div className="mt-3 flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  {article.optimized && (
+                                    <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                      ✓ Optimized
+                                    </span>
+                                  )}
+                                  {article.hasDraft && (
+                                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
+                                      📝 Draft Ready
+                                    </span>
+                                  )}
+                                </div>
                                 
-                                {blog.hasDraft && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      // Publish all articles in this blog that have drafts
-                                      const articlesWithDrafts = blog.articles?.filter(a => a.hasDraft) || [];
-                                      if (articlesWithDrafts.length > 0) {
-                                        showConfirmation(
-                                          'Publish Blog Articles',
-                                          `Publish ${articlesWithDrafts.length} article drafts in this blog? This will make the draft content live on your store.`,
-                                          () => {
-                                            Promise.all(articlesWithDrafts.map(a => performPublishDraft('article', a.id)))
-                                              .then(() => {
-                                                addNotification(`Successfully published ${articlesWithDrafts.length} article drafts`, 'success');
-                                                fetchBlogs(shop);
-                                                fetchStatus(shop);
-                                              })
-                                              .catch(err => addNotification('Some articles failed to publish', 'error'));
-                                          }
-                                        );
-                                      }
-                                    }}
-                                    className="px-1.5 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
-                                    title="Publish all draft articles in this blog"
-                                  >
-                                    <CheckCircle className="w-3 h-3" />
-                                    <span>Publish</span>
-                                  </button>
-                                )}
-                                
-                                {blog.optimized && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      // Rollback all articles in this blog that are optimized
-                                      const optimizedArticles = blog.articles?.filter(a => a.optimized) || [];
-                                      if (optimizedArticles.length > 0) {
-                                        showConfirmation(
-                                          'Rollback Blog Articles',
-                                          `Rollback ${optimizedArticles.length} optimized articles in this blog? This will restore the original content.`,
-                                          () => {
-                                            Promise.all(optimizedArticles.map(a => rollback('article', a.id)))
-                                              .then(() => {
-                                                addNotification(`Successfully rolled back ${optimizedArticles.length} articles`, 'success');
-                                                fetchBlogs(shop);
-                                                fetchStatus(shop);
-                                              })
-                                              .catch(err => addNotification('Some articles failed to rollback', 'error'));
-                                          }
-                                        );
-                                      }
-                                    }}
-                                    className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
-                                    title="Rollback all optimized articles in this blog"
-                                  >
-                                    <RotateCcw className="w-3 h-3" />
-                                    <span>Rollback</span>
-                                  </button>
-                                )}
+                                {/* Action Buttons */}
+                                <div className="flex items-center space-x-1 flex-shrink-0">
+                                  {article.hasDraft && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePreviewDraft('article', article.id);
+                                      }}
+                                      className="px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      title="Preview draft content"
+                                    >
+                                      <Eye className="w-3 h-3" />
+                                      <span>Preview</span>
+                                    </button>
+                                  )}
+                                  
+                                  {article.hasDraft && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        publishDraft('article', article.id);
+                                      }}
+                                      className="px-1.5 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      title="Publish draft optimization"
+                                    >
+                                      <CheckCircle className="w-3 h-3" />
+                                      <span>Publish</span>
+                                    </button>
+                                  )}
+                                  
+                                  {article.optimized && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        rollback('article', article.id);
+                                      }}
+                                      className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      title="Rollback to original content"
+                                    >
+                                      <RotateCcw className="w-3 h-3" />
+                                      <span>Rollback</span>
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
