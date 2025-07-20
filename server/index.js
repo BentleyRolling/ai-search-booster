@@ -443,27 +443,32 @@ const generateMockOptimization = (content, type) => {
   const title = content.title || content.name || 'Untitled';
   const description = content.description || content.body_html || content.content || 'No description available';
   
+  // Clean the description and get first 300 characters for a meaningful summary
+  const cleanDescription = description.replace(/<[^>]*>/g, '').trim();
+  const shortDescription = cleanDescription.substring(0, 300);
+  
   return {
-    optimizedTitle: `${title} - Premium Quality`,
-    optimizedDescription: `${description.substring(0, 500)}... Enhanced for better search visibility and customer engagement.`,
-    summary: `${title} - A quality ${type} available in our store with premium features and excellent customer satisfaction.`,
+    optimizedTitle: title,
+    optimizedDescription: cleanDescription.length > shortDescription.length ? 
+      `${shortDescription}...` : cleanDescription,
+    summary: `${title} - ${shortDescription.substring(0, 150)}${shortDescription.length > 150 ? '...' : ''}`,
     faqs: [
       {
-        question: `What makes ${title} special?`,
-        answer: `${title} is carefully curated with premium features and exceptional quality that sets it apart from competitors.`
+        question: `Tell me about ${title}`,
+        answer: cleanDescription.substring(0, 200) + (cleanDescription.length > 200 ? '...' : '')
       },
       {
-        question: `How do I get started with ${title}?`,
-        answer: `Getting started with ${title} is simple and straightforward. Our team provides full support to ensure your success.`
+        question: `What are the key features of ${title}?`,
+        answer: `${title} offers quality and reliability that meets customer expectations.`
       }
     ],
     jsonLd: {
       "@context": "https://schema.org",
       "@type": type === 'product' ? "Product" : type === 'page' ? "WebPage" : "Article",
       "name": title,
-      "description": description.substring(0, 200) + '...'
+      "description": cleanDescription.substring(0, 200) + (cleanDescription.length > 200 ? '...' : '')
     },
-    llmDescription: `${title} is a premium ${type} that offers exceptional value and quality. Perfect for customers looking for reliable solutions with outstanding support.`
+    llmDescription: `${title}: ${cleanDescription.substring(0, 250)}${cleanDescription.length > 250 ? '...' : ''}`
   };
 };
 
@@ -922,10 +927,12 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
         if (draftFaq) {
           try {
             const faqData = JSON.parse(draftFaq);
-            if (faqData.questions && faqData.questions.length > 0) {
+            if (faqData && faqData.questions && Array.isArray(faqData.questions) && faqData.questions.length > 0) {
               faqHtml = '\n\n<div class="ai-optimization-faqs">\n<h3>Frequently Asked Questions</h3>\n';
               faqData.questions.forEach(faq => {
-                faqHtml += `<div class="faq-item">\n<h4>${faq.question}</h4>\n<p>${faq.answer}</p>\n</div>\n`;
+                if (faq && faq.question && faq.answer && faq.question !== 'undefined' && faq.answer !== 'undefined') {
+                  faqHtml += `<div class="faq-item">\n<h4>${faq.question}</h4>\n<p>${faq.answer}</p>\n</div>\n`;
+                }
               });
               faqHtml += '</div>';
             }
@@ -1075,10 +1082,12 @@ app.post('/api/publish/product/:id', simpleVerifyShop, async (req, res) => {
         if (draftFaq) {
           try {
             const faqData = JSON.parse(draftFaq);
-            if (faqData.questions && faqData.questions.length > 0) {
+            if (faqData && faqData.questions && Array.isArray(faqData.questions) && faqData.questions.length > 0) {
               faqHtml = '\n\n<div class="ai-optimization-faqs">\n<h3>Frequently Asked Questions</h3>\n';
               faqData.questions.forEach(faq => {
-                faqHtml += `<div class="faq-item">\n<h4>${faq.question}</h4>\n<p>${faq.answer}</p>\n</div>\n`;
+                if (faq && faq.question && faq.answer && faq.question !== 'undefined' && faq.answer !== 'undefined') {
+                  faqHtml += `<div class="faq-item">\n<h4>${faq.question}</h4>\n<p>${faq.answer}</p>\n</div>\n`;
+                }
               });
               faqHtml += '</div>';
             }
@@ -1247,10 +1256,12 @@ app.post('/api/publish/article/:id', simpleVerifyShop, async (req, res) => {
         if (draftFaq) {
           try {
             const faqData = JSON.parse(draftFaq);
-            if (faqData.questions && faqData.questions.length > 0) {
+            if (faqData && faqData.questions && Array.isArray(faqData.questions) && faqData.questions.length > 0) {
               faqHtml = '\n\n<div class="ai-optimization-faqs">\n<h3>Frequently Asked Questions</h3>\n';
               faqData.questions.forEach(faq => {
-                faqHtml += `<div class="faq-item">\n<h4>${faq.question}</h4>\n<p>${faq.answer}</p>\n</div>\n`;
+                if (faq && faq.question && faq.answer && faq.question !== 'undefined' && faq.answer !== 'undefined') {
+                  faqHtml += `<div class="faq-item">\n<h4>${faq.question}</h4>\n<p>${faq.answer}</p>\n</div>\n`;
+                }
               });
               faqHtml += '</div>';
             }

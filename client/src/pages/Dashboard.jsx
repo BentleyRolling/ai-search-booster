@@ -89,12 +89,17 @@ const Dashboard = () => {
     if (confirmConfig?.onConfirm) {
       try {
         await confirmConfig.onConfirm();
+        // Always close the modal after successful operation
+        handleConfirmClose();
       } catch (error) {
         console.error('Confirmation action error:', error);
         addNotification('Operation failed. Please try again.', 'error');
+        // Close modal even if error occurred
+        handleConfirmClose();
       }
+    } else {
+      handleConfirmClose();
     }
-    handleConfirmClose();
   };
 
   // Always use relative paths - AuthContext will convert to absolute backend URLs
