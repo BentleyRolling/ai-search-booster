@@ -738,6 +738,7 @@ const Dashboard = () => {
           }
           
           const data = await response.json();
+          console.log('[ROLLBACK] Success response:', data);
           addNotification(data.message, 'success');
           
           // Update the product/blog status to reflect the rollback
@@ -784,9 +785,12 @@ const Dashboard = () => {
             await fetchBlogs(shop);
             retries++;
           }
+          
+          console.log('[ROLLBACK] Rollback completed successfully, modal should close now');
         } catch (error) {
           console.error('Rollback error:', error);
           addNotification('Failed to rollback: ' + error.message, 'error');
+          throw error; // Re-throw to prevent modal from closing on error
         } finally {
           setOptimizing(false);
         }

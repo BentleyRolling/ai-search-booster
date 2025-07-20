@@ -571,20 +571,61 @@ Return **only** this JSON object:
       });
       
       try {
+        console.log('[AI-OPTIMIZATION] Making OpenAI API call...');
         const response = await Promise.race([apiPromise, timeoutPromise]);
+        console.log('[AI-OPTIMIZATION] OpenAI API response status:', response.status);
+        console.log('[AI-OPTIMIZATION] OpenAI API response structure:', {
+          hasData: !!response.data,
+          hasChoices: !!response.data?.choices,
+          choicesLength: response.data?.choices?.length || 0,
+          hasMessage: !!response.data?.choices?.[0]?.message,
+          hasContent: !!response.data?.choices?.[0]?.message?.content
+        });
+        
+        if (!response.data?.choices?.[0]?.message?.content) {
+          console.error('[AI-OPTIMIZATION] Invalid OpenAI response structure:', response.data);
+          return generateMockOptimization(content, type);
+        }
+        
         const aiResponse = response.data.choices[0].message.content;
-        console.log('[AI-OPTIMIZATION] OpenAI response received:', aiResponse.substring(0, 200) + '...');
+        console.log('[AI-OPTIMIZATION] OpenAI response:', aiResponse);
         
         try {
-          return JSON.parse(aiResponse);
+          const parsedResponse = JSON.parse(aiResponse);
+          console.log('[AI-OPTIMIZATION] Parsed OpenAI response:', parsedResponse);
+          
+          // Validate required fields
+          if (!parsedResponse.optimizedTitle || !parsedResponse.optimizedDescription || !parsedResponse.summary) {
+            console.error('[AI-OPTIMIZATION] Missing required fields in OpenAI response:', {
+              hasTitle: !!parsedResponse.optimizedTitle,
+              hasDescription: !!parsedResponse.optimizedDescription,
+              hasSummary: !!parsedResponse.summary,
+              hasFaqs: !!parsedResponse.faqs,
+              faqsLength: parsedResponse.faqs?.length || 0
+            });
+            return generateMockOptimization(content, type);
+          }
+          
+          // Validate FAQs structure
+          if (!parsedResponse.faqs || !Array.isArray(parsedResponse.faqs) || parsedResponse.faqs.length === 0) {
+            console.error('[AI-OPTIMIZATION] Invalid FAQs in OpenAI response:', parsedResponse.faqs);
+            parsedResponse.faqs = [
+              {
+                question: `What is ${content.title || content.name}?`,
+                answer: parsedResponse.summary || 'A quality product from our collection.'
+              }
+            ];
+          }
+          
+          return parsedResponse;
         } catch (parseError) {
-          console.error('[AI-OPTIMIZATION] Failed to parse OpenAI response:', parseError);
-          console.log('[AI-OPTIMIZATION] Raw response:', aiResponse);
-          // Fall back to mock response if parsing fails
+          console.error('[AI-OPTIMIZATION] Failed to parse OpenAI response as JSON:', parseError);
+          console.log('[AI-OPTIMIZATION] Raw unparseable response:', aiResponse);
           return generateMockOptimization(content, type);
         }
       } catch (apiError) {
-        console.error('[AI-OPTIMIZATION] OpenAI API error:', apiError.message);
+        console.error('[AI-OPTIMIZATION] OpenAI API call failed:', apiError.message);
+        console.error('[AI-OPTIMIZATION] Full API error:', apiError);
         console.log('[AI-OPTIMIZATION] Falling back to mock optimization');
         return generateMockOptimization(content, type);
       }
