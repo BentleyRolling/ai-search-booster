@@ -531,14 +531,29 @@ Original content: ${JSON.stringify(content)}
 1) **optimizedTitle**: Descriptive, specific, human-readable (not keyword-stuffed)
 2) **optimizedDescription**: Rich contextual description with materials, use cases, benefits, and user scenarios (200-300 words)
 3) **summary**: 2-3 sentences that clearly explain what it is and why someone would want it
-4) **faqs**: 5-7 substantive FAQs that answer real customer questions and help AI understand the product deeply
+4) **faqs**: Array of 3-5 FAQ objects with "question" and "answer" properties
 5) **jsonLd**: Complete Product schema with detailed properties
 6) **llmDescription**: A citation-friendly paragraph that AI agents can use when recommending this product
 
-REMEMBER: This content will be consumed by AI agents making recommendations to humans. Make it informative, contextual, and trustworthy.
+CRITICAL: FAQs must be an array of objects with "question" and "answer" strings:
+[
+  {"question": "What is this product?", "answer": "Detailed answer here"},
+  {"question": "Who should buy this?", "answer": "Detailed answer here"}
+]
 
-Return **only** this JSON object:
-{ "optimizedTitle": "", "optimizedDescription": "", "summary": "", "faqs": [], "jsonLd": {}, "llmDescription": "" }`;
+Return **only** this valid JSON object with NO markdown formatting:
+{
+  "optimizedTitle": "Title here",
+  "optimizedDescription": "Description here", 
+  "summary": "Summary here",
+  "faqs": [
+    {"question": "Question 1?", "answer": "Answer 1"},
+    {"question": "Question 2?", "answer": "Answer 2"},
+    {"question": "Question 3?", "answer": "Answer 3"}
+  ],
+  "jsonLd": {"@context": "https://schema.org", "@type": "Product"},
+  "llmDescription": "Description here"
+}`;
   
   try {
     console.log('[AI-OPTIMIZATION] Starting optimization:', {
@@ -615,6 +630,27 @@ Return **only** this JSON object:
                 answer: parsedResponse.summary || 'A quality product from our collection.'
               }
             ];
+          } else {
+            // Clean up any empty or malformed FAQ entries
+            parsedResponse.faqs = parsedResponse.faqs.filter(faq => 
+              faq && 
+              typeof faq.question === 'string' && 
+              typeof faq.answer === 'string' && 
+              faq.question.trim() && 
+              faq.answer.trim() &&
+              faq.question !== '' &&
+              faq.answer !== ''
+            );
+            
+            // If all FAQs were filtered out, add a default one
+            if (parsedResponse.faqs.length === 0) {
+              parsedResponse.faqs = [
+                {
+                  question: `What is ${content.title || content.name}?`,
+                  answer: parsedResponse.summary || 'A quality product from our collection.'
+                }
+              ];
+            }
           }
           
           return parsedResponse;
