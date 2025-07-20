@@ -58,18 +58,38 @@ export const AuthProvider = ({ children }) => {
         try {
           // Use direct fetch for external backend URL, authenticated fetch for relative paths
           const isExternalUrl = finalUrl.includes('://');
-          const fetchOptions = isExternalUrl ? 
-            { ...options, mode: 'cors', credentials: 'omit' } : 
-            options;
+          
+          let fetchOptions = options;
+          let fetchFunction = fetch; // Default to authenticated fetch
+          
+          if (isExternalUrl) {
+            // For external URLs, ensure shop parameter is included for backend authentication
+            const url = new URL(finalUrl);
+            if (shop && !url.searchParams.has('shop')) {
+              url.searchParams.set('shop', shop);
+              finalUrl = url.toString();
+            }
+            
+            fetchOptions = { 
+              ...options, 
+              mode: 'cors', 
+              credentials: 'omit',
+              headers: {
+                ...options.headers,
+                // Don't include additional auth headers for external - backend uses shop param
+              }
+            };
+            fetchFunction = window.fetch;
+          }
             
           console.log('[ASB-DEBUG] AuthProvider: Making fetch with options:', fetchOptions);
+          console.log('[ASB-DEBUG] AuthProvider: Final URL with shop param:', finalUrl);
           
           // Add timeout for hanging requests
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Request timeout after 8 seconds')), 8000);
           });
           
-          const fetchFunction = isExternalUrl ? window.fetch : fetch;
           const result = await Promise.race([fetchFunction(finalUrl, fetchOptions), timeoutPromise]);
           console.log('[ASB-DEBUG] AuthProvider: ✅ Got response!');
           console.log('[ASB-DEBUG] AuthProvider: Response URL:', result.url);
