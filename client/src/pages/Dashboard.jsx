@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { useCitations } from '../hooks/useCitations';
@@ -827,16 +827,26 @@ const Dashboard = () => {
   };
 
   const rollbackAllOptimizations = async (type) => {
-    const itemsToRollback = type === 'product' 
-      ? products.filter(p => p.optimized)
-      : blogs.filter(b => b.optimized);
+    let itemsToRollback = [];
+    let rollbackType = type;
+    
+    if (type === 'product') {
+      itemsToRollback = products.filter(p => p.optimized);
+    } else if (type === 'blog') {
+      // For blogs, we need to rollback individual articles
+      rollbackType = 'article';
+      itemsToRollback = blogs.flatMap(blog => 
+        blog.articles?.filter(article => article.optimized) || []
+      );
+    }
     
     if (itemsToRollback.length === 0) {
       addNotification('No optimized items to rollback', 'info');
       return;
     }
     
-    const message = `Rollback ALL ${itemsToRollback.length} optimized ${type}s?\n\nThis will:\n• Delete all draft and published optimizations\n• Restore original content for all items\n• Remove all AI-generated FAQs\n• Disable LLM schema output\n\nThis action cannot be undone.`;
+    const itemLabel = type === 'product' ? 'products' : 'articles';
+    const message = `Rollback ALL ${itemsToRollback.length} optimized ${itemLabel}?\n\nThis will:\n• Delete all draft and published optimizations\n• Restore original content for all items\n• Remove all AI-generated FAQs\n• Disable LLM schema output\n\nThis action cannot be undone.`;
     
     if (!confirm(message)) return;
     
@@ -846,7 +856,7 @@ const Dashboard = () => {
       
       for (const item of itemsToRollback) {
         try {
-          const response = await authFetch(`${API_BASE}/api/rollback/${type}/${item.id}?shop=${shop}`, {
+          const response = await authFetch(`${API_BASE}/api/rollback/${rollbackType}/${item.id}?shop=${shop}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ shop })
@@ -1389,24 +1399,69 @@ const Dashboard = () => {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Status Cards */}
+        {/* Tab-Specific Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
-              <Package className="w-5 h-5 text-gray-400" />
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{status?.totalProducts || 0}</p>
-          </div>
+          {activeTab === 'products' && (
+            <>
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
+                  <Package className="w-5 h-5 text-gray-400" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900">{status?.totalProducts || 0}</p>
+              </div>
+              
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-500">Optimized Products</h3>
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                </div>
+                <p className="text-3xl font-bold text-green-600">{status?.optimizedProducts || 0}</p>
+              </div>
+            </>
+          )}
           
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-500">Optimized</h3>
-              <CheckCircle className="w-5 h-5 text-green-500" />
-            </div>
-            <p className="text-3xl font-bold text-green-600">{status?.optimizedProducts || 0}</p>
-          </div>
+          {activeTab === 'blogs' && (
+            <>
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-500">Total Articles</h3>
+                  <FileText className="w-5 h-5 text-gray-400" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900">{status?.totalBlogs || 0}</p>
+              </div>
+              
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-500">Optimized Articles</h3>
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                </div>
+                <p className="text-3xl font-bold text-green-600">{status?.optimizedBlogs || 0}</p>
+              </div>
+            </>
+          )}
           
+          {activeTab === 'pages' && (
+            <>
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-500">Total Pages</h3>
+                  <Globe className="w-5 h-5 text-gray-400" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900">{status?.totalPages || 0}</p>
+              </div>
+              
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-500">Optimized Pages</h3>
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                </div>
+                <p className="text-3xl font-bold text-green-600">{status?.optimizedPages || 0}</p>
+              </div>
+            </>
+          )}
+          
+          {/* Usage - Always shown on all tabs for billing accuracy */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-gray-500">Usage This Month</h3>
@@ -1422,6 +1477,7 @@ const Dashboard = () => {
             </p>
           </div>
           
+          {/* AI Provider - Always shown on all tabs */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-gray-500">AI Provider</h3>
@@ -1836,7 +1892,7 @@ const Dashboard = () => {
                                           'Rollback Blog Articles',
                                           `Rollback ${optimizedArticles.length} optimized articles in this blog? This will restore the original content.`,
                                           () => {
-                                            Promise.all(optimizedArticles.map(a => rollback('blog', a.id)))
+                                            Promise.all(optimizedArticles.map(a => rollback('article', a.id)))
                                               .then(() => {
                                                 addNotification(`Successfully rolled back ${optimizedArticles.length} articles`, 'success');
                                                 fetchBlogs(shop);
