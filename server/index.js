@@ -644,10 +644,11 @@ const simpleVerifyShop = (req, res, next) => {
     return res.status(400).json({ error: 'Missing shop parameter' });
   }
   
-  // Create or get shop info for mock data
+  // Get existing shop info or create minimal entry
   let shopInfo = shopData.get(shop);
   if (!shopInfo) {
-    shopInfo = { accessToken: 'mock-token', installedAt: new Date().toISOString() };
+    // Don't set mock-token - let endpoints handle authentication properly
+    shopInfo = { installedAt: new Date().toISOString() };
     shopData.set(shop, shopInfo);
   }
   
