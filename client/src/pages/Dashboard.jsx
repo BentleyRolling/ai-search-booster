@@ -1829,8 +1829,8 @@ const Dashboard = () => {
               <div className="space-y-6">
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-4">
-                      <h2 className="text-lg font-semibold">Select Blog Articles to Optimize</h2>
+                    <h2 className="text-lg font-semibold">Select Blog Articles to Optimize</h2>
+                    <div className="flex items-center space-x-3">
                       <button
                         onClick={() => {
                           if (selectedArticles.length === articles.length) {
@@ -1845,8 +1845,6 @@ const Dashboard = () => {
                         <CheckCircle className="w-3 h-3" />
                         <span>{selectedArticles.length === articles.length ? 'Deselect All' : 'Select All'}</span>
                       </button>
-                    </div>
-                    <div className="flex items-center space-x-3">
                       <button
                         onClick={() => optimizeArticles()}
                         disabled={optimizing || selectedArticles.length === 0}
@@ -1865,7 +1863,22 @@ const Dashboard = () => {
                         )}
                       </button>
                       <button
-                        onClick={() => publishAllDrafts('article')}
+                        onClick={() => {
+                          const drafts = articles.filter(a => a.hasDraft);
+                          if (drafts.length === 0) {
+                            addNotification('No drafts to publish', 'info');
+                            return;
+                          }
+                          showConfirmation(
+                            'Publish Drafts',
+                            `Publish ${drafts.length} draft optimizations? This will make the draft content live on your store.`,
+                            () => {
+                              Promise.all(drafts.map(a => performPublishDraft('article', a.id)))
+                                .then(() => addNotification(`Successfully published ${drafts.length} drafts`, 'success'))
+                                .catch(err => addNotification('Some drafts failed to publish', 'error'));
+                            }
+                          );
+                        }}
                         disabled={optimizing || !articles.some(a => a.hasDraft)}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                         title="Publish all article drafts"
