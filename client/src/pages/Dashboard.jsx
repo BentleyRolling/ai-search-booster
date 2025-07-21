@@ -664,11 +664,18 @@ const Dashboard = () => {
           }
         })
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       setPreview(data);
       addNotification('Product preview generated successfully!', 'success');
     } catch (error) {
-      addNotification('Failed to generate preview. Please try again.', 'error');
+      console.error('Preview error:', error);
+      addNotification(`Failed to generate preview: ${error.message}`, 'error');
     } finally {
       setPreviewLoading(false);
     }
@@ -698,11 +705,18 @@ const Dashboard = () => {
           }
         })
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       setPreview(data);
       addNotification('Blog preview generated successfully!', 'success');
     } catch (error) {
-      addNotification('Failed to generate blog preview. Please try again.', 'error');
+      console.error('Blog preview error:', error);
+      addNotification(`Failed to generate blog preview: ${error.message}`, 'error');
     } finally {
       setPreviewLoading(false);
     }
@@ -790,7 +804,7 @@ const Dashboard = () => {
         } catch (error) {
           console.error('Rollback error:', error);
           addNotification('Failed to rollback: ' + error.message, 'error');
-          throw error; // Re-throw to prevent modal from closing on error
+          // Don't re-throw - let modal close even on error
         } finally {
           setOptimizing(false);
         }
@@ -1845,6 +1859,23 @@ const Dashboard = () => {
                           <>
                             <BookOpen className="w-4 h-4" />
                             <span>Optimize Selected ({selectedArticles.length})</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => previewBlogOptimization()}
+                        disabled={previewLoading}
+                        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      >
+                        {previewLoading ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <span>Loading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-4 h-4" />
+                            <span>Preview</span>
                           </>
                         )}
                       </button>
