@@ -2868,6 +2868,54 @@ app.post('/api/consent/accept', express.json(), async (req, res) => {
   }
 });
 
+// API: Reset consent (for testing)
+app.delete('/api/consent/reset', async (req, res) => {
+  try {
+    let shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Shop parameter required' });
+    }
+    
+    // Clean shop domain
+    shop = shop.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    console.log('[CONSENT] Resetting consent for shop:', shop);
+    
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    try {
+      // Get existing metafields
+      const metafieldsResponse = await axios.get(
+        `https://${shop}/admin/api/2024-01/metafields.json?namespace=aisearchbooster`,
+        { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+      );
+      
+      // Delete consent metafields
+      for (const metafield of metafieldsResponse.data.metafields) {
+        if (metafield.key === 'disclaimer_accepted' || metafield.key === 'disclaimer_accepted_at') {
+          await axios.delete(
+            `https://${shop}/admin/api/2024-01/metafields/${metafield.id}.json`,
+            { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+          );
+        }
+      }
+      
+      console.log('[CONSENT] Consent reset successfully for shop:', shop);
+      res.json({ success: true, message: 'Consent reset - modal will show on next visit' });
+      
+    } catch (error) {
+      console.error('[CONSENT] Error resetting consent:', error.message);
+      res.status(500).json({ error: 'Failed to reset consent' });
+    }
+  } catch (error) {
+    console.error('[CONSENT] Reset error:', error);
+    res.status(500).json({ error: 'Failed to process consent reset' });
+  }
+});
+
 // API: Get status
 app.get('/api/status', simpleVerifyShop, async (req, res) => {
   try {
