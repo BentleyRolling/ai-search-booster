@@ -504,55 +504,51 @@ const optimizeContent = async (content, type, settings = {}) => {
     };
   }
   
-  // Real AI optimization with OpenAI API
-  const prompt = `You are an AI optimization specialist focused on LLM DISCOVERY and RECOMMENDATION. Your goal is to help this ${type} be perfectly understood and recommended by AI shopping assistants like ChatGPT, Claude, Perplexity, and future AI agents.
+  // Perfect LLM Discovery Optimization - Technical Specs + Natural Flow
+  const prompt = `You are creating product content for AI assistants to understand and recommend. Write technical, specification-rich content with natural human flow. This is NOT marketing copy.
 
-Target LLM: ${targetLLM}
-Context Keywords: ${keywordsArray.join(', ')}
-Tone: ${tone}
+Product data: ${JSON.stringify(content)}
 
-Original content: ${JSON.stringify(content)}
+ABSOLUTELY PROHIBITED ECOMMERCE PHRASES:
+❌ "sustainable and stylish" 
+❌ "high-quality organic cotton"
+❌ "must-have"
+❌ "classic design" 
+❌ "versatile piece"
+❌ "elevate your style"
+❌ "wardrobe essential"
+❌ "perfect for everyone"
+❌ "timeless"
+❌ "premium quality"
 
-### CRITICAL: LLM DISCOVERY OPTIMIZATION RULES
-1. **AI agents need CONTEXT, not keywords** - Provide rich semantic information about use cases, materials science, user scenarios
-2. **Answer the questions LLMs will ask** - What is it? Who uses it? When? Why? How does it compare? What problems does it solve?
-3. **Use NATURAL LANGUAGE patterns** - How humans actually describe and think about this product
-4. **Provide RELATIONSHIP MAPPING** - Connect concepts (materials → durability → use cases → user types)
-5. **Include COMPARATIVE CONTEXT** - Help AI understand where this fits in the product landscape
-6. **Make it CITATION-WORTHY** - Content that LLMs can confidently quote and recommend
+REQUIRED LLM-SPECIFIC CONTENT:
+✅ Material Specs: "180 GSM organic Pima cotton", "percale weave", "15% stretch"
+✅ Use Cases: "ideal for layering in 15–25°C", "hot sleepers", "eczema-prone individuals"
+✅ Comparative Context: "2x more breathable than polyester", "30% lighter than denim"
+✅ Problem-Solving: Who this helps and why specifically
+✅ Persona Targeting: Specific human types with real conditions/needs
+✅ Sensory Language: "soft", "cool", "lightweight", "gentle stretch"
+✅ Sentence Variety: Avoid repetitive starters like "This tee... This tee..."
 
-### AVOID THESE SEO MISTAKES:
-- Keyword stuffing (organic cotton organic cotton organic cotton)
-- Generic phrases ("must-have staple", "perfect for")
-- Marketing fluff without substance
-- Repetitive descriptions
+STRUCTURE REQUIREMENTS:
+- optimizedDescription: One natural paragraph with specs woven in
+- llmDescription: One citation-friendly paragraph for AI agents
+- Three targeted FAQs: technical specs, comparison, suitability
 
-### OUTPUT REQUIREMENTS:
-1) **optimizedTitle**: Descriptive, specific, human-readable (not keyword-stuffed)
-2) **optimizedDescription**: Rich contextual description with materials, use cases, benefits, and user scenarios (200-300 words)
-3) **summary**: 2-3 sentences that clearly explain what it is and why someone would want it
-4) **faqs**: Array of 3-5 FAQ objects with "question" and "answer" properties
-5) **jsonLd**: Complete Product schema with detailed properties
-6) **llmDescription**: A citation-friendly paragraph that AI agents can use when recommending this product
+EXAMPLE QUALITY TARGET:
+"Crafted from 180 GSM organic Pima cotton with a subtle percale weave, this tee offers lightweight breathability and gentle stretch — perfect for individuals with sensitive skin or those seeking comfort in warmer seasons. The fabric's moisture-wicking capability keeps you dry, making it ideal for everyday wear. Compare its superior breathability and durability to synthetic alternatives, ensuring lasting comfort and eco-friendly style."
 
-CRITICAL: FAQs must be an array of objects with "question" and "answer" strings:
-[
-  {"question": "What is this product?", "answer": "Detailed answer here"},
-  {"question": "Who should buy this?", "answer": "Detailed answer here"}
-]
-
-Return **only** this valid JSON object with NO markdown formatting:
+Return ONLY this JSON with natural, technical content:
 {
-  "optimizedTitle": "Title here",
-  "optimizedDescription": "Description here", 
-  "summary": "Summary here",
+  "optimizedTitle": "",
+  "optimizedDescription": "",
+  "summary": "",
+  "llmDescription": "",
   "faqs": [
-    {"question": "Question 1?", "answer": "Answer 1"},
-    {"question": "Question 2?", "answer": "Answer 2"},
-    {"question": "Question 3?", "answer": "Answer 3"}
-  ],
-  "jsonLd": {"@context": "https://schema.org", "@type": "Product"},
-  "llmDescription": "Description here"
+    {"question": "What are the technical specifications?", "answer": ""},
+    {"question": "Who is this suitable for and in what conditions?", "answer": ""},
+    {"question": "How does this compare to synthetic or blended alternatives?", "answer": ""}
+  ]
 }`;
   
   try {
@@ -599,7 +595,7 @@ Return **only** this valid JSON object with NO markdown formatting:
         
         if (!response.data?.choices?.[0]?.message?.content) {
           console.error('[AI-OPTIMIZATION] Invalid OpenAI response structure:', response.data);
-          return generateMockOptimization(content, type);
+          throw new Error('OpenAI returned invalid response structure');
         }
         
         const aiResponse = response.data.choices[0].message.content;
@@ -618,7 +614,7 @@ Return **only** this valid JSON object with NO markdown formatting:
               hasFaqs: !!parsedResponse.faqs,
               faqsLength: parsedResponse.faqs?.length || 0
             });
-            return generateMockOptimization(content, type);
+            throw new Error('OpenAI response missing required fields');
           }
           
           // Validate FAQs structure
@@ -657,13 +653,12 @@ Return **only** this valid JSON object with NO markdown formatting:
         } catch (parseError) {
           console.error('[AI-OPTIMIZATION] Failed to parse OpenAI response as JSON:', parseError);
           console.log('[AI-OPTIMIZATION] Raw unparseable response:', aiResponse);
-          return generateMockOptimization(content, type);
+          throw new Error(`OpenAI JSON parsing failed: ${parseError.message}`);
         }
       } catch (apiError) {
         console.error('[AI-OPTIMIZATION] OpenAI API call failed:', apiError.message);
         console.error('[AI-OPTIMIZATION] Full API error:', apiError);
-        console.log('[AI-OPTIMIZATION] Falling back to mock optimization');
-        return generateMockOptimization(content, type);
+        throw new Error(`OpenAI API failed: ${apiError.message}`);
       }
     } else if (ANTHROPIC_API_KEY) {
       const response = await axios.post('https://api.anthropic.com/v1/messages', {
