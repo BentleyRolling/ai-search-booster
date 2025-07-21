@@ -3135,9 +3135,21 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
 });
 
 // API: Get collections (Shopify collections)
-app.get('/api/collections', simpleVerifyShop, async (req, res) => {
+app.get('/api/collections', async (req, res) => {
   try {
-    const { shop } = req;
+    // Extract shop from query, body, or session token (same as Products API)
+    let shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
+    
+    // For embedded apps, check session token from Authorization header
+    const sessionToken = req.headers.authorization;
+    if (sessionToken && !shop) {
+      // Extract shop from session token if needed
+      shop = req.headers['x-shopify-shop-domain'];
+    }
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Missing shop parameter' });
+    }
     const { limit = 50, page = 1 } = req.query;
     
     console.log('[COLLECTIONS-API] Request received for shop:', shop);
