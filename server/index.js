@@ -3442,21 +3442,36 @@ app.get('/api/collections', async (req, res) => {
     console.log('[COLLECTIONS] Fetching real collections from Shopify for shop:', shop);
     const { accessToken } = shopInfo;
     
-    const response = await axios.get(
-      `https://${shop}/admin/api/2024-01/collections.json?limit=${limit}&fields=id,title,handle,description,published_scope,created_at,updated_at`,
-      {
-        headers: { 'X-Shopify-Access-Token': accessToken }
-      }
-    );
+    // Fetch both custom and smart collections
+    const [customResponse, smartResponse] = await Promise.all([
+      axios.get(
+        `https://${shop}/admin/api/2024-01/custom_collections.json?limit=${limit}&fields=id,title,handle,body_html,published_scope,created_at,updated_at`,
+        { headers: { 'X-Shopify-Access-Token': accessToken } }
+      ),
+      axios.get(
+        `https://${shop}/admin/api/2024-01/smart_collections.json?limit=${limit}&fields=id,title,handle,body_html,published_scope,created_at,updated_at`,
+        { headers: { 'X-Shopify-Access-Token': accessToken } }
+      )
+    ]);
+    
+    // Combine both types of collections
+    const allCollections = [
+      ...(customResponse.data.custom_collections || []),
+      ...(smartResponse.data.smart_collections || [])
+    ];
+    
+    console.log(`[COLLECTIONS] Fetched ${allCollections.length} collections (${customResponse.data.custom_collections?.length || 0} custom, ${smartResponse.data.smart_collections?.length || 0} smart)`);
     
     // Check metafields for optimization status (same as products)
-    const shopifyCollections = await Promise.all(response.data.collections.map(async (collection) => {
+    const shopifyCollections = await Promise.all(allCollections.map(async (collection) => {
       let optimized = false;
       let hasDraft = false;
       
       try {
+        // Determine collection type for correct metafields endpoint
+        const collectionType = customResponse.data.custom_collections?.find(c => c.id === collection.id) ? 'custom_collections' : 'smart_collections';
         const metafieldsResponse = await axios.get(
-          `https://${shop}/admin/api/2024-01/collections/${collection.id}/metafields.json?namespace=asb`,
+          `https://${shop}/admin/api/2024-01/${collectionType}/${collection.id}/metafields.json?namespace=asb`,
           { headers: { 'X-Shopify-Access-Token': accessToken } }
         );
         
@@ -4629,3 +4644,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Fix collections auth Mon Jul 21 16:10:08 PDT 2025 */
 /* Collections exact copy Mon Jul 21 16:16:52 PDT 2025 */
 /* Show real error Mon Jul 21 16:25:06 PDT 2025 */
+/* Fix collections endpoints Mon Jul 21 16:35:18 PDT 2025 */
