@@ -755,6 +755,9 @@ const Dashboard = () => {
           console.log('[ROLLBACK] Success response:', data);
           addNotification(data.message, 'success');
           
+          // Close modal immediately after successful API call
+          setOptimizing(false);
+          
           // Update the product/blog status to reflect the rollback
           if (type === 'product') {
             setProducts(prev => prev.map(p => 
@@ -770,7 +773,7 @@ const Dashboard = () => {
             })));
           }
           
-          // Immediately refresh all data after rollback
+          // Refresh data in background (don't block modal closure)
           console.log('Refreshing data after rollback...');
           await Promise.all([
             fetchStatus(shop),
@@ -804,8 +807,7 @@ const Dashboard = () => {
         } catch (error) {
           console.error('Rollback error:', error);
           addNotification('Failed to rollback: ' + error.message, 'error');
-          // Don't re-throw - let modal close even on error
-        } finally {
+          // Close modal immediately on error too
           setOptimizing(false);
         }
       }
@@ -1672,21 +1674,18 @@ const Dashboard = () => {
                       <span>Test API</span>
                     </button>
                     <button
-                      onClick={previewOptimization}
-                      disabled={previewLoading}
+                      onClick={() => {
+                        const drafts = products.filter(p => p.hasDraft);
+                        if (drafts.length > 0) {
+                          handlePreviewDraft('product', drafts[0].id);
+                        }
+                      }}
+                      disabled={!products.some(p => p.hasDraft)}
                       className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      title={products.some(p => p.hasDraft) ? "Preview optimized product" : "No optimized products to preview"}
                     >
-                      {previewLoading ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>Loading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="w-4 h-4" />
-                          <span>Preview</span>
-                        </>
-                      )}
+                      <Eye className="w-4 h-4" />
+                      <span>Preview</span>
                     </button>
                     <button
                       onClick={optimizeProducts}
@@ -1863,21 +1862,18 @@ const Dashboard = () => {
                         )}
                       </button>
                       <button
-                        onClick={() => previewBlogOptimization()}
-                        disabled={previewLoading}
+                        onClick={() => {
+                          const drafts = articles.filter(a => a.hasDraft);
+                          if (drafts.length > 0) {
+                            handlePreviewDraft('article', drafts[0].id);
+                          }
+                        }}
+                        disabled={!articles.some(a => a.hasDraft)}
                         className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        title={articles.some(a => a.hasDraft) ? "Preview optimized article" : "No optimized articles to preview"}
                       >
-                        {previewLoading ? (
-                          <>
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                            <span>Loading...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="w-4 h-4" />
-                            <span>Preview</span>
-                          </>
-                        )}
+                        <Eye className="w-4 h-4" />
+                        <span>Preview</span>
                       </button>
                       <button
                         onClick={() => publishAllDrafts('article')}
