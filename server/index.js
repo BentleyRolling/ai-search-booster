@@ -1640,13 +1640,13 @@ app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
       hasDraft: !!draftContent,
       hasLive: !!liveContent,
       draft: {
-        content: draftContent,
+        content: draftContent ? JSON.parse(draftContent) : null,
         faq: draftFaq ? JSON.parse(draftFaq) : null,
         settings: draftSettings ? JSON.parse(draftSettings) : null,
         timestamp: draftTimestamp
       },
       live: {
-        content: liveContent,
+        content: liveContent ? JSON.parse(liveContent) : null,
         faq: liveFaq ? JSON.parse(liveFaq) : null,
         timestamp: publishedTimestamp
       }

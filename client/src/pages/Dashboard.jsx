@@ -2691,9 +2691,30 @@ const Dashboard = () => {
                   {selectedDraft.data.hasDraft ? (
                     <div className="space-y-4">
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <h4 className="font-medium text-yellow-800 mb-2">Content</h4>
-                        <div className="text-sm text-yellow-700 whitespace-pre-wrap">
-                          {selectedDraft.data.draft.content}
+                        <h4 className="font-medium text-yellow-800 mb-2">Optimized Content</h4>
+                        <div className="space-y-3 text-sm text-yellow-700">
+                          {selectedDraft.data.draft.content?.optimizedTitle && (
+                            <div>
+                              <strong>Title:</strong> {selectedDraft.data.draft.content.optimizedTitle}
+                            </div>
+                          )}
+                          {selectedDraft.data.draft.content?.optimizedDescription && (
+                            <div>
+                              <strong>Description:</strong>
+                              <div className="mt-1 whitespace-pre-wrap">{selectedDraft.data.draft.content.optimizedDescription}</div>
+                            </div>
+                          )}
+                          {selectedDraft.data.draft.content?.llmDescription && (
+                            <div>
+                              <strong>LLM Description:</strong>
+                              <div className="mt-1 whitespace-pre-wrap">{selectedDraft.data.draft.content.llmDescription}</div>
+                            </div>
+                          )}
+                          {selectedDraft.data.draft.content?.summary && (
+                            <div>
+                              <strong>Summary:</strong> {selectedDraft.data.draft.content.summary}
+                            </div>
+                          )}
                         </div>
                       </div>
                       
