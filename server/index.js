@@ -3242,8 +3242,8 @@ app.get('/api/collections', simpleVerifyShop, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Categories error:', error);
-    res.status(500).json({ error: 'Failed to fetch categories' });
+    console.error('[COLLECTIONS-API] Error:', error);
+    res.status(500).json({ error: 'Failed to fetch collections' });
   }
 });
 
