@@ -620,7 +620,18 @@ About Page: "Provides background information about the company, founding story, 
 MINIMAL CONTENT FALLBACK:
 If page has minimal content, still provide structured, LLM-friendly descriptions based on page handle/title context.
 
-Return ONLY this JSON with factual, universal content:`;
+Return ONLY this JSON with factual, universal content:
+{
+  "optimizedTitle": "",
+  "optimizedDescription": "",
+  "summary": "",
+  "llmDescription": "",
+  "faqs": [
+    {"question": "What information is provided on this page?", "answer": ""},
+    {"question": "When would someone need to reference this page?", "answer": ""},
+    {"question": "What type of content or policies does this cover?", "answer": ""}
+  ]
+}`;
   } else {
     prompt = `Optimize this blog article for LLMs to understand, summarize, and recommend.
 
