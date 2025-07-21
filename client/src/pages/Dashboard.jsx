@@ -41,6 +41,8 @@ const Dashboard = () => {
   const [consentCheckbox, setConsentCheckbox] = useState(false);
   const [checkingConsent, setCheckingConsent] = useState(true);
   const [showTermsPopup, setShowTermsPopup] = useState(false);
+  const [showLegalRecords, setShowLegalRecords] = useState(false);
+  const [legalRecordsData, setLegalRecordsData] = useState(null);
   const [testResults, setTestResults] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [optimizationProgress, setOptimizationProgress] = useState(null);
@@ -211,15 +213,10 @@ const Dashboard = () => {
         console.log('Legal Note:', data.legalNote);
         console.log('============================================');
         
-        // Show summary in notification
-        const hasAccepted = data.shopifyMetafields.find(m => m.key === 'disclaimer_accepted');
-        const acceptedAt = data.shopifyMetafields.find(m => m.key === 'disclaimer_accepted_at');
+        // Store data and show popup
+        setLegalRecordsData(data);
+        setShowLegalRecords(true);
         
-        if (hasAccepted && acceptedAt) {
-          addNotification(`✅ Consent verified: Accepted on ${acceptedAt.value} (Check console for full legal records)`, 'success');
-        } else {
-          addNotification('❌ No consent record found', 'warning');
-        }
       } else {
         throw new Error('Failed to fetch consent records');
       }
@@ -3333,6 +3330,110 @@ const Dashboard = () => {
                 <button
                   onClick={() => setShowTermsPopup(false)}
                   className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Legal Records Popup Modal */}
+      {showLegalRecords && legalRecordsData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  📋 Legal Consent Records Verification
+                </h2>
+                <button
+                  onClick={() => setShowLegalRecords(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="overflow-y-auto max-h-[60vh] space-y-6">
+                {/* Shop Info */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-blue-900 mb-2">Store Information</h3>
+                  <div className="text-sm space-y-1">
+                    <p><strong>Shop Domain:</strong> {legalRecordsData.shop}</p>
+                    <p><strong>Records Retrieved:</strong> {new Date(legalRecordsData.retrievedAt).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                {/* Consent Status */}
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-green-900 mb-2">Consent Verification</h3>
+                  {legalRecordsData.shopifyMetafields.length > 0 ? (
+                    <div className="space-y-3">
+                      {legalRecordsData.shopifyMetafields.map((field, index) => (
+                        <div key={index} className="bg-white p-3 rounded border">
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <p><strong>Field:</strong> {field.key}</p>
+                            <p><strong>Value:</strong> {field.value}</p>
+                            <p><strong>Shopify ID:</strong> {field.id}</p>
+                            <p><strong>Type:</strong> {field.type}</p>
+                            <p><strong>Created:</strong> {new Date(field.created_at).toLocaleString()}</p>
+                            <p><strong>Updated:</strong> {new Date(field.updated_at).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-red-600">❌ No consent records found</p>
+                  )}
+                </div>
+
+                {/* Server Logs */}
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-yellow-900 mb-2">Server Audit Trail</h3>
+                  <div className="text-sm space-y-2">
+                    <p><strong>Log Reference:</strong></p>
+                    <div className="bg-gray-100 p-2 rounded font-mono text-xs">
+                      {legalRecordsData.serverLogs}
+                    </div>
+                    <p className="text-gray-600">
+                      Server logs contain IP address, user agent, and exact timestamps for legal protection.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Legal Notes */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-2">Legal Information</h3>
+                  <div className="text-sm space-y-2">
+                    <p>{legalRecordsData.legalNote}</p>
+                    <div className="mt-3 p-3 bg-white border-l-4 border-blue-500">
+                      <p className="font-medium">For Legal Inquiries:</p>
+                      <ul className="list-disc list-inside text-xs mt-1 space-y-1">
+                        <li>Shopify metafields provide permanent storage with platform timestamps</li>
+                        <li>Server logs include IP addresses and user agents for identity verification</li>
+                        <li>All consent actions are logged with microsecond precision</li>
+                        <li>Records can be cross-referenced between Shopify and server systems</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(JSON.stringify(legalRecordsData, null, 2));
+                    addNotification('Legal records copied to clipboard', 'success');
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                >
+                  Copy JSON Data
+                </button>
+                <button
+                  onClick={() => setShowLegalRecords(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
                 >
                   Close
                 </button>
