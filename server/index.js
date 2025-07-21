@@ -3350,7 +3350,7 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
   }
 });
 
-// API: Get collections (Shopify collections) - COPIED FROM WORKING PRODUCTS API
+// API: Get collections (EXACT COPY OF WORKING PRODUCTS API)
 app.get('/api/collections', async (req, res) => {
   try {
     // Extract shop from query, body, or session token
@@ -3377,7 +3377,7 @@ app.get('/api/collections', async (req, res) => {
     const userAgent = req.headers['user-agent'] || '';
     const isEmbeddedApp = userAgent.includes('Shopify') || req.headers['sec-fetch-site'] === 'same-origin';
     
-    console.log('[COLLECTIONS-API] Collections API called:', {
+    console.log('[COLLECTIONS-DEBUG] Collections API called:', {
       shop,
       isProxyRequest,
       isEmbeddedApp,
@@ -3388,10 +3388,10 @@ app.get('/api/collections', async (req, res) => {
     });
     
     if (isEmbeddedApp && !isProxyRequest) {
-      console.log('[COLLECTIONS-API] ⚠️ WARNING: Embedded app request without proxy detected!');
-      console.log('[COLLECTIONS-API] This suggests the Shopify app proxy is not configured correctly.');
-      console.log('[COLLECTIONS-API] Expected: x-forwarded-host should contain myshopify.com');
-      console.log('[COLLECTIONS-API] Actual headers:', JSON.stringify(req.headers, null, 2));
+      console.log('[COLLECTIONS-CI] ⚠️ WARNING: Embedded app request without proxy detected!');
+      console.log('[COLLECTIONS-CI] This suggests the Shopify app proxy is not configured correctly.');
+      console.log('[COLLECTIONS-CI] Expected: x-forwarded-host should contain myshopify.com');
+      console.log('[COLLECTIONS-CI] Actual headers:', JSON.stringify(req.headers, null, 2));
     }
     
     if (!shop) {
@@ -3400,16 +3400,15 @@ app.get('/api/collections', async (req, res) => {
     
     // Check if shop has valid access token from OAuth flow
     const shopInfo = shopData.get(shop);
-    
     if (!shopInfo || !shopInfo.accessToken) {
-      console.log('[COLLECTIONS-API] No valid OAuth token, returning mock data for collections:', shop);
+      console.log('[COLLECTIONS] No valid OAuth token, returning mock data for shop:', shop);
       // Return mock data when no OAuth token
-      const categories = [
+      const collections = [
         {
           id: 1,
-          title: 'Men\'s Clothing',
-          handle: 'mens-clothing',
-          description: 'High-quality men\'s apparel and accessories',
+          title: 'Sample Collection 1',
+          handle: 'sample-collection-1',
+          description: 'Sample collection description',
           published_scope: 'web',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -3418,34 +3417,30 @@ app.get('/api/collections', async (req, res) => {
         },
         {
           id: 2,
-          title: 'Women\'s Fashion',
-          handle: 'womens-fashion',
-          description: 'Stylish women\'s clothing and accessories',
+          title: 'Sample Collection 2', 
+          handle: 'sample-collection-2',
+          description: 'Another sample collection',
           published_scope: 'web',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           optimized: false,
-          hasDraft: false
+          hasDraft: true
         }
       ];
       
       return res.json({
-        collections: categories,
+        collections,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
-          total: categories.length
+          total: collections.length
         }
       });
     }
     
     // Fetch real collections from Shopify API
-    console.log('[COLLECTIONS-API] Fetching real collections from Shopify for shop:', shop);
+    console.log('[COLLECTIONS] Fetching real collections from Shopify for shop:', shop);
     const { accessToken } = shopInfo;
-    
-    console.log('[COLLECTIONS-API] Making Shopify API request...');
-    console.log('[COLLECTIONS-API] URL:', `https://${shop}/admin/api/2024-01/collections.json?limit=${limit}&fields=id,title,handle,description,published_scope,created_at,updated_at`);
-    console.log('[COLLECTIONS-API] AccessToken present:', !!accessToken);
     
     const response = await axios.get(
       `https://${shop}/admin/api/2024-01/collections.json?limit=${limit}&fields=id,title,handle,description,published_scope,created_at,updated_at`,
@@ -3454,31 +3449,41 @@ app.get('/api/collections', async (req, res) => {
       }
     );
     
-    console.log('[COLLECTIONS-API] Shopify response status:', response.status);
-    console.log('[COLLECTIONS-API] Shopify response data:', response.data);
-    const collections = response.data.collections || [];
-    console.log(`[COLLECTIONS-API] Fetched ${collections.length} collections from Shopify:`, collections.map(c => ({id: c.id, title: c.title})));
-    
-    // TEMPORARILY SKIP metafields to isolate the issue
-    console.log('[COLLECTIONS-API] SKIPPING metafields check for debugging');
-    const categoriesWithStatus = collections.map(collection => ({
-      ...collection,
-      optimized: false,
-      hasDraft: false
+    // Check metafields for optimization status (same as products)
+    const shopifyCollections = await Promise.all(response.data.collections.map(async (collection) => {
+      let optimized = false;
+      let hasDraft = false;
+      
+      try {
+        const metafieldsResponse = await axios.get(
+          `https://${shop}/admin/api/2024-01/collections/${collection.id}/metafields.json?namespace=asb`,
+          { headers: { 'X-Shopify-Access-Token': accessToken } }
+        );
+        
+        const metafields = metafieldsResponse.data.metafields || [];
+        optimized = metafields.some(m => m.key === 'optimized_content');
+        hasDraft = metafields.some(m => m.key === 'optimized_content_draft');
+      } catch (metaError) {
+        console.log(`Error checking metafields for collection ${collection.id}:`, metaError.message);
+      }
+      
+      return {
+        ...collection,
+        optimized,
+        hasDraft
+      };
     }));
     
-    console.log('[COLLECTIONS-API] Collections with status (no metafields):', categoriesWithStatus.length);
-    
     res.json({
-      collections: categoriesWithStatus,
+      collections: shopifyCollections,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        total: categoriesWithStatus.length
+        total: shopifyCollections.length
       }
     });
   } catch (error) {
-    console.error('[COLLECTIONS-API] Error:', error);
+    console.error('[COLLECTIONS] Collections error:', error);
     res.status(500).json({ error: 'Failed to fetch collections' });
   }
 });
@@ -4614,3 +4619,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Debug collections frontend Mon Jul 21 15:27:12 PDT 2025 */
 /* Debug collections simplified Mon Jul 21 15:33:23 PDT 2025 */
 /* Fix collections auth Mon Jul 21 16:10:08 PDT 2025 */
+/* Collections exact copy Mon Jul 21 16:16:52 PDT 2025 */
