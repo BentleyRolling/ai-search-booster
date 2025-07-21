@@ -308,18 +308,31 @@ const Dashboard = () => {
 
   const fetchCollections = async (shopName) => {
     try {
-      console.log('Dashboard: Fetching collections for shop:', shopName);
+      console.log('=== COLLECTIONS FRONTEND DEBUG ===');
+      console.log('Shop name:', shopName);
+      console.log('API_BASE:', API_BASE);
+      console.log('Full URL:', `${API_BASE}/api/collections?shop=${shopName}`);
+      
       const response = await authFetch(`${API_BASE}/api/collections?shop=${shopName}`);
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
+      
       const data = await response.json();
-      console.log('Dashboard: Collections data received:', data);
-      console.log('Dashboard: Collections array:', data.collections);
-      console.log('Dashboard: Collections length:', data.collections?.length);
+      console.log('Collections response data:', JSON.stringify(data, null, 2));
+      console.log('Collections array:', data.collections);
+      console.log('Collections length:', data.collections?.length);
+      console.log('Setting collections state to:', data.collections || []);
+      
       setCollections(data.collections || []);
     } catch (error) {
-      console.error('Failed to fetch collections:', error);
+      console.error('Collections fetch error:', error);
+      console.error('Error stack:', error.stack);
       setCollections([]);
     }
   };
