@@ -901,6 +901,7 @@ const Dashboard = () => {
       // Refresh data
       fetchStatus(shop);
       fetchProducts(shop);
+      fetchBlogs(shop);
       fetchHistory(shop);
       
       return data;
@@ -1596,13 +1597,14 @@ const Dashboard = () => {
             </p>
           </div>
           
-          {/* AI Provider - Always shown on all tabs */}
+          {/* Shopify Store Status - Always shown on all tabs */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-500">AI Provider</h3>
-              <AlertCircle className="w-5 h-5 text-blue-500" />
+              <h3 className="text-sm font-medium text-gray-500">Shopify Store</h3>
+              <Globe className="w-5 h-5 text-blue-500" />
             </div>
-            <p className="text-lg font-semibold text-gray-900">{status?.aiProvider || 'Not configured'}</p>
+            <p className="text-lg font-semibold text-green-600">Optimized</p>
+            <p className="text-xs text-gray-500 mt-1">RSS & Embeddings Active</p>
           </div>
         </div>
 
@@ -1703,7 +1705,14 @@ const Dashboard = () => {
                           `Publish ${drafts.length} draft optimizations? This will make the draft content live on your store.`,
                           () => {
                             Promise.all(drafts.map(p => performPublishDraft('product', p.id)))
-                              .then(() => addNotification(`Successfully published ${drafts.length} drafts`, 'success'))
+                              .then(async () => {
+                                addNotification(`Successfully published ${drafts.length} drafts`, 'success');
+                                // Final refresh to ensure UI is updated
+                                await Promise.all([
+                                  fetchProducts(shop),
+                                  fetchStatus(shop)
+                                ]);
+                              })
                               .catch(err => addNotification('Some drafts failed to publish', 'error'));
                           }
                         );
@@ -1874,7 +1883,14 @@ const Dashboard = () => {
                             `Publish ${drafts.length} draft optimizations? This will make the draft content live on your store.`,
                             () => {
                               Promise.all(drafts.map(a => performPublishDraft('article', a.id)))
-                                .then(() => addNotification(`Successfully published ${drafts.length} drafts`, 'success'))
+                                .then(async () => {
+                                  addNotification(`Successfully published ${drafts.length} drafts`, 'success');
+                                  // Final refresh to ensure UI is updated
+                                  await Promise.all([
+                                    fetchBlogs(shop),
+                                    fetchStatus(shop)
+                                  ]);
+                                })
                                 .catch(err => addNotification('Some drafts failed to publish', 'error'));
                             }
                           );
