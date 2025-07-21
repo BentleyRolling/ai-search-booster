@@ -1644,8 +1644,12 @@ app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
       draft: {
         content: draftContent ? (function() {
           try {
-            return JSON.parse(draftContent);
+            console.log('[DRAFT-FETCH] Raw draftContent:', draftContent);
+            const parsed = JSON.parse(draftContent);
+            console.log('[DRAFT-FETCH] Parsed as JSON:', parsed);
+            return parsed;
           } catch (e) {
+            console.log('[DRAFT-FETCH] JSON parse failed, treating as plain text:', e.message);
             // Handle plain text content (Products/Blogs store as string)
             return { description: draftContent };
           }
@@ -3136,10 +3140,16 @@ app.get('/api/collections', simpleVerifyShop, async (req, res) => {
     const { shop } = req;
     const { limit = 50, page = 1 } = req.query;
     
+    console.log('[COLLECTIONS-API] Request received for shop:', shop);
+    console.log('[COLLECTIONS-API] shopData keys:', Array.from(shopData.keys()));
+    
     // Check if shop has valid access token from OAuth flow
     const shopInfo = shopData.get(shop);
+    console.log('[COLLECTIONS-API] shopInfo found:', !!shopInfo);
+    console.log('[COLLECTIONS-API] has accessToken:', !!shopInfo?.accessToken);
+    
     if (!shopInfo || !shopInfo.accessToken) {
-      console.log('No valid OAuth token, returning mock data for collections:', shop);
+      console.log('[COLLECTIONS-API] No valid OAuth token, returning mock data for collections:', shop);
       // Return mock data when no OAuth token
       const categories = [
         {
@@ -3177,9 +3187,10 @@ app.get('/api/collections', simpleVerifyShop, async (req, res) => {
     }
     
     // Fetch real collections from Shopify API
-    console.log('Fetching real collections from Shopify for shop:', shop);
+    console.log('[COLLECTIONS-API] Fetching real collections from Shopify for shop:', shop);
     const { accessToken } = shopInfo;
     
+    console.log('[COLLECTIONS-API] Making Shopify API request...');
     const response = await axios.get(
       `https://${shop}/admin/api/2024-01/collections.json?limit=${limit}&fields=id,title,handle,description,published_scope,created_at,updated_at`,
       {
@@ -3187,8 +3198,10 @@ app.get('/api/collections', simpleVerifyShop, async (req, res) => {
       }
     );
     
+    console.log('[COLLECTIONS-API] Shopify response status:', response.status);
+    console.log('[COLLECTIONS-API] Shopify response data:', response.data);
     const collections = response.data.collections || [];
-    console.log(`Fetched ${collections.length} collections from Shopify`);
+    console.log(`[COLLECTIONS-API] Fetched ${collections.length} collections from Shopify:`, collections.map(c => ({id: c.id, title: c.title})));
     
     // Check optimization status and drafts for each collection
     const categoriesWithStatus = await Promise.all(collections.map(async (collection) => {
