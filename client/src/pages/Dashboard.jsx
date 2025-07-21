@@ -2050,11 +2050,10 @@ const Dashboard = () => {
 
             {/* Blogs Tab - Individual Articles */}
             {activeTab === 'blogs' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold">Select Blog Articles to Optimize</h2>
-                    <div className="flex items-center space-x-3">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Select Blog Articles to Optimize</h3>
+                  <div className="flex space-x-2">
                       <button
                         onClick={() => {
                           if (selectedArticles.length === articles.length) {
@@ -2082,7 +2081,7 @@ const Dashboard = () => {
                         ) : (
                           <>
                             <BookOpen className="w-4 h-4" />
-                            <span>Optimize Selected ({selectedArticles.length})</span>
+                            <span>Optimize Selected</span>
                           </>
                         )}
                       </button>
@@ -2127,9 +2126,9 @@ const Dashboard = () => {
                         <span>Rollback All</span>
                       </button>
                     </div>
-                  </div>
-                  
-                  {articles.length === 0 ? (
+                </div>
+                
+                {articles.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No blog articles found</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -2220,17 +2219,15 @@ const Dashboard = () => {
                       ))}
                     </div>
                   )}
-                </div>
               </div>
             )}
 
             {/* Pages Tab */}
             {activeTab === 'pages' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold">Select Pages to Optimize</h2>
-                    <div className="flex items-center space-x-3">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Select Pages to Optimize</h3>
+                  <div className="flex space-x-2">
                       <button
                         onClick={() => {
                           if (selectedPages.length === pages.length) {
@@ -2302,9 +2299,9 @@ const Dashboard = () => {
                         <span>Rollback All</span>
                       </button>
                     </div>
-                  </div>
-                  
-                  {pages.length === 0 ? (
+                </div>
+                
+                {pages.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No pages found</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -2402,17 +2399,15 @@ const Dashboard = () => {
                       ))}
                     </div>
                   )}
-                </div>
               </div>
             )}
 
             {/* Categories Tab */}
             {activeTab === 'categories' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-lg shadow p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold">Select Categories to Optimize</h2>
-                    <div className="flex items-center space-x-3">
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Select Categories to Optimize</h3>
+                  <div className="flex space-x-2">
                       <button
                         onClick={() => {
                           if (selectedCategories.length === categories.length) {
@@ -2484,9 +2479,9 @@ const Dashboard = () => {
                         <span>Rollback All</span>
                       </button>
                     </div>
-                  </div>
-                  
-                  {categories.length === 0 ? (
+                </div>
+                
+                {categories.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No categories found</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -2584,7 +2579,6 @@ const Dashboard = () => {
                       ))}
                     </div>
                   )}
-                </div>
               </div>
             )}
           </div>
