@@ -1572,6 +1572,10 @@ app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
     
     const endpoint = type === 'product' 
       ? `products/${id}/metafields`
+      : type === 'page'
+      ? `pages/${id}/metafields`
+      : type === 'category'
+      ? `collections/${id}/metafields`
       : `articles/${id}/metafields`;
     
     // Get draft metafields
