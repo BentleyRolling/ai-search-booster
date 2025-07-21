@@ -2682,9 +2682,8 @@ const Dashboard = () => {
             </div>
           </div>
         )}
-      </div>
 
-      {/* Help Section */}
+        {/* Help Section */}
       <div className="bg-white rounded-lg shadow mb-8">
         <div className="border-b">
           <nav className="flex -mb-px">
@@ -2852,6 +2851,9 @@ const Dashboard = () => {
           </div>
         )}
         </div>
+      </div>
+
+      {/* Close main container */}
       </div>
 
       {/* Draft Preview Modal */}
