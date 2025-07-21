@@ -2715,6 +2715,12 @@ const Dashboard = () => {
                               <strong>Summary:</strong> {selectedDraft.data.draft.content.summary}
                             </div>
                           )}
+                          {selectedDraft.data.draft.content?.description && !selectedDraft.data.draft.content?.optimizedTitle && (
+                            <div>
+                              <strong>Content:</strong>
+                              <div className="mt-1 whitespace-pre-wrap">{selectedDraft.data.draft.content.description}</div>
+                            </div>
+                          )}
                         </div>
                       </div>
                       

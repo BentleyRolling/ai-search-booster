@@ -972,6 +972,8 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
     
     const endpoint = resourceType === 'product' 
       ? `products/${resourceId}/metafields`
+      : resourceType === 'page'
+      ? `pages/${resourceId}/metafields`
       : `articles/${resourceId}/metafields`;
     
     // Get draft metafields
@@ -994,7 +996,7 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
     if (!originalBackup) {
       // Fetch original content
       const originalResponse = await axios.get(
-        `https://${shop}/admin/api/2024-01/${resourceType === 'product' ? 'products' : 'articles'}/${resourceId}.json`,
+        `https://${shop}/admin/api/2024-01/${resourceType === 'product' ? 'products' : resourceType === 'page' ? 'pages' : 'articles'}/${resourceId}.json`,
         { headers: { 'X-Shopify-Access-Token': accessToken } }
       );
       
@@ -1640,13 +1642,27 @@ app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
       hasDraft: !!draftContent,
       hasLive: !!liveContent,
       draft: {
-        content: draftContent ? JSON.parse(draftContent) : null,
+        content: draftContent ? (function() {
+          try {
+            return JSON.parse(draftContent);
+          } catch (e) {
+            // Handle plain text content (Products/Blogs store as string)
+            return { description: draftContent };
+          }
+        })() : null,
         faq: draftFaq ? JSON.parse(draftFaq) : null,
         settings: draftSettings ? JSON.parse(draftSettings) : null,
         timestamp: draftTimestamp
       },
       live: {
-        content: liveContent ? JSON.parse(liveContent) : null,
+        content: liveContent ? (function() {
+          try {
+            return JSON.parse(liveContent);
+          } catch (e) {
+            // Handle plain text content (Products/Blogs store as string)
+            return { description: liveContent };
+          }
+        })() : null,
         faq: liveFaq ? JSON.parse(liveFaq) : null,
         timestamp: publishedTimestamp
       }
