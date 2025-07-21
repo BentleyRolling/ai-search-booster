@@ -2701,7 +2701,7 @@ const Dashboard = () => {
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                           <h4 className="font-medium text-blue-800 mb-2">FAQ</h4>
                           <div className="space-y-2">
-                            {selectedDraft.data.draft.faq.questions?.map((faq, index) => (
+                            {selectedDraft.data.draft.faq?.map((faq, index) => (
                               <div key={index} className="text-sm">
                                 <div className="font-medium text-blue-700">Q: {faq.question}</div>
                                 <div className="text-blue-600">A: {faq.answer}</div>
@@ -2738,7 +2738,7 @@ const Dashboard = () => {
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                           <h4 className="font-medium text-green-800 mb-2">FAQ</h4>
                           <div className="space-y-2">
-                            {selectedDraft.data.live.faq.questions?.map((faq, index) => (
+                            {selectedDraft.data.live.faq?.map((faq, index) => (
                               <div key={index} className="text-sm">
                                 <div className="font-medium text-green-700">Q: {faq.question}</div>
                                 <div className="text-green-600">A: {faq.answer}</div>
