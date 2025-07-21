@@ -21,12 +21,12 @@ const Dashboard = () => {
   const [blogs, setBlogs] = useState([]);
   const [articles, setArticles] = useState([]);
   const [pages, setPages] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedBlogs, setSelectedBlogs] = useState([]);
   const [selectedArticles, setSelectedArticles] = useState([]);
   const [selectedPages, setSelectedPages] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCollections, setSelectedCollections] = useState([]);
   const [usage, setUsage] = useState(null);
   const [settings, setSettings] = useState({
     targetLLM: 'general',
@@ -154,7 +154,7 @@ const Dashboard = () => {
             fetchProducts(shopParam),
             fetchBlogs(shopParam),
             fetchPages(shopParam),
-            fetchCategories(shopParam),
+            fetchCollections(shopParam),
             fetchUsage(shopParam)
           ]).then(() => {
             clearTimeout(loadingTimeout);
@@ -306,19 +306,19 @@ const Dashboard = () => {
     }
   };
 
-  const fetchCategories = async (shopName) => {
+  const fetchCollections = async (shopName) => {
     try {
-      console.log('Dashboard: Fetching categories for shop:', shopName);
-      const response = await authFetch(`${API_BASE}/api/categories?shop=${shopName}`);
+      console.log('Dashboard: Fetching collections for shop:', shopName);
+      const response = await authFetch(`${API_BASE}/api/collections?shop=${shopName}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const data = await response.json();
-      console.log('Dashboard: Categories data received:', data);
-      setCategories(data.categories || []);
+      console.log('Dashboard: Collections data received:', data);
+      setCollections(data.collections || []);
     } catch (error) {
-      console.error('Failed to fetch categories:', error);
-      setCategories([]);
+      console.error('Failed to fetch collections:', error);
+      setCollections([]);
     }
   };
 
@@ -561,33 +561,33 @@ const Dashboard = () => {
     }
   };
 
-  const optimizeCategories = async () => {
-    console.log('optimizeCategories called, selectedCategories:', selectedCategories);
+  const optimizeCollections = async () => {
+    console.log('optimizeCollections called, selectedCollections:', selectedCollections);
     
-    if (selectedCategories.length === 0) {
-      addNotification('Please select categories to optimize', 'warning');
+    if (selectedCollections.length === 0) {
+      addNotification('Please select collections to optimize', 'warning');
       return;
     }
     
     setOptimizing(true);
-    setOptimizationProgress({ type: 'categories', current: 0, total: selectedCategories.length });
-    addNotification(`Starting optimization of ${selectedCategories.length} categories...`, 'info');
+    setOptimizationProgress({ type: 'collections', current: 0, total: selectedCollections.length });
+    addNotification(`Starting optimization of ${selectedCollections.length} collections...`, 'info');
     
     try {
       let successCount = 0;
       let failedCount = 0;
       
-      for (let i = 0; i < selectedCategories.length; i++) {
-        const categoryId = selectedCategories[i];
+      for (let i = 0; i < selectedCollections.length; i++) {
+        const collectionId = selectedCollections[i];
         
         try {
-          console.log(`Optimizing category ${i + 1}/${selectedCategories.length}: ${categoryId}`);
-          const response = await authFetch(`${API_BASE}/api/optimize/categories?shop=${shop}`, {
+          console.log(`Optimizing collection ${i + 1}/${selectedCollections.length}: ${collectionId}`);
+          const response = await authFetch(`${API_BASE}/api/optimize/collections?shop=${shop}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               shop,
-              categoryIds: [categoryId],
+              collectionIds: [collectionId],
               settings: {
                 targetLLM: settings.targetLLM,
                 keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
@@ -609,28 +609,28 @@ const Dashboard = () => {
             failedCount++;
           }
         } catch (itemError) {
-          console.error(`Failed to optimize category ${categoryId}:`, itemError);
+          console.error(`Failed to optimize collection ${collectionId}:`, itemError);
           failedCount++;
         }
         
-        setOptimizationProgress({ type: 'categories', current: i + 1, total: selectedCategories.length });
+        setOptimizationProgress({ type: 'collections', current: i + 1, total: selectedCollections.length });
       }
       
       if (successCount > 0) {
-        addNotification(`Successfully optimized ${successCount} categories!`, 'success');
+        addNotification(`Successfully optimized ${successCount} collections!`, 'success');
       }
       if (failedCount > 0) {
-        addNotification(`${failedCount} categories failed to optimize`, 'error');
+        addNotification(`${failedCount} collections failed to optimize`, 'error');
       }
       
       fetchStatus(shop);
-      fetchCategories(shop);
+      fetchCollections(shop);
       fetchHistory(shop);
       fetchUsage(shop);
-      setSelectedCategories([]);
+      setSelectedCollections([]);
     } catch (error) {
-      console.error('Category optimization error:', error);
-      addNotification('Failed to optimize categories. Please try again.', 'error');
+      console.error('Collections optimization error:', error);
+      addNotification('Failed to optimize collections. Please try again.', 'error');
     } finally {
       setOptimizing(false);
       setTimeout(() => setOptimizationProgress(null), 1000);
@@ -1764,7 +1764,7 @@ const Dashboard = () => {
               
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-500">Optimized Categories</h3>
+                  <h3 className="text-sm font-medium text-gray-500">Optimized Collections</h3>
                   <CheckCircle className="w-5 h-5 text-green-500" />
                 </div>
                 <p className="text-3xl font-bold text-green-600">{categories?.filter(c => c.optimized)?.length || 0}</p>
@@ -2423,7 +2423,7 @@ const Dashboard = () => {
                         <span>{selectedCategories.length === categories.length ? 'Deselect All' : 'Select All'}</span>
                       </button>
                       <button
-                        onClick={optimizeCategories}
+                        onClick={optimizeCollections}
                         disabled={optimizing || selectedCategories.length === 0}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                       >

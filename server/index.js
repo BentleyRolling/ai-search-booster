@@ -2190,13 +2190,13 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
   }
 });
 
-// API: Optimize categories (collections)
-app.post('/api/optimize/categories', simpleVerifyShop, optimizationLimiter, async (req, res) => {
+// API: Optimize collections
+app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, async (req, res) => {
   try {
-    const { categoryIds, settings } = req.body;
+    const { collectionIds, settings } = req.body;
     const { shop } = req;
     
-    console.log(`[CATEGORIES-OPTIMIZE] Starting optimization for shop: ${shop}, categories: ${categoryIds}`);
+    console.log(`[COLLECTIONS-OPTIMIZE] Starting optimization for shop: ${shop}, collections: ${collectionIds}`);
     
     // Get shop info for access token
     const shopInfo = shopData.get(shop);
@@ -2210,14 +2210,14 @@ app.post('/api/optimize/categories', simpleVerifyShop, optimizationLimiter, asyn
     const { accessToken } = shopInfo;
     const results = [];
     
-    // Process each category ID
-    for (const categoryId of categoryIds) {
+    // Process each collection ID
+    for (const collectionId of collectionIds) {
       try {
-        console.log(`[CATEGORIES-OPTIMIZE] Processing category ${categoryId}`);
+        console.log(`[COLLECTIONS-OPTIMIZE] Processing collection ${collectionId}`);
         
         // Fetch collection from Shopify API
         const collectionResponse = await axios.get(
-          `https://${shop}/admin/api/2024-01/collections/${categoryId}.json`,
+          `https://${shop}/admin/api/2024-01/collections/${collectionId}.json`,
           {
             headers: { 'X-Shopify-Access-Token': accessToken }
           }
@@ -2228,7 +2228,7 @@ app.post('/api/optimize/categories', simpleVerifyShop, optimizationLimiter, asyn
         
         // Store original as backup if not already stored
         const metafieldsResponse = await axios.get(
-          `https://${shop}/admin/api/2024-01/collections/${categoryId}/metafields.json?namespace=asb&key=original_backup`,
+          `https://${shop}/admin/api/2024-01/collections/${collectionId}/metafields.json?namespace=asb&key=original_backup`,
           {
             headers: { 'X-Shopify-Access-Token': accessToken }
           }
@@ -2236,7 +2236,7 @@ app.post('/api/optimize/categories', simpleVerifyShop, optimizationLimiter, asyn
         
         if (metafieldsResponse.data.metafields.length === 0) {
           await axios.post(
-            `https://${shop}/admin/api/2024-01/collections/${categoryId}/metafields.json`,
+            `https://${shop}/admin/api/2024-01/collections/${collectionId}/metafields.json`,
             {
               metafield: {
                 namespace: 'asb',
@@ -2256,14 +2256,14 @@ app.post('/api/optimize/categories', simpleVerifyShop, optimizationLimiter, asyn
         }
         
         // Optimize content using AI (collection-specific prompt)
-        const optimized = await optimizeContent(collection, 'category', settings);
+        const optimized = await optimizeContent(collection, 'collection', settings);
         
         // Store optimization as draft metafields (don't update collection directly)
-        console.log(`[CATEGORIES-OPTIMIZE] Storing optimization as draft for collection ${collection.id}`);
+        console.log(`[COLLECTIONS-OPTIMIZE] Storing optimization as draft for collection ${collection.id}`);
         
         // Store optimized content as draft
         await axios.post(
-          `https://${shop}/admin/api/2024-01/collections/${categoryId}/metafields.json`,
+          `https://${shop}/admin/api/2024-01/collections/${collectionId}/metafields.json`,
           {
             metafield: {
               namespace: 'asb',
@@ -2285,35 +2285,35 @@ app.post('/api/optimize/categories', simpleVerifyShop, optimizationLimiter, asyn
         );
         
         results.push({
-          id: categoryId,
+          id: collectionId,
           title: collection.title,
           status: 'success',
           optimized: optimized
         });
         
       } catch (error) {
-        console.error(`[CATEGORIES-OPTIMIZE] Error processing category ${categoryId}:`, error);
+        console.error(`[COLLECTIONS-OPTIMIZE] Error processing collection ${collectionId}:`, error);
         results.push({
-          id: categoryId,
+          id: collectionId,
           status: 'error',
           error: error.message
         });
       }
     }
     
-    console.log(`[CATEGORIES-OPTIMIZE] Completed optimization for ${categoryIds.length} categories`);
+    console.log(`[COLLECTIONS-OPTIMIZE] Completed optimization for ${collectionIds.length} collections`);
     res.json({
       success: true,
       results: results,
       summary: {
-        total: categoryIds.length,
+        total: collectionIds.length,
         successful: results.filter(r => r.status === 'success').length,
         failed: results.filter(r => r.status === 'error').length
       }
     });
   } catch (error) {
-    console.error('Category optimization error:', error);
-    res.status(500).json({ error: 'Failed to optimize categories: ' + error.message });
+    console.error('Collections optimization error:', error);
+    res.status(500).json({ error: 'Failed to optimize collections: ' + error.message });
   }
 });
 
@@ -3114,8 +3114,8 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
   }
 });
 
-// API: Get categories (Shopify collections)
-app.get('/api/categories', simpleVerifyShop, async (req, res) => {
+// API: Get collections (Shopify collections)
+app.get('/api/collections', simpleVerifyShop, async (req, res) => {
   try {
     const { shop } = req;
     const { limit = 50, page = 1 } = req.query;
@@ -3151,7 +3151,7 @@ app.get('/api/categories', simpleVerifyShop, async (req, res) => {
       ];
       
       return res.json({
-        categories,
+        collections: categories,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
@@ -3205,7 +3205,7 @@ app.get('/api/categories', simpleVerifyShop, async (req, res) => {
     }));
     
     res.json({
-      categories: categoriesWithStatus,
+      collections: categoriesWithStatus,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
