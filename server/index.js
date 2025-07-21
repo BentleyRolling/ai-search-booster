@@ -2758,6 +2758,116 @@ app.get('/api/usage', simpleVerifyShop, async (req, res) => {
   }
 });
 
+// API: Check consent status
+app.get('/api/consent/status', async (req, res) => {
+  try {
+    let shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Shop parameter required' });
+    }
+    
+    // Clean shop domain
+    shop = shop.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    console.log('[CONSENT] Checking consent for shop:', shop);
+    
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      console.log('[CONSENT] No valid session for shop:', shop);
+      return res.json({ hasConsent: false });
+    }
+    
+    try {
+      // Check for disclaimer_accepted metafield
+      const metafieldsResponse = await axios.get(
+        `https://${shop}/admin/api/2024-01/metafields.json?namespace=aisearchbooster&key=disclaimer_accepted`,
+        { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+      );
+      
+      const hasConsent = metafieldsResponse.data.metafields.length > 0 && 
+                        metafieldsResponse.data.metafields[0].value === 'true';
+      
+      console.log('[CONSENT] Consent status:', hasConsent);
+      res.json({ hasConsent });
+      
+    } catch (error) {
+      console.error('[CONSENT] Error checking metafields:', error.message);
+      res.json({ hasConsent: false });
+    }
+  } catch (error) {
+    console.error('[CONSENT] Status check error:', error);
+    res.status(500).json({ error: 'Failed to check consent status' });
+  }
+});
+
+// API: Record consent acceptance
+app.post('/api/consent/accept', express.json(), async (req, res) => {
+  try {
+    let shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Shop parameter required' });
+    }
+    
+    // Clean shop domain
+    shop = shop.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    console.log('[CONSENT] Recording consent acceptance for shop:', shop);
+    
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const timestamp = new Date().toISOString();
+    const clientIP = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
+    
+    try {
+      // Store in Shopify metafields
+      await axios.post(
+        `https://${shop}/admin/api/2024-01/metafields.json`,
+        {
+          metafield: {
+            namespace: 'aisearchbooster',
+            key: 'disclaimer_accepted',
+            value: 'true',
+            type: 'single_line_text_field'
+          }
+        },
+        { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+      );
+      
+      await axios.post(
+        `https://${shop}/admin/api/2024-01/metafields.json`,
+        {
+          metafield: {
+            namespace: 'aisearchbooster',
+            key: 'disclaimer_accepted_at',
+            value: timestamp,
+            type: 'single_line_text_field'
+          }
+        },
+        { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+      );
+      
+      // Log for legal protection
+      console.log(`[CONSENT-LOG] Shop: ${shop}, Timestamp: ${timestamp}, IP: ${clientIP}, UserAgent: ${req.headers['user-agent']}`);
+      
+      res.json({ 
+        success: true, 
+        timestamp,
+        message: 'Consent recorded successfully' 
+      });
+      
+    } catch (error) {
+      console.error('[CONSENT] Error storing consent:', error.message);
+      res.status(500).json({ error: 'Failed to record consent' });
+    }
+  } catch (error) {
+    console.error('[CONSENT] Accept error:', error);
+    res.status(500).json({ error: 'Failed to process consent acceptance' });
+  }
+});
+
 // API: Get status
 app.get('/api/status', simpleVerifyShop, async (req, res) => {
   try {

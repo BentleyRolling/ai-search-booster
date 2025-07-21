@@ -37,6 +37,9 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('products');
   const [helpTab, setHelpTab] = useState('instructions');
   const [expandedFaq, setExpandedFaq] = useState(null);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [consentCheckbox, setConsentCheckbox] = useState(false);
+  const [checkingConsent, setCheckingConsent] = useState(true);
   const [testResults, setTestResults] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [optimizationProgress, setOptimizationProgress] = useState(null);
@@ -126,6 +129,50 @@ const Dashboard = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
+  // Consent management functions
+  const checkConsentStatus = async (shopParam) => {
+    try {
+      const response = await authFetch(`${API_BASE}/api/consent/status?shop=${shopParam}`);
+      if (!response.ok) {
+        console.log('Consent status check failed, showing modal');
+        return false;
+      }
+      const data = await response.json();
+      return data.hasConsent === true;
+    } catch (error) {
+      console.error('Error checking consent status:', error);
+      return false;
+    }
+  };
+
+  const handleConsentAccept = async () => {
+    if (!consentCheckbox) {
+      addNotification('Please check the confirmation box to continue', 'warning');
+      return;
+    }
+
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const shopParam = urlParams.get('shop');
+      
+      const response = await authFetch(`${API_BASE}/api/consent/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shop: shopParam })
+      });
+
+      if (response.ok) {
+        setShowConsentModal(false);
+        addNotification('Terms accepted. Welcome to AI Search Booster!', 'success');
+      } else {
+        throw new Error('Failed to record consent');
+      }
+    } catch (error) {
+      console.error('Error accepting consent:', error);
+      addNotification('Failed to record consent. Please try again.', 'error');
+    }
+  };
+
   useEffect(() => {
     try {
       // Get shop from URL params
@@ -139,18 +186,31 @@ const Dashboard = () => {
       if (shopParam) {
         setShop(shopParam);
         
-        // Wait for authFetch to be ready before making API calls
+        // Wait for authFetch to be ready before checking consent and loading data
         if (isReady && authFetch) {
-          console.log('[ASB-DEBUG] Dashboard: Starting API calls with authenticated fetch');
+          console.log('[ASB-DEBUG] Dashboard: Checking consent status first');
           
-          // Set loading to false after a timeout to prevent endless loading
-          const loadingTimeout = setTimeout(() => {
-            console.log('Dashboard: Setting loading to false after timeout');
-            setLoading(false);
-          }, 5000);
-          
-          // Fetch data with individual error handling
-          Promise.allSettled([
+          // Check consent status first
+          checkConsentStatus(shopParam).then(hasConsent => {
+            setCheckingConsent(false);
+            
+            if (!hasConsent) {
+              console.log('No consent found, showing modal');
+              setShowConsentModal(true);
+              setLoading(false);
+              return;
+            }
+            
+            console.log('[ASB-DEBUG] Dashboard: Consent verified, loading data');
+            
+            // Set loading to false after a timeout to prevent endless loading
+            const loadingTimeout = setTimeout(() => {
+              console.log('Dashboard: Setting loading to false after timeout');
+              setLoading(false);
+            }, 5000);
+            
+            // Fetch data with individual error handling
+            Promise.allSettled([
             fetchStatus(shopParam),
             fetchHistory(shopParam),
             fetchProducts(shopParam),
@@ -167,6 +227,11 @@ const Dashboard = () => {
             clearTimeout(loadingTimeout);
             setLoading(false);
             setError(error);
+          });
+          }).catch(error => {
+            console.error('Error checking consent:', error);
+            setCheckingConsent(false);
+            setLoading(false);
           });
         } else {
           console.log('Dashboard: Waiting for auth fetch to be ready...');
@@ -2713,6 +2778,19 @@ const Dashboard = () => {
                 <span>Support & FAQ</span>
               </div>
             </button>
+            <button
+              onClick={() => setHelpTab('terms')}
+              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                helpTab === 'terms'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <FileText className="w-4 h-4" />
+                <span>Terms & Disclaimer</span>
+              </div>
+            </button>
           </nav>
         </div>
 
@@ -2847,6 +2925,38 @@ const Dashboard = () => {
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Terms & Disclaimer Tab */}
+        {helpTab === 'terms' && (
+          <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              📜 Legal Disclaimer
+            </h3>
+            
+            <div className="prose prose-sm text-gray-700 space-y-4">
+              <p>
+                AI Search Booster provides content optimization suggestions using advanced automation. While we aim to improve your store's visibility across modern search platforms, results may vary depending on your existing content, store setup, and third-party platform behavior.
+              </p>
+              
+              <p>
+                <strong>All optimization suggestions should be reviewed before publishing.</strong> You are solely responsible for verifying the accuracy, appropriateness, and compliance of any content generated using this app.
+              </p>
+              
+              <p>By using this app, you acknowledge and accept that:</p>
+              
+              <ul className="list-disc ml-6 space-y-2">
+                <li>You are responsible for any content published via this tool.</li>
+                <li>We are not liable for how optimization outputs are used or interpreted.</li>
+                <li>No guarantee is made that use of this app will result in increased traffic, visibility, or sales.</li>
+                <li>This tool is provided "as-is" without warranties of any kind. Use at your own discretion.</li>
+              </ul>
+              
+              <p className="text-xs text-gray-600 mt-6 p-3 bg-gray-100 rounded">
+                Consent to these terms is recorded with a timestamp and securely stored. This record may be referenced in the event of legal inquiries or disputes regarding usage.
+              </p>
             </div>
           </div>
         )}
@@ -3025,6 +3135,66 @@ const Dashboard = () => {
                   className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
                 >
                   Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Consent Modal */}
+      {showConsentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  🚀 Welcome to AI Search Booster!
+                </h2>
+                <div className="space-y-4 text-gray-700 text-left">
+                  <p>
+                    This app enhances your store's visibility in modern search environments using advanced automation.
+                  </p>
+                  <p>
+                    As with any optimization tool, please review changes before publishing.
+                  </p>
+                  <p>
+                    By continuing, you agree to our{' '}
+                    <button 
+                      onClick={() => setHelpTab('terms')} 
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Terms of Use and Legal Disclaimer
+                    </button>.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <label className="flex items-start space-x-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={consentCheckbox}
+                    onChange={(e) => setConsentCheckbox(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-700">
+                    ☑️ I understand this tool generates optimization suggestions that may require review before publishing.
+                  </span>
+                </label>
+              </div>
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={handleConsentAccept}
+                  disabled={!consentCheckbox}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                    consentCheckbox 
+                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  Continue
                 </button>
               </div>
             </div>
