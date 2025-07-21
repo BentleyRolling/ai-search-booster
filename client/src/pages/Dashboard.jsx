@@ -1892,14 +1892,6 @@ const Dashboard = () => {
                       <span>{selectedProducts.length === products.length ? 'Deselect All' : 'Select All'}</span>
                     </button>
                     <button
-                      onClick={testProxyRouting}
-                      className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center space-x-1 text-sm"
-                      title="Test app proxy routing - check console logs"
-                    >
-                      <Search className="w-3 h-3" />
-                      <span>Test API</span>
-                    </button>
-                    <button
                       onClick={optimizeProducts}
                       disabled={optimizing || selectedProducts.length === 0}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
@@ -2254,14 +2246,6 @@ const Dashboard = () => {
                         <span>{selectedPages.length === pages.length ? 'Deselect All' : 'Select All'}</span>
                       </button>
                       <button
-                        onClick={testProxyRouting}
-                        className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center space-x-1 text-sm"
-                        title="Test app proxy routing - check console logs"
-                      >
-                        <Search className="w-3 h-3" />
-                        <span>Test API</span>
-                      </button>
-                      <button
                         onClick={optimizePages}
                         disabled={optimizing || selectedPages.length === 0}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
@@ -2442,14 +2426,6 @@ const Dashboard = () => {
                       >
                         <CheckCircle className="w-3 h-3" />
                         <span>{selectedCategories.length === categories.length ? 'Deselect All' : 'Select All'}</span>
-                      </button>
-                      <button
-                        onClick={testProxyRouting}
-                        className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center space-x-1 text-sm"
-                        title="Test app proxy routing - check console logs"
-                      >
-                        <Search className="w-3 h-3" />
-                        <span>Test API</span>
                       </button>
                       <button
                         onClick={optimizeCategories}
