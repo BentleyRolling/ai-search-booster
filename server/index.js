@@ -1183,8 +1183,18 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Publish error:', error);
-    res.status(500).json({ error: 'Failed to publish draft optimization' });
+    console.error('[PUBLISH] Publish error:', error);
+    console.error('[PUBLISH] Error message:', error.message);
+    console.error('[PUBLISH] Error stack:', error.stack);
+    console.error('[PUBLISH] Error response:', error.response?.data);
+    console.error('[PUBLISH] Error status:', error.response?.status);
+    console.error('[PUBLISH] Request body:', req.body);
+    res.status(500).json({ 
+      error: 'Failed to publish draft optimization',
+      details: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
   }
 });
 
@@ -4645,3 +4655,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Collections exact copy Mon Jul 21 16:16:52 PDT 2025 */
 /* Show real error Mon Jul 21 16:25:06 PDT 2025 */
 /* Fix collections endpoints Mon Jul 21 16:35:18 PDT 2025 */
+/* Debug publish errors Mon Jul 21 16:44:37 PDT 2025 */
