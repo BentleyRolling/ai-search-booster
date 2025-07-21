@@ -315,6 +315,8 @@ const Dashboard = () => {
       }
       const data = await response.json();
       console.log('Dashboard: Collections data received:', data);
+      console.log('Dashboard: Collections array:', data.collections);
+      console.log('Dashboard: Collections length:', data.collections?.length);
       setCollections(data.collections || []);
     } catch (error) {
       console.error('Failed to fetch collections:', error);
