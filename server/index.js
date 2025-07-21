@@ -676,49 +676,14 @@ Return ONLY this JSON with natural, technical content:
       const aiResponse = response.data.content[0].text;
       return JSON.parse(aiResponse);
     } else {
-      // Fallback when no AI API keys are available
-      console.log('[AI-OPTIMIZATION] No AI API keys available, using fallback');
-      return {
-        optimizedTitle: content.title || content.name,
-        optimizedDescription: content.description || content.body_html || content.content || 'A premium product from our collection.',
-        summary: `${content.title || content.name} - A quality product available in our store.`,
-        faqs: [
-          {
-            question: `What is ${content.title || content.name}?`,
-            answer: content.description || content.body_html || content.content || 'A premium product from our collection.'
-          }
-        ],
-        jsonLd: {
-          "@context": "https://schema.org",
-          "@type": type === 'product' ? "Product" : "Article",
-          "name": content.title || content.name,
-          "description": content.description || content.body_html || content.content || ''
-        },
-        llmDescription: content.description || content.body_html || content.content || `Learn about ${content.title || content.name}`
-      };
+      // No AI API keys available - throw error instead of fallback
+      throw new Error('No AI API keys configured (OpenAI or Anthropic required)');
     }
   } catch (error) {
     console.error('[AI-OPTIMIZATION] AI optimization error:', error);
     console.error('[AI-OPTIMIZATION] Error details:', error.response?.data);
-    // Return fallback on error
-    return {
-      optimizedTitle: content.title || content.name,
-      optimizedDescription: content.description || content.body_html || content.content || 'A premium product from our collection.',
-      summary: `${content.title || content.name} - A quality product available in our store.`,
-      faqs: [
-        {
-          question: `What is ${content.title || content.name}?`,
-          answer: content.description || content.body_html || content.content || 'A premium product from our collection.'
-        }
-      ],
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": type === 'product' ? "Product" : "Article",
-        "name": content.title || content.name,
-        "description": content.description || content.body_html || content.content || ''
-      },
-      llmDescription: content.description || content.body_html || content.content || `Learn about ${content.title || content.name}`
-    };
+    // NO FALLBACK - throw the error to prevent garbage content
+    throw error;
   }
 };
 
