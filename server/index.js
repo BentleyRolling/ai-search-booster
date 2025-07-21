@@ -2993,7 +2993,8 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
           body_html: '<h1>About Our Store</h1><p>We are a premium retailer...</p>',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          optimized: false
+          optimized: false,
+          hasDraft: false
         },
         {
           id: 2,
@@ -3002,7 +3003,8 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
           body_html: '<h1>Shipping Information</h1><p>We ship worldwide...</p>',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          optimized: false
+          optimized: false,
+          hasDraft: false
         }
       ];
       
@@ -3030,12 +3032,15 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
     // Check metafields for optimization status
     const shopifyPages = await Promise.all(response.data.pages.map(async (page) => {
       let optimized = false;
+      let hasDraft = false;
       try {
         const metafieldsRes = await axios.get(
           `https://${shop}/admin/api/2024-01/pages/${page.id}/metafields.json?namespace=asb`,
           { headers: { 'X-Shopify-Access-Token': accessToken } }
         );
-        optimized = metafieldsRes.data.metafields.some(m => m.key === 'optimization_data');
+        const metafields = metafieldsRes.data.metafields;
+        optimized = metafields.some(m => m.key === 'optimized_content');
+        hasDraft = metafields.some(m => m.key === 'optimized_content_draft');
       } catch (metaError) {
         console.log(`Could not fetch metafields for page ${page.id}:`, metaError.message);
       }
@@ -3047,7 +3052,8 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
         body_html: page.body_html,
         created_at: page.created_at,
         updated_at: page.updated_at,
-        optimized
+        optimized,
+        hasDraft
       };
     }));
     
