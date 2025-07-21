@@ -480,28 +480,9 @@ const optimizeContent = async (content, type, settings = {}) => {
                        typeof keywords === 'string' ? keywords.split(',').map(k => k.trim()).filter(k => k) :
                        [];
   
-  // If in mock mode, use fallback
+  // NO MOCK MODE - Always use real AI optimization
   if (MOCK_MODE) {
-    return {
-      summary: `${content.title || content.name} - A quality product available in our store.`,
-      faqs: [
-        {
-          question: `What is ${content.title || content.name}?`,
-          answer: content.description || content.body_html || content.content || 'A premium product from our collection.'
-        },
-        {
-          question: `What are the benefits of ${content.title || content.name}?`,
-          answer: `${content.title || content.name} offers exceptional quality and value for our customers.`
-        }
-      ],
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": type === 'product' ? "Product" : "Article",
-        "name": content.title || content.name,
-        "description": content.description || content.body_html || content.content || ''
-      },
-      llmDescription: content.description || content.body_html || content.content || `Learn about ${content.title || content.name}`
-    };
+    throw new Error('Mock mode disabled - only real LLM optimization allowed');
   }
   
   // Perfect LLM Discovery Optimization - Type-Specific Prompts
