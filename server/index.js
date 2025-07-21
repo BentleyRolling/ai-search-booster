@@ -3350,15 +3350,10 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
   }
 });
 
-// API: Get collections (Shopify collections)
+// API: Get collections (Shopify collections) - COPIED FROM WORKING PRODUCTS API
 app.get('/api/collections', async (req, res) => {
   try {
-    console.log('=== COLLECTIONS API DEBUG START ===');
-    console.log('Request query:', req.query);
-    console.log('Request headers shop:', req.headers['x-shopify-shop-domain']);
-    console.log('Request auth header:', req.headers.authorization ? 'present' : 'missing');
-    
-    // Extract shop from query, body, or session token (same as Products API)
+    // Extract shop from query, body, or session token
     let shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
     
     // For embedded apps, check session token from Authorization header
@@ -3368,21 +3363,43 @@ app.get('/api/collections', async (req, res) => {
       shop = req.headers['x-shopify-shop-domain'];
     }
     
-    console.log('Final shop parameter:', shop);
+    console.log('[COLLECTIONS-API] Request details:', {
+      shop,
+      hasSessionToken: !!sessionToken,
+      userAgent: req.headers['user-agent']?.substring(0, 100),
+      origin: req.headers.origin
+    });
     
-    if (!shop) {
-      console.log('ERROR: No shop parameter found');
-      return res.status(400).json({ error: 'Missing shop parameter' });
-    }
     const { limit = 50, page = 1 } = req.query;
     
-    console.log('[COLLECTIONS-API] Request received for shop:', shop);
-    console.log('[COLLECTIONS-API] shopData keys:', Array.from(shopData.keys()));
+    // Log proxy detection for debugging
+    const isProxyRequest = req.headers['x-forwarded-host'] && req.headers['x-forwarded-host'].includes('myshopify.com');
+    const userAgent = req.headers['user-agent'] || '';
+    const isEmbeddedApp = userAgent.includes('Shopify') || req.headers['sec-fetch-site'] === 'same-origin';
+    
+    console.log('[COLLECTIONS-API] Collections API called:', {
+      shop,
+      isProxyRequest,
+      isEmbeddedApp,
+      origin: req.headers.origin,
+      referer: req.headers.referer,
+      userAgent: userAgent.substring(0, 100),
+      forwardedHost: req.headers['x-forwarded-host']
+    });
+    
+    if (isEmbeddedApp && !isProxyRequest) {
+      console.log('[COLLECTIONS-API] ⚠️ WARNING: Embedded app request without proxy detected!');
+      console.log('[COLLECTIONS-API] This suggests the Shopify app proxy is not configured correctly.');
+      console.log('[COLLECTIONS-API] Expected: x-forwarded-host should contain myshopify.com');
+      console.log('[COLLECTIONS-API] Actual headers:', JSON.stringify(req.headers, null, 2));
+    }
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Missing shop parameter' });
+    }
     
     // Check if shop has valid access token from OAuth flow
     const shopInfo = shopData.get(shop);
-    console.log('[COLLECTIONS-API] shopInfo found:', !!shopInfo);
-    console.log('[COLLECTIONS-API] has accessToken:', !!shopInfo?.accessToken);
     
     if (!shopInfo || !shopInfo.accessToken) {
       console.log('[COLLECTIONS-API] No valid OAuth token, returning mock data for collections:', shop);
@@ -4596,3 +4613,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Backend debug deployment Mon Jul 21 15:18:28 PDT 2025 */
 /* Debug collections frontend Mon Jul 21 15:27:12 PDT 2025 */
 /* Debug collections simplified Mon Jul 21 15:33:23 PDT 2025 */
+/* Fix collections auth Mon Jul 21 16:10:08 PDT 2025 */
