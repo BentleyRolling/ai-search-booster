@@ -2685,43 +2685,46 @@ const Dashboard = () => {
       </div>
 
       {/* Help Section */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-          <HelpCircle className="w-5 h-5 mr-2" />
-          Help & Support
-        </h2>
-        
-        {/* Help Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setHelpTab('instructions')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                helpTab === 'instructions'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <BookOpen className="w-4 h-4" />
-                <span>Instructions</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                <HelpCircle className="w-5 h-5 mr-2" />
+                Help & Support
+              </h2>
+              
+              {/* Help Tabs */}
+              <div className="border-b border-gray-200 mb-6">
+                <nav className="-mb-px flex space-x-8">
+                  <button
+                    onClick={() => setHelpTab('instructions')}
+                    className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                      helpTab === 'instructions'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <BookOpen className="w-4 h-4" />
+                      <span>Instructions</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setHelpTab('support')}
+                    className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                      helpTab === 'support'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Support & FAQ</span>
+                    </div>
+                  </button>
+                </nav>
               </div>
-            </button>
-            <button
-              onClick={() => setHelpTab('support')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                helpTab === 'support'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4" />
-                <span>Support & FAQ</span>
-              </div>
-            </button>
-          </nav>
-        </div>
 
         {/* Instructions Tab */}
         {helpTab === 'instructions' && (
@@ -2855,6 +2858,29 @@ const Dashboard = () => {
             </div>
           </div>
         )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Sidebar - could add quick stats or links later */}
+        <div className="hidden lg:block">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-4">Quick Links</h3>
+            <div className="space-y-3">
+              <a href="mailto:AskMaxEvo@gmail.com" className="flex items-center text-sm text-blue-600 hover:text-blue-800">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Contact Support
+              </a>
+              <button 
+                onClick={() => setHelpTab('instructions')}
+                className="flex items-center text-sm text-gray-600 hover:text-gray-800 w-full text-left"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                View Instructions
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Draft Preview Modal */}
