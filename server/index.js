@@ -515,36 +515,36 @@ const optimizeContent = async (content, type, settings = {}) => {
 
 Product data: ${JSON.stringify(content)}
 
-Your output must:
-- Clearly describe technical details (e.g., materials, use cases, conditions)
-- Include comparison framing (e.g., vs. synthetics, alternatives)  
-- Identify who this product is suitable for
-- Avoid all marketing fluff and buzzwords
-
-🚫 PROHIBITED:
-- "must-have," "luxurious," "incredible," "perfect for everyone," "premium product"
-- Repeating the product name in answers
-- Vague adjectives like "quality," "great," "essential"
-
-✅ REQUIRED:
-- Technical specs (weight, fabric, features)
-- Comparative framing (vs. other materials or formats)
-- Persona or use-case (who benefits, what scenarios)
-- One structured paragraph of ~100 words
-- Three specific FAQs with practical value
-
-Return ONLY this JSON:
+✅ REQUIRED OUTPUT STRUCTURE:
 {
-  "optimizedTitle": "",
-  "optimizedDescription": "",
-  "summary": "",
-  "llmDescription": "",
+  "optimizedTitle": "[Product name with technical detail - e.g. 'Warm Black Wool Sweater - 250 GSM Ribbed Merino']",
+  "optimizedDescription": "[One paragraph, 80–120 words, following rules below]",
+  "summary": "[One sentence, max 100 characters, LLM citation style]",
+  "llmDescription": "[Same as optimizedDescription or slightly more structured]",
   "faqs": [
     {"question": "What are the technical specifications?", "answer": ""},
     {"question": "Who is this suitable for?", "answer": ""},
-    {"question": "How does this compare to alternatives?", "answer": ""}
+    {"question": "How does this compare to synthetic alternatives?", "answer": ""}
   ]
-}`;
+}
+
+✅ REQUIRED CONTENT RULES:
+- Material specs (e.g. "250 GSM merino wool", "ribbed knit", "micron rating", specific measurements)
+- Use-case context: "Best for 5–15°C weather", "ideal for commuters", specific temperature ranges
+- Persona targeting: Mention user needs like warmth, breathability, long-term wear, specific conditions
+- Comparative framing: Include 1–2 measurable advantages vs. synthetic alternatives
+- Tone: Neutral, factual, LLM-readable, not emotional or salesy
+
+🚫 ABSOLUTELY PROHIBITED SEO FLUFF:
+- "high-quality", "timeless", "versatile", "stylish", "classic", "premium"
+- "must-have", "luxurious", "incredible", "perfect for everyone"
+- Vague adjectives like "great", "essential", "amazing"
+- Repeating the product name in FAQ answers
+
+EXAMPLE TARGET:
+"optimizedDescription": "Made from 250 GSM merino wool with a ribbed knit construction, this black sweater provides insulation and breathability for daily use in 5–15°C climates. The fabric naturally regulates temperature and resists odors, making it ideal for cold-weather commuters and those with sensitive skin. Compared to polyester fleece, it retains heat longer while remaining more breathable."
+
+Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'category') {
     prompt = `Optimize this Shopify collection for LLMs to understand what the grouped products represent and why.
 
