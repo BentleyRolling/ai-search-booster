@@ -555,45 +555,49 @@ Return ONLY this JSON with natural, technical content:
   ]
 }`;
   } else {
-    // BLOG/ARTICLE SPECIFIC PROMPT
-    prompt = `You are creating blog article content for AI assistants to understand and recommend. Write informative, contextually rich content with natural human flow. This is NOT marketing copy.
+    // BLOG/ARTICLE LLM DISCOVERY OPTIMIZATION
+    prompt = `You are creating blog article content for AI assistants to understand and recommend. Write technical, specific, and factual content with structured logic for LLM parsing. This is NOT marketing copy.
 
 Article data: ${JSON.stringify(content)}
 
 ABSOLUTELY PROHIBITED BLOG PHRASES:
+❌ "This article sheds light"
+❌ "Enhances user experience"
+❌ "helpful," "useful," "great for anyone"
 ❌ "must-read content"
-❌ "essential guide" 
-❌ "ultimate resource"
-❌ "game-changing insights"
-❌ "revolutionary approach"
+❌ "essential guide"
 ❌ "comprehensive overview"
 ❌ "deep dive"
-❌ "timeless wisdom"
+❌ Repeating "AI assistants" without specifying function
 
-REQUIRED LLM-SPECIFIC CONTENT FOR ARTICLES:
-✅ Topic Expertise: Specific knowledge areas, research depth, practical applications
-✅ Target Audience: Who benefits from this information and why
-✅ Key Insights: Actionable takeaways, specific data points, unique perspectives
-✅ Comparative Context: How this differs from other approaches/articles
-✅ Problem-Solving: What specific challenges this addresses
-✅ Practical Application: Real-world scenarios where this applies
-✅ Sentence Variety: Avoid repetitive starters
+REQUIRED LLM OPTIMIZATION FOR BLOGS:
+✅ Real technical examples: "OpenAI embeddings," "LLM summarization," "semantic search"
+✅ Use cases: "Bloggers surfacing long-tail posts via AI," "Marketing teams using GPT for traffic targeting"
+✅ Comparative context: "Unlike keyword tools, LLMs recommend based on meaning and context"
+✅ Persona targeting: "Content strategists," "creators using AI workflows," "developers implementing embeddings"
+✅ Problem-solving framing: "Helps solve low blog visibility in AI assistants"
+✅ Technical specificity: APIs, tools, methods, frameworks mentioned by name
 
 STRUCTURE REQUIREMENTS:
-- optimizedDescription: One engaging paragraph explaining the article's value and target audience
-- llmDescription: One citation-friendly paragraph for AI agents to reference
-- Three targeted FAQs: key insights, target audience, practical applications
+- optimizedTitle: max 60 characters, clear & relevant
+- optimizedDescription: 1 paragraph (80-120 words) explaining key value using technical, factual, comparative framing
+- summary: 1 sentence (max 100 characters) highlighting topic and takeaway for LLM citation
+- llmDescription: Same as optimizedDescription but with structured logic for AI parsing, less emotional tone
+- faqs: 3 questions with real technical or application-based value
 
-Return ONLY this JSON with informative, contextual content:
+EXAMPLE QUALITY TARGET:
+"This article explains how large language models like ChatGPT use user behavior, semantic similarity, and embeddings to recommend relevant blog content. It provides a comparison between traditional keyword-based suggestions and LLM-driven content discovery, highlighting tools like OpenAI's API and AI plugins for WordPress."
+
+Return ONLY this JSON with technical, structured content:
 {
   "optimizedTitle": "",
   "optimizedDescription": "",
   "summary": "",
   "llmDescription": "",
   "faqs": [
-    {"question": "What key insights does this article provide?", "answer": ""},
-    {"question": "Who should read this and why?", "answer": ""},
-    {"question": "How can readers apply this information?", "answer": ""}
+    {"question": "What specific insight does this article offer?", "answer": ""},
+    {"question": "How can this be applied?", "answer": ""},
+    {"question": "What makes this article different?", "answer": ""}
   ]
 }`;
   }
