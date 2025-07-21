@@ -1604,7 +1604,7 @@ const Dashboard = () => {
               <Globe className="w-5 h-5 text-blue-500" />
             </div>
             <p className="text-lg font-semibold text-green-600">Optimized</p>
-            <p className="text-xs text-gray-500 mt-1">RSS & Embeddings Active</p>
+            <p className="text-xs text-gray-500 mt-1">JSON-LD & LLM Schema Active</p>
           </div>
         </div>
 
