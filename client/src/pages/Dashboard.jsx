@@ -40,6 +40,7 @@ const Dashboard = () => {
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [consentCheckbox, setConsentCheckbox] = useState(false);
   const [checkingConsent, setCheckingConsent] = useState(true);
+  const [showTermsPopup, setShowTermsPopup] = useState(false);
   const [testResults, setTestResults] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [optimizationProgress, setOptimizationProgress] = useState(null);
@@ -3161,7 +3162,7 @@ const Dashboard = () => {
                   <p>
                     By continuing, you agree to our{' '}
                     <button 
-                      onClick={() => setHelpTab('terms')} 
+                      onClick={() => setShowTermsPopup(true)} 
                       className="text-blue-600 hover:text-blue-800 underline"
                     >
                       Terms of Use and Legal Disclaimer
@@ -3179,7 +3180,7 @@ const Dashboard = () => {
                     className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <span className="text-sm text-gray-700">
-                    ☑️ I understand this tool generates optimization suggestions that may require review before publishing.
+                    I understand this tool generates optimization suggestions that may require review before publishing.
                   </span>
                 </label>
               </div>
@@ -3195,6 +3196,59 @@ const Dashboard = () => {
                   }`}
                 >
                   Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Terms Popup Modal */}
+      {showTermsPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  📜 Terms of Use & Legal Disclaimer
+                </h2>
+                <button
+                  onClick={() => setShowTermsPopup(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="overflow-y-auto max-h-[60vh] prose prose-sm text-gray-700 space-y-4">
+                <p>
+                  AI Search Booster provides content optimization suggestions using advanced automation. While we aim to improve your store's visibility across modern search platforms, results may vary depending on your existing content, store setup, and third-party platform behavior.
+                </p>
+                
+                <p>
+                  <strong>All optimization suggestions should be reviewed before publishing.</strong> You are solely responsible for verifying the accuracy, appropriateness, and compliance of any content generated using this app.
+                </p>
+                
+                <p>By using this app, you acknowledge and accept that:</p>
+                
+                <ul className="list-disc ml-6 space-y-2">
+                  <li>You are responsible for any content published via this tool.</li>
+                  <li>We are not liable for how optimization outputs are used or interpreted.</li>
+                  <li>No guarantee is made that use of this app will result in increased traffic, visibility, or sales.</li>
+                  <li>This tool is provided "as-is" without warranties of any kind. Use at your own discretion.</li>
+                </ul>
+                
+                <p className="text-xs text-gray-600 mt-6 p-3 bg-gray-100 rounded">
+                  Consent to these terms is recorded with a timestamp and securely stored. This record may be referenced in the event of legal inquiries or disputes regarding usage.
+                </p>
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowTermsPopup(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  Close
                 </button>
               </div>
             </div>
