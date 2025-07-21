@@ -4611,3 +4611,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Force backend deployment Mon Jul 21 14:39:48 PDT 2025 */
 /* Force backend deployment Mon Jul 21 15:02:48 PDT 2025 */
 /* Backend debug deployment Mon Jul 21 15:18:28 PDT 2025 */
+/* Debug collections frontend Mon Jul 21 15:27:12 PDT 2025 */

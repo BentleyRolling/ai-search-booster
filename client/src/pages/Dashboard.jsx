@@ -450,6 +450,11 @@ const Dashboard = () => {
       console.log('Setting collections state to:', data.collections || []);
       
       setCollections(data.collections || []);
+      
+      // Debug state immediately after setting
+      setTimeout(() => {
+        console.log('Collections state after setState:', collections.length);
+      }, 100);
     } catch (error) {
       console.error('Collections fetch error:', error);
       console.error('Error stack:', error.stack);
@@ -2647,7 +2652,11 @@ const Dashboard = () => {
                     </div>
                 </div>
                 
-                {collections.length === 0 ? (
+                {(() => {
+                  console.log('RENDER DEBUG: collections.length =', collections.length);
+                  console.log('RENDER DEBUG: collections =', collections);
+                  return collections.length === 0;
+                })() ? (
                     <p className="text-gray-500 text-center py-8">No collections found</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
