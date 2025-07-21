@@ -174,6 +174,26 @@ const Dashboard = () => {
     }
   };
 
+  const resetConsent = async () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const shopParam = urlParams.get('shop');
+      
+      const response = await authFetch(`${API_BASE}/api/consent/reset?shop=${shopParam}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        addNotification('Consent reset successfully. Refresh to see the modal again.', 'success');
+      } else {
+        throw new Error('Failed to reset consent');
+      }
+    } catch (error) {
+      console.error('Error resetting consent:', error);
+      addNotification('Failed to reset consent. Please try again.', 'error');
+    }
+  };
+
   useEffect(() => {
     try {
       // Get shop from URL params
@@ -1704,6 +1724,23 @@ const Dashboard = () => {
                   <option value="technical">Technical</option>
                   <option value="friendly">Friendly</option>
                 </select>
+              </div>
+            </div>
+            
+            {/* Testing Controls */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-md font-semibold mb-4">Testing & Development</h3>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={resetConsent}
+                  className="px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>Reset Consent Modal</span>
+                </button>
+                <p className="text-sm text-gray-500">
+                  Reset consent to test the first-time launch modal again
+                </p>
               </div>
             </div>
             
