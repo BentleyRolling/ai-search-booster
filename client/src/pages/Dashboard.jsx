@@ -194,6 +194,41 @@ const Dashboard = () => {
     }
   };
 
+  const viewConsentRecords = async () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const shopParam = urlParams.get('shop');
+      
+      const response = await authFetch(`${API_BASE}/api/consent/records?shop=${shopParam}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('=== CONSENT RECORDS FOR LEGAL VERIFICATION ===');
+        console.log('Shop:', data.shop);
+        console.log('Retrieved at:', data.retrievedAt);
+        console.log('Shopify Metafields:', data.shopifyMetafields);
+        console.log('Server Logs:', data.serverLogs);
+        console.log('Legal Note:', data.legalNote);
+        console.log('============================================');
+        
+        // Show summary in notification
+        const hasAccepted = data.shopifyMetafields.find(m => m.key === 'disclaimer_accepted');
+        const acceptedAt = data.shopifyMetafields.find(m => m.key === 'disclaimer_accepted_at');
+        
+        if (hasAccepted && acceptedAt) {
+          addNotification(`✅ Consent verified: Accepted on ${acceptedAt.value} (Check console for full legal records)`, 'success');
+        } else {
+          addNotification('❌ No consent record found', 'warning');
+        }
+      } else {
+        throw new Error('Failed to fetch consent records');
+      }
+    } catch (error) {
+      console.error('Error fetching consent records:', error);
+      addNotification('Failed to fetch consent records. Please try again.', 'error');
+    }
+  };
+
   useEffect(() => {
     try {
       // Get shop from URL params
@@ -1730,17 +1765,31 @@ const Dashboard = () => {
             {/* Testing Controls */}
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="text-md font-semibold mb-4">Testing & Development</h3>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={resetConsent}
-                  className="px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>Reset Consent Modal</span>
-                </button>
-                <p className="text-sm text-gray-500">
-                  Reset consent to test the first-time launch modal again
-                </p>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={resetConsent}
+                    className="px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Reset Consent Modal</span>
+                  </button>
+                  <p className="text-sm text-gray-500">
+                    Reset consent to test the first-time launch modal again
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={viewConsentRecords}
+                    className="px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>View Legal Records</span>
+                  </button>
+                  <p className="text-sm text-gray-500">
+                    Display consent records for legal verification (check browser console)
+                  </p>
+                </div>
               </div>
             </div>
             

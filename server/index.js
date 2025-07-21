@@ -2916,6 +2916,64 @@ app.delete('/api/consent/reset', async (req, res) => {
   }
 });
 
+// API: Get consent records (for legal verification)
+app.get('/api/consent/records', async (req, res) => {
+  try {
+    let shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
+    
+    if (!shop) {
+      return res.status(400).json({ error: 'Shop parameter required' });
+    }
+    
+    // Clean shop domain
+    shop = shop.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    console.log('[CONSENT] Fetching consent records for shop:', shop);
+    
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    try {
+      // Get consent metafields from Shopify
+      const metafieldsResponse = await axios.get(
+        `https://${shop}/admin/api/2024-01/metafields.json?namespace=aisearchbooster`,
+        { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+      );
+      
+      const consentMetafields = metafieldsResponse.data.metafields.filter(m => 
+        m.key === 'disclaimer_accepted' || m.key === 'disclaimer_accepted_at'
+      );
+      
+      // Format the response for legal verification
+      const records = {
+        shop: shop,
+        shopifyMetafields: consentMetafields.map(m => ({
+          id: m.id,
+          key: m.key,
+          value: m.value,
+          created_at: m.created_at,
+          updated_at: m.updated_at,
+          type: m.type
+        })),
+        serverLogs: `Check server logs for: [CONSENT-LOG] Shop: ${shop}`,
+        legalNote: 'Dual-layer storage: Shopify metafields (persistent) + server logs (audit trail)',
+        retrievedAt: new Date().toISOString()
+      };
+      
+      console.log('[CONSENT] Retrieved consent records for legal verification:', records);
+      res.json(records);
+      
+    } catch (error) {
+      console.error('[CONSENT] Error fetching consent records:', error.message);
+      res.status(500).json({ error: 'Failed to fetch consent records' });
+    }
+  } catch (error) {
+    console.error('[CONSENT] Records error:', error);
+    res.status(500).json({ error: 'Failed to process consent records request' });
+  }
+});
+
 // API: Get status
 app.get('/api/status', simpleVerifyShop, async (req, res) => {
   try {
