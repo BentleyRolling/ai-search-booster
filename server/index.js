@@ -3427,6 +3427,9 @@ app.get('/api/collections', async (req, res) => {
     const { accessToken } = shopInfo;
     
     console.log('[COLLECTIONS-API] Making Shopify API request...');
+    console.log('[COLLECTIONS-API] URL:', `https://${shop}/admin/api/2024-01/collections.json?limit=${limit}&fields=id,title,handle,description,published_scope,created_at,updated_at`);
+    console.log('[COLLECTIONS-API] AccessToken present:', !!accessToken);
+    
     const response = await axios.get(
       `https://${shop}/admin/api/2024-01/collections.json?limit=${limit}&fields=id,title,handle,description,published_scope,created_at,updated_at`,
       {
@@ -3439,35 +3442,15 @@ app.get('/api/collections', async (req, res) => {
     const collections = response.data.collections || [];
     console.log(`[COLLECTIONS-API] Fetched ${collections.length} collections from Shopify:`, collections.map(c => ({id: c.id, title: c.title})));
     
-    // Check optimization status and drafts for each collection
-    const categoriesWithStatus = await Promise.all(collections.map(async (collection) => {
-      try {
-        // Check for optimization metafields
-        const metafieldsResponse = await axios.get(
-          `https://${shop}/admin/api/2024-01/collections/${collection.id}/metafields.json?namespace=asb`,
-          {
-            headers: { 'X-Shopify-Access-Token': accessToken }
-          }
-        );
-        
-        const metafields = metafieldsResponse.data.metafields || [];
-        const optimizedContentField = metafields.find(m => m.key === 'optimized_content');
-        const draftContentField = metafields.find(m => m.key === 'optimized_content_draft');
-        
-        return {
-          ...collection,
-          optimized: !!optimizedContentField,
-          hasDraft: !!draftContentField
-        };
-      } catch (error) {
-        console.log(`Error checking metafields for collection ${collection.id}:`, error.message);
-        return {
-          ...collection,
-          optimized: false,
-          hasDraft: false
-        };
-      }
+    // TEMPORARILY SKIP metafields to isolate the issue
+    console.log('[COLLECTIONS-API] SKIPPING metafields check for debugging');
+    const categoriesWithStatus = collections.map(collection => ({
+      ...collection,
+      optimized: false,
+      hasDraft: false
     }));
+    
+    console.log('[COLLECTIONS-API] Collections with status (no metafields):', categoriesWithStatus.length);
     
     res.json({
       collections: categoriesWithStatus,
@@ -4612,3 +4595,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Force backend deployment Mon Jul 21 15:02:48 PDT 2025 */
 /* Backend debug deployment Mon Jul 21 15:18:28 PDT 2025 */
 /* Debug collections frontend Mon Jul 21 15:27:12 PDT 2025 */
+/* Debug collections simplified Mon Jul 21 15:33:23 PDT 2025 */
