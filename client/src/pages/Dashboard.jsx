@@ -773,35 +773,22 @@ const Dashboard = () => {
             })));
           }
           
-          // Refresh data in background (don't block modal closure)
-          console.log('Refreshing data after rollback...');
-          await Promise.all([
-            fetchStatus(shop),
-            fetchProducts(shop),
-            fetchBlogs(shop),
-            fetchHistory(shop),
-            fetchUsage(shop)
-          ]);
-          
-          // Poll for updates if the item still shows as optimized
-          let retries = 0;
-          while (retries < 3) {
-            const currentProduct = products.find(p => p.id.toString() === id.toString());
-            const currentBlog = blogs.find(b => b.id.toString() === id.toString());
-            
-            if ((type === 'product' && currentProduct && !currentProduct.optimized) ||
-                (type === 'blog' && currentBlog && !currentBlog.optimized)) {
-              console.log('Rollback status updated successfully');
-              break;
+          // Refresh data in background (don't block modal closure or throw errors)
+          setTimeout(async () => {
+            try {
+              console.log('Refreshing data after rollback...');
+              await Promise.all([
+                fetchStatus(shop).catch(err => console.log('Status refresh failed:', err.message)),
+                fetchProducts(shop).catch(err => console.log('Products refresh failed:', err.message)),
+                fetchBlogs(shop).catch(err => console.log('Blogs refresh failed:', err.message)),
+                fetchHistory(shop).catch(err => console.log('History refresh failed:', err.message)),
+                fetchUsage(shop).catch(err => console.log('Usage refresh failed:', err.message))
+              ]);
+              console.log('Background refresh completed');
+            } catch (error) {
+              console.log('Background refresh error (non-blocking):', error.message);
             }
-            
-            console.log(`Retry ${retries + 1}: Status not updated yet, refreshing again...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            await fetchStatus(shop);
-            await fetchProducts(shop);
-            await fetchBlogs(shop);
-            retries++;
-          }
+          }, 100); // Small delay to ensure modal closes first
           
           console.log('[ROLLBACK] Rollback completed successfully, modal should close now');
         } catch (error) {
@@ -1666,26 +1653,26 @@ const Dashboard = () => {
                   <h3 className="text-lg font-semibold">Select Products to Optimize</h3>
                   <div className="flex space-x-2">
                     <button
+                      onClick={() => {
+                        if (selectedProducts.length === products.length) {
+                          setSelectedProducts([]);
+                        } else {
+                          setSelectedProducts(products.map(p => p.id.toString()));
+                        }
+                      }}
+                      className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-1 text-sm"
+                      title={selectedProducts.length === products.length ? "Deselect all products" : "Select all products"}
+                    >
+                      <CheckCircle className="w-3 h-3" />
+                      <span>{selectedProducts.length === products.length ? 'Deselect All' : 'Select All'}</span>
+                    </button>
+                    <button
                       onClick={testProxyRouting}
                       className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center space-x-1 text-sm"
                       title="Test app proxy routing - check console logs"
                     >
                       <Search className="w-3 h-3" />
                       <span>Test API</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        const drafts = products.filter(p => p.hasDraft);
-                        if (drafts.length > 0) {
-                          handlePreviewDraft('product', drafts[0].id);
-                        }
-                      }}
-                      disabled={!products.some(p => p.hasDraft)}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-                      title={products.some(p => p.hasDraft) ? "Preview optimized product" : "No optimized products to preview"}
-                    >
-                      <Eye className="w-4 h-4" />
-                      <span>Preview</span>
                     </button>
                     <button
                       onClick={optimizeProducts}
@@ -1842,7 +1829,23 @@ const Dashboard = () => {
               <div className="space-y-6">
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold">Select Blog Articles to Optimize</h2>
+                    <div className="flex items-center space-x-4">
+                      <h2 className="text-lg font-semibold">Select Blog Articles to Optimize</h2>
+                      <button
+                        onClick={() => {
+                          if (selectedArticles.length === articles.length) {
+                            setSelectedArticles([]);
+                          } else {
+                            setSelectedArticles(articles.map(a => a.id.toString()));
+                          }
+                        }}
+                        className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-1 text-sm"
+                        title={selectedArticles.length === articles.length ? "Deselect all articles" : "Select all articles"}
+                      >
+                        <CheckCircle className="w-3 h-3" />
+                        <span>{selectedArticles.length === articles.length ? 'Deselect All' : 'Select All'}</span>
+                      </button>
+                    </div>
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={() => optimizeArticles()}
@@ -1860,20 +1863,6 @@ const Dashboard = () => {
                             <span>Optimize Selected ({selectedArticles.length})</span>
                           </>
                         )}
-                      </button>
-                      <button
-                        onClick={() => {
-                          const drafts = articles.filter(a => a.hasDraft);
-                          if (drafts.length > 0) {
-                            handlePreviewDraft('article', drafts[0].id);
-                          }
-                        }}
-                        disabled={!articles.some(a => a.hasDraft)}
-                        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-                        title={articles.some(a => a.hasDraft) ? "Preview optimized article" : "No optimized articles to preview"}
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>Preview</span>
                       </button>
                       <button
                         onClick={() => publishAllDrafts('article')}
