@@ -974,6 +974,8 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
       ? `products/${resourceId}/metafields`
       : resourceType === 'page'
       ? `pages/${resourceId}/metafields`
+      : resourceType === 'collection'
+      ? `custom_collections/${resourceId}/metafields`  // Collections need custom_collections endpoint
       : `articles/${resourceId}/metafields`;
     
     // Get draft metafields
@@ -996,11 +998,13 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
     if (!originalBackup) {
       // Fetch original content
       const originalResponse = await axios.get(
-        `https://${shop}/admin/api/2024-01/${resourceType === 'product' ? 'products' : resourceType === 'page' ? 'pages' : 'articles'}/${resourceId}.json`,
+        `https://${shop}/admin/api/2024-01/${resourceType === 'product' ? 'products' : resourceType === 'page' ? 'pages' : resourceType === 'collection' ? 'custom_collections' : 'articles'}/${resourceId}.json`,
         { headers: { 'X-Shopify-Access-Token': accessToken } }
       );
       
-      const originalData = originalResponse.data[resourceType];
+      const originalData = resourceType === 'collection' 
+        ? originalResponse.data.custom_collection 
+        : originalResponse.data[resourceType];
       await axios.post(
         `https://${shop}/admin/api/2024-01/${endpoint}.json`,
         {
@@ -1071,7 +1075,7 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
     // Update the actual product/article content with optimized content
     if (draftContent) {
       try {
-        const updateEndpoint = resourceType === 'product' ? 'products' : 'articles';
+        const updateEndpoint = resourceType === 'product' ? 'products' : resourceType === 'page' ? 'pages' : resourceType === 'collection' ? 'custom_collections' : 'articles';
         
         // Parse draft content to extract the optimized content
         const parsedDraft = JSON.parse(draftContent);
@@ -1114,6 +1118,22 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
                 ...(optimizedTitle && { title: optimizedTitle })
               } 
             }
+          : resourceType === 'page'
+          ? {
+              page: {
+                id: resourceId,
+                body_html: finalContent,
+                ...(optimizedTitle && { title: optimizedTitle })
+              }
+            }
+          : resourceType === 'collection'
+          ? {
+              custom_collection: {
+                id: resourceId,
+                body_html: finalContent,
+                ...(optimizedTitle && { title: optimizedTitle })
+              }
+            }
           : { 
               article: { 
                 id: resourceId, 
@@ -1139,6 +1159,10 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
       try {
         const metafieldEndpoint = resourceType === 'product' 
           ? `products/${resourceId}/metafields`
+          : resourceType === 'page'
+          ? `pages/${resourceId}/metafields`
+          : resourceType === 'collection'
+          ? `custom_collections/${resourceId}/metafields`
           : `articles/${resourceId}/metafields`;
           
         await axios.post(
@@ -4656,3 +4680,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Show real error Mon Jul 21 16:25:06 PDT 2025 */
 /* Fix collections endpoints Mon Jul 21 16:35:18 PDT 2025 */
 /* Debug publish errors Mon Jul 21 16:44:37 PDT 2025 */
+/* Fix publish endpoints Mon Jul 21 16:53:44 PDT 2025 */
