@@ -3353,6 +3353,11 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
 // API: Get collections (Shopify collections)
 app.get('/api/collections', async (req, res) => {
   try {
+    console.log('=== COLLECTIONS API DEBUG START ===');
+    console.log('Request query:', req.query);
+    console.log('Request headers shop:', req.headers['x-shopify-shop-domain']);
+    console.log('Request auth header:', req.headers.authorization ? 'present' : 'missing');
+    
     // Extract shop from query, body, or session token (same as Products API)
     let shop = req.query.shop || req.body.shop || req.headers['x-shopify-shop-domain'];
     
@@ -3363,7 +3368,10 @@ app.get('/api/collections', async (req, res) => {
       shop = req.headers['x-shopify-shop-domain'];
     }
     
+    console.log('Final shop parameter:', shop);
+    
     if (!shop) {
+      console.log('ERROR: No shop parameter found');
       return res.status(400).json({ error: 'Missing shop parameter' });
     }
     const { limit = 50, page = 1 } = req.query;
@@ -4602,3 +4610,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 // BACKEND DEPLOYMENT TOO Mon Jul 21 14:20:34 PDT 2025
 /* Force backend deployment Mon Jul 21 14:39:48 PDT 2025 */
 /* Force backend deployment Mon Jul 21 15:02:48 PDT 2025 */
+/* Backend debug deployment Mon Jul 21 15:18:28 PDT 2025 */
