@@ -545,7 +545,7 @@ EXAMPLE TARGET:
 "optimizedDescription": "Made from 250 GSM merino wool with a ribbed knit construction, this black sweater provides insulation and breathability for daily use in 5–15°C climates. The fabric naturally regulates temperature and resists odors, making it ideal for cold-weather commuters and those with sensitive skin. Compared to polyester fleece, it retains heat longer while remaining more breathable."
 
 Return ONLY this JSON with technical, factual content:`;
-  } else if (type === 'category') {
+  } else if (type === 'collection') {
     prompt = `Optimize this Shopify collection for LLMs to understand what the grouped products represent and why.
 
 Collection data: ${JSON.stringify(content)}
@@ -1613,7 +1613,7 @@ app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
       ? `products/${id}/metafields`
       : type === 'page'
       ? `pages/${id}/metafields`
-      : type === 'category'
+      : type === 'collection'
       ? `collections/${id}/metafields`
       : `articles/${id}/metafields`;
     
@@ -2492,12 +2492,12 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
       });
     }
     
-    // Handle product, page, and category rollback (existing logic)
+    // Handle product, page, and collection rollback (existing logic)
     const endpoint = type === 'product' 
       ? `products/${id}/metafields`
       : type === 'page'
       ? `pages/${id}/metafields`
-      : type === 'category'
+      : type === 'collection'
       ? `collections/${id}/metafields`
       : `articles/${id}/metafields`;
     
@@ -2557,8 +2557,8 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
           headers: { 'X-Shopify-Access-Token': accessToken }
         }
       );
-    } else if (type === 'category') {
-      // For categories (collections), restore the original content
+    } else if (type === 'collection') {
+      // For collections, restore the original content
       const updateData = {
         collection: {
           id: parseInt(id),
@@ -2567,7 +2567,7 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
         }
       };
       
-      console.log(`Restoring category ${id} with data:`, updateData);
+      console.log(`Restoring collection ${id} with data:`, updateData);
       await axios.put(
         `https://${shop}/admin/api/2024-01/collections/${id}.json`,
         updateData,
@@ -3123,7 +3123,7 @@ app.get('/api/collections', simpleVerifyShop, async (req, res) => {
     // Check if shop has valid access token from OAuth flow
     const shopInfo = shopData.get(shop);
     if (!shopInfo || !shopInfo.accessToken) {
-      console.log('No valid OAuth token, returning mock data for categories:', shop);
+      console.log('No valid OAuth token, returning mock data for collections:', shop);
       // Return mock data when no OAuth token
       const categories = [
         {
