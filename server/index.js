@@ -472,6 +472,35 @@ const generateMockOptimization = (content, type) => {
   };
 };
 
+// Content analysis helper function
+const analyzeContentTopic = (content) => {
+  const textToAnalyze = [
+    content.title || '',
+    content.body_html || content.description || content.content || '',
+    (content.tags || []).join(' ')
+  ].join(' ').toLowerCase();
+  
+  // AI/LLM related keywords
+  const aiKeywords = ['ai', 'artificial intelligence', 'llm', 'large language model', 'chatgpt', 'claude', 'openai', 'gpt', 'machine learning', 'neural network', 'embedding', 'semantic', 'nlp', 'natural language'];
+  
+  // Content discovery/optimization keywords  
+  const contentKeywords = ['seo', 'content optimization', 'search engine', 'content discovery', 'blog optimization', 'content strategy', 'content marketing'];
+  
+  // E-commerce/product keywords
+  const ecommerceKeywords = ['product', 'buy', 'purchase', 'price', 'cart', 'checkout', 'shipping', 'delivery', 'store', 'shop'];
+  
+  const isAIRelated = aiKeywords.some(keyword => textToAnalyze.includes(keyword));
+  const isContentRelated = contentKeywords.some(keyword => textToAnalyze.includes(keyword));
+  const isEcommerce = ecommerceKeywords.some(keyword => textToAnalyze.includes(keyword));
+  
+  return {
+    isAIRelated,
+    isContentRelated, 
+    isEcommerce,
+    topic: isAIRelated ? 'ai' : isContentRelated ? 'content' : isEcommerce ? 'ecommerce' : 'general'
+  };
+};
+
 const optimizeContent = async (content, type, settings = {}) => {
   const { targetLLM = 'general', keywords = [], tone = 'professional' } = settings;
   
@@ -485,91 +514,94 @@ const optimizeContent = async (content, type, settings = {}) => {
     throw new Error('Mock mode disabled - only real LLM optimization allowed');
   }
   
-  // Perfect LLM Discovery Optimization - Type-Specific Prompts
+  // Analyze content to determine topic and approach
+  const contentAnalysis = analyzeContentTopic(content);
+  
+  // Content-Aware LLM Discovery Optimization
   let prompt;
   
   if (type === 'product') {
-    // LOCKED WORKING PRODUCT PROMPT - DO NOT CHANGE
-    prompt = `You are creating product content for AI assistants to understand and recommend. Write technical, specification-rich content with natural human flow. This is NOT marketing copy.
+    // CONTENT-AWARE PRODUCT OPTIMIZATION
+    const isAIProduct = contentAnalysis.isAIRelated;
+    const productContext = isAIProduct ? 'AI/tech product' : 'general product';
+    
+    prompt = `You are optimizing ${productContext} content for LLM discovery. Write factual, specification-rich content that helps AI assistants understand and recommend this product appropriately.
 
 Product data: ${JSON.stringify(content)}
+Content topic detected: ${contentAnalysis.topic}
 
-ABSOLUTELY PROHIBITED ECOMMERCE PHRASES:
-❌ "sustainable and stylish" 
-❌ "high-quality organic cotton"
-❌ "must-have"
-❌ "classic design" 
-❌ "versatile piece"
-❌ "elevate your style"
-❌ "wardrobe essential"
-❌ "perfect for everyone"
-❌ "timeless"
-❌ "premium quality"
+PROHIBITED MARKETING PHRASES:
+❌ "sustainable and stylish", "must-have", "classic design", "versatile piece"
+❌ "elevate your style", "wardrobe essential", "perfect for everyone", "timeless"
+❌ "premium quality", "game-changing", "revolutionary"
 
-REQUIRED LLM-SPECIFIC CONTENT:
-✅ Material Specs: "180 GSM organic Pima cotton", "percale weave", "15% stretch"
-✅ Use Cases: "ideal for layering in 15–25°C", "hot sleepers", "eczema-prone individuals"
-✅ Comparative Context: "2x more breathable than polyester", "30% lighter than denim"
-✅ Problem-Solving: Who this helps and why specifically
-✅ Persona Targeting: Specific human types with real conditions/needs
-✅ Sensory Language: "soft", "cool", "lightweight", "gentle stretch"
-✅ Sentence Variety: Avoid repetitive starters like "This tee... This tee..."
+REQUIRED OPTIMIZATION APPROACH:
+✅ Technical specifications and measurable details
+✅ Specific use cases and target conditions  
+✅ Comparative context against alternatives
+✅ Problem-solving framing (who this helps and why)
+✅ Factual, descriptive language over marketing claims
+✅ Natural sentence variety and flow
 
-STRUCTURE REQUIREMENTS:
-- optimizedDescription: One natural paragraph with specs woven in
-- llmDescription: One citation-friendly paragraph for AI agents
-- Three targeted FAQs: technical specs, comparison, suitability
+${isAIProduct ? `
+AI PRODUCT SPECIFIC:
+✅ Technical capabilities, API details, compatibility
+✅ Integration requirements and use cases
+✅ Performance metrics and limitations
+` : `
+GENERAL PRODUCT SPECIFIC:  
+✅ Material specs, dimensions, care instructions
+✅ Sensory qualities and physical characteristics
+✅ Practical applications and user scenarios
+`}
 
-EXAMPLE QUALITY TARGET:
-"Crafted from 180 GSM organic Pima cotton with a subtle percale weave, this tee offers lightweight breathability and gentle stretch — perfect for individuals with sensitive skin or those seeking comfort in warmer seasons. The fabric's moisture-wicking capability keeps you dry, making it ideal for everyday wear. Compare its superior breathability and durability to synthetic alternatives, ensuring lasting comfort and eco-friendly style."
-
-Return ONLY this JSON with natural, technical content:
+Return ONLY this JSON:
 {
   "optimizedTitle": "",
   "optimizedDescription": "",
   "summary": "",
   "llmDescription": "",
   "faqs": [
-    {"question": "What are the technical specifications?", "answer": ""},
-    {"question": "Who is this suitable for and in what conditions?", "answer": ""},
-    {"question": "How does this compare to synthetic or blended alternatives?", "answer": ""}
+    {"question": "What are the key specifications?", "answer": ""},
+    {"question": "Who is this suitable for?", "answer": ""},
+    {"question": "How does this compare to alternatives?", "answer": ""}
   ]
 }`;
   } else if (type === 'category') {
-    // CATEGORY/COLLECTION LLM DISCOVERY OPTIMIZATION
-    prompt = `You are creating collection/category content for AI assistants to understand and recommend. Write technical, descriptive content with comparative context and keyword framing for LLM parsing. This is NOT marketing copy.
+    // CONTENT-AWARE CATEGORY OPTIMIZATION
+    const categoryContext = contentAnalysis.isAIRelated ? 'AI/tech collection' : 
+                           contentAnalysis.isEcommerce ? 'product collection' : 'general collection';
+    
+    prompt = `You are optimizing ${categoryContext} content for LLM discovery. Write factual, descriptive content that helps AI assistants understand this collection's scope and purpose.
 
 Collection data: ${JSON.stringify(content)}
+Content topic detected: ${contentAnalysis.topic}
 
-ABSOLUTELY PROHIBITED CATEGORY PHRASES:
-❌ "curated selection"
-❌ "must-have collection"
-❌ "perfect for any occasion"
-❌ "timeless pieces"
-❌ "handpicked favorites"
-❌ "essential collection"
-❌ "premium quality items"
-❌ "elevate your style"
+PROHIBITED MARKETING PHRASES:
+❌ "curated selection", "must-have collection", "perfect for any occasion"
+❌ "timeless pieces", "handpicked favorites", "essential collection"
+❌ "premium quality items", "elevate your style"
 
-REQUIRED LLM OPTIMIZATION FOR CATEGORIES:
-✅ Comparative Context: "includes lightweight, breathable apparel vs winter jackets", "features natural fibers vs synthetic blends"
-✅ Keyword/Contextual Framing: Material types, seasons, use cases, target demographics
-✅ Technical Descriptors: "moisture-wicking fabrics", "temperature regulation", "skin-friendly materials"
-✅ Persona Targeting: "athletes seeking performance wear", "professionals needing versatile pieces", "individuals with sensitive skin"
-✅ Problem-Solving: What specific needs this collection addresses
-✅ Comparative Logic: How items within relate or differ from other categories
+REQUIRED OPTIMIZATION APPROACH:
+✅ Clear scope definition and inclusion criteria
+✅ Comparative context against other categories
+✅ Specific use cases and target scenarios
+✅ Factual descriptors over promotional language
+✅ Technical characteristics when applicable
 
-STRUCTURE REQUIREMENTS:
-- optimizedTitle: max 60 characters, clear category name
-- optimizedDescription: 1 paragraph (80-120 words) explaining collection scope and key differentiators
-- summary: 1 sentence highlighting collection focus and target use cases
-- llmDescription: Technical description with comparative context for AI parsing
-- faqs: 3 questions about collection scope, target use, and differentiation
+${contentAnalysis.isAIRelated ? `
+AI COLLECTION SPECIFIC:
+✅ Technical capabilities, integration types, use cases
+✅ Compatibility requirements and limitations
+✅ Target developer/user scenarios
+` : `
+GENERAL COLLECTION SPECIFIC:
+✅ Material types, seasonal considerations, functional aspects
+✅ Target demographics and usage contexts
+✅ Physical characteristics and practical benefits
+`}
 
-EXAMPLE QUALITY TARGET:
-"This collection features lightweight, moisture-wicking fabrics designed for warm weather activities and daily comfort. Items include breathable cotton blends, performance synthetics, and temperature-regulating materials suitable for individuals who prioritize comfort in 20-30°C environments. Compare these pieces to heavier winter collections or formal wear — these focus on casual functionality and skin-friendly construction."
-
-Return ONLY this JSON with descriptive, comparative content:
+Return ONLY this JSON:
 {
   "optimizedTitle": "",
   "optimizedDescription": "",
@@ -577,45 +609,109 @@ Return ONLY this JSON with descriptive, comparative content:
   "llmDescription": "",
   "faqs": [
     {"question": "What types of items are included in this collection?", "answer": ""},
-    {"question": "Who is this collection designed for and when?", "answer": ""},
+    {"question": "Who is this collection designed for?", "answer": ""},
     {"question": "How does this collection differ from others?", "answer": ""}
   ]
 }`;
+  } else if (type === 'page') {
+    // CONTENT-AWARE PAGE OPTIMIZATION
+    const pageContext = contentAnalysis.isAIRelated ? 'AI/LLM-focused page' :
+                       contentAnalysis.isContentRelated ? 'content strategy page' : 'general informational page';
+    
+    prompt = `You are optimizing ${pageContext} content for LLM discovery. Write factual, informative content that helps AI assistants understand this page's purpose and value.
+
+Page data: ${JSON.stringify(content)}
+Content topic detected: ${contentAnalysis.topic}
+
+PROHIBITED MARKETING PHRASES:
+❌ "sustainable," "versatile," "must-have", "comprehensive guide"
+❌ "essential resource", "game-changing solution", "sheds light"
+❌ Marketing fluff and buzzwords
+❌ Repeating page titles in FAQ answers
+
+REQUIRED OPTIMIZATION APPROACH:
+✅ Clear problem definition and solution explanation
+✅ Specific target audience identification
+✅ Factual, informative tone over promotional language
+✅ Practical applications and real-world scenarios
+✅ Technical accuracy when discussing tools or methods
+
+${contentAnalysis.isAIRelated ? `
+AI/LLM PAGE SPECIFIC:
+✅ Technical explanations of AI concepts, tools, and methods
+✅ Specific tool mentions: ChatGPT, Claude, OpenAI API, embeddings
+✅ Comparison with traditional approaches when relevant
+✅ Developer/strategist-focused use cases
+` : contentAnalysis.isContentRelated ? `
+CONTENT STRATEGY PAGE SPECIFIC:
+✅ Content optimization methodologies and best practices
+✅ Strategic frameworks and implementation approaches
+✅ Target audience and use case scenarios
+✅ Measurable outcomes and success metrics
+` : `
+GENERAL PAGE SPECIFIC:
+✅ Clear explanation of topic/subject matter
+✅ Practical applications and benefits
+✅ Target audience and relevant scenarios
+✅ Informational value and key takeaways
+`}
+
+Return ONLY this JSON:
+{
+  "optimizedTitle": "",
+  "optimizedDescription": "",
+  "summary": "",
+  "llmDescription": "",
+  "faqs": [
+    {"question": "What problem does this page address?", "answer": ""},
+    {"question": "Who should use this information?", "answer": ""},
+    {"question": "What are the key benefits or outcomes?", "answer": ""}
+  ]
+}`;
   } else {
-    // BLOG/ARTICLE LLM DISCOVERY OPTIMIZATION
-    prompt = `You are creating blog article content for AI assistants to understand and recommend. Write technical, specific, and factual content with structured logic for LLM parsing. This is NOT marketing copy.
+    // CONTENT-AWARE BLOG/ARTICLE OPTIMIZATION
+    const articleContext = contentAnalysis.isAIRelated ? 'AI/LLM-focused article' :
+                          contentAnalysis.isContentRelated ? 'content strategy article' : 'general informational article';
+    
+    prompt = `You are optimizing ${articleContext} content for LLM discovery. Write factual, informative content that helps AI assistants understand this article's insights and value.
 
 Article data: ${JSON.stringify(content)}
+Content topic detected: ${contentAnalysis.topic}
 
-ABSOLUTELY PROHIBITED BLOG PHRASES:
-❌ "This article sheds light"
-❌ "Enhances user experience"
+PROHIBITED MARKETING PHRASES:
+❌ "This article sheds light", "enhances user experience", "must-read content"
+❌ "essential guide", "comprehensive overview", "deep dive"
 ❌ "helpful," "useful," "great for anyone"
-❌ "must-read content"
-❌ "essential guide"
-❌ "comprehensive overview"
-❌ "deep dive"
-❌ Repeating "AI assistants" without specifying function
+❌ Generic claims without specificity
 
-REQUIRED LLM OPTIMIZATION FOR BLOGS:
-✅ Real technical examples: "OpenAI embeddings," "LLM summarization," "semantic search"
-✅ Use cases: "Bloggers surfacing long-tail posts via AI," "Marketing teams using GPT for traffic targeting"
-✅ Comparative context: "Unlike keyword tools, LLMs recommend based on meaning and context"
-✅ Persona targeting: "Content strategists," "creators using AI workflows," "developers implementing embeddings"
-✅ Problem-solving framing: "Helps solve low blog visibility in AI assistants"
-✅ Technical specificity: APIs, tools, methods, frameworks mentioned by name
+REQUIRED OPTIMIZATION APPROACH:
+✅ Specific insights and actionable information
+✅ Clear target audience and use cases
+✅ Factual explanations over promotional language
+✅ Practical applications and real-world examples
+✅ Technical accuracy and specificity
 
-STRUCTURE REQUIREMENTS:
-- optimizedTitle: max 60 characters, clear & relevant
-- optimizedDescription: 1 paragraph (80-120 words) explaining key value using technical, factual, comparative framing
-- summary: 1 sentence (max 100 characters) highlighting topic and takeaway for LLM citation
-- llmDescription: Same as optimizedDescription but with structured logic for AI parsing, less emotional tone
-- faqs: 3 questions with real technical or application-based value
+${contentAnalysis.isAIRelated ? `
+AI/LLM ARTICLE SPECIFIC:
+✅ Technical examples: OpenAI embeddings, LLM summarization, semantic search
+✅ Tool-specific references: APIs, frameworks, implementation details
+✅ Comparative analysis with traditional approaches
+✅ Developer/strategist-focused applications
+` : contentAnalysis.isContentRelated ? `
+CONTENT STRATEGY ARTICLE SPECIFIC:
+✅ Content optimization methodologies and tactics
+✅ Performance metrics and measurement approaches
+✅ Strategic frameworks and implementation guidance
+✅ Creator/marketer-focused use cases
+` : `
+GENERAL ARTICLE SPECIFIC:
+✅ Topic-specific insights and explanations
+✅ Practical applications within the subject domain
+✅ Target audience relevance and value
+✅ Clear takeaways and actionable information
+`}
 
-EXAMPLE QUALITY TARGET:
-"This article explains how large language models like ChatGPT use user behavior, semantic similarity, and embeddings to recommend relevant blog content. It provides a comparison between traditional keyword-based suggestions and LLM-driven content discovery, highlighting tools like OpenAI's API and AI plugins for WordPress."
-
-Return ONLY this JSON with technical, structured content:
+Return ONLY this JSON:
 {
   "optimizedTitle": "",
   "optimizedDescription": "",
@@ -623,8 +719,8 @@ Return ONLY this JSON with technical, structured content:
   "llmDescription": "",
   "faqs": [
     {"question": "What specific insight does this article offer?", "answer": ""},
-    {"question": "How can this be applied?", "answer": ""},
-    {"question": "What makes this article different?", "answer": ""}
+    {"question": "How can this information be applied?", "answer": ""},
+    {"question": "Who would benefit most from this content?", "answer": ""}
   ]
 }`;
   }
