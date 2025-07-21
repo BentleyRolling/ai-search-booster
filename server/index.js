@@ -535,6 +535,52 @@ Return ONLY this JSON with natural, technical content:
     {"question": "How does this compare to synthetic or blended alternatives?", "answer": ""}
   ]
 }`;
+  } else if (type === 'category') {
+    // CATEGORY/COLLECTION LLM DISCOVERY OPTIMIZATION
+    prompt = `You are creating collection/category content for AI assistants to understand and recommend. Write technical, descriptive content with comparative context and keyword framing for LLM parsing. This is NOT marketing copy.
+
+Collection data: ${JSON.stringify(content)}
+
+ABSOLUTELY PROHIBITED CATEGORY PHRASES:
+❌ "curated selection"
+❌ "must-have collection"
+❌ "perfect for any occasion"
+❌ "timeless pieces"
+❌ "handpicked favorites"
+❌ "essential collection"
+❌ "premium quality items"
+❌ "elevate your style"
+
+REQUIRED LLM OPTIMIZATION FOR CATEGORIES:
+✅ Comparative Context: "includes lightweight, breathable apparel vs winter jackets", "features natural fibers vs synthetic blends"
+✅ Keyword/Contextual Framing: Material types, seasons, use cases, target demographics
+✅ Technical Descriptors: "moisture-wicking fabrics", "temperature regulation", "skin-friendly materials"
+✅ Persona Targeting: "athletes seeking performance wear", "professionals needing versatile pieces", "individuals with sensitive skin"
+✅ Problem-Solving: What specific needs this collection addresses
+✅ Comparative Logic: How items within relate or differ from other categories
+
+STRUCTURE REQUIREMENTS:
+- optimizedTitle: max 60 characters, clear category name
+- optimizedDescription: 1 paragraph (80-120 words) explaining collection scope and key differentiators
+- summary: 1 sentence highlighting collection focus and target use cases
+- llmDescription: Technical description with comparative context for AI parsing
+- faqs: 3 questions about collection scope, target use, and differentiation
+
+EXAMPLE QUALITY TARGET:
+"This collection features lightweight, moisture-wicking fabrics designed for warm weather activities and daily comfort. Items include breathable cotton blends, performance synthetics, and temperature-regulating materials suitable for individuals who prioritize comfort in 20-30°C environments. Compare these pieces to heavier winter collections or formal wear — these focus on casual functionality and skin-friendly construction."
+
+Return ONLY this JSON with descriptive, comparative content:
+{
+  "optimizedTitle": "",
+  "optimizedDescription": "",
+  "summary": "",
+  "llmDescription": "",
+  "faqs": [
+    {"question": "What types of items are included in this collection?", "answer": ""},
+    {"question": "Who is this collection designed for and when?", "answer": ""},
+    {"question": "How does this collection differ from others?", "answer": ""}
+  ]
+}`;
   } else {
     // BLOG/ARTICLE LLM DISCOVERY OPTIMIZATION
     prompt = `You are creating blog article content for AI assistants to understand and recommend. Write technical, specific, and factual content with structured logic for LLM parsing. This is NOT marketing copy.
@@ -1830,43 +1876,58 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
         const optimized = await optimizeContent(page, 'page', settings);
         console.log(`[PAGES-OPTIMIZE] AI optimization completed for page ${pageId}`);
         
-        // Update page with optimized content
-        const updateData = {
-          page: {
-            id: pageId
-          }
-        };
+        // Store optimization as draft metafields (don't update page directly)
+        console.log(`[PAGES-OPTIMIZE] Storing optimization as draft for page ${page.id}`);
         
-        // Only update if we have optimized content
-        if (optimized.optimizedTitle) {
-          updateData.page.title = optimized.optimizedTitle;
-        }
-        if (optimized.optimizedDescription) {
-          updateData.page.body_html = optimized.optimizedDescription;
-        }
-        
-        // Update page in Shopify
-        console.log(`[PAGES-OPTIMIZE] Updating page ${pageId} in Shopify`);
-        await axios.put(
-          `https://${shop}/admin/api/2024-01/pages/${pageId}.json`,
-          updateData,
-          {
-            headers: { 'X-Shopify-Access-Token': accessToken }
-          }
-        );
-        console.log(`[PAGES-OPTIMIZE] Page ${pageId} updated successfully`);
-        
-        // Store optimization metadata
+        // Store optimized content as draft
         await axios.post(
           `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json`,
           {
             metafield: {
               namespace: 'asb',
-              key: 'optimization_data',
+              key: 'optimized_content_draft',
               value: JSON.stringify({
-                optimized,
-                settings,
+                title: optimized.optimizedTitle,
+                body_html: optimized.optimizedDescription,
+                llmDescription: optimized.llmDescription,
+                summary: optimized.summary,
                 timestamp: new Date().toISOString()
+              }),
+              type: 'json'
+            }
+          },
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        // Store FAQ data as draft
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json`,
+          {
+            metafield: {
+              namespace: 'asb',
+              key: 'faq_data_draft',
+              value: JSON.stringify(optimized.faqs || []),
+              type: 'json'
+            }
+          },
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        // Store optimization settings as draft
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json`,
+          {
+            metafield: {
+              namespace: 'asb',
+              key: 'optimization_settings_draft',
+              value: JSON.stringify({
+                settings,
+                timestamp: new Date().toISOString(),
+                optimizationType: 'page'
               }),
               type: 'json'
             }
@@ -2086,6 +2147,133 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
   }
 });
 
+// API: Optimize categories (collections)
+app.post('/api/optimize/categories', simpleVerifyShop, optimizationLimiter, async (req, res) => {
+  try {
+    const { categoryIds, settings } = req.body;
+    const { shop } = req;
+    
+    console.log(`[CATEGORIES-OPTIMIZE] Starting optimization for shop: ${shop}, categories: ${categoryIds}`);
+    
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ 
+        error: 'Shop not authenticated', 
+        redirectUrl: `/auth?shop=${shop}`
+      });
+    }
+    
+    const { accessToken } = shopInfo;
+    const results = [];
+    
+    // Process each category ID
+    for (const categoryId of categoryIds) {
+      try {
+        console.log(`[CATEGORIES-OPTIMIZE] Processing category ${categoryId}`);
+        
+        // Fetch collection from Shopify API
+        const collectionResponse = await axios.get(
+          `https://${shop}/admin/api/2024-01/collections/${categoryId}.json`,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        const collection = collectionResponse.data.collection;
+        console.log(`Found collection: ${collection.title}`);
+        
+        // Store original as backup if not already stored
+        const metafieldsResponse = await axios.get(
+          `https://${shop}/admin/api/2024-01/collections/${categoryId}/metafields.json?namespace=asb&key=original_backup`,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        if (metafieldsResponse.data.metafields.length === 0) {
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/collections/${categoryId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'asb',
+                key: 'original_backup',
+                value: JSON.stringify({
+                  title: collection.title,
+                  description: collection.description,
+                  handle: collection.handle
+                }),
+                type: 'json'
+              }
+            },
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
+            }
+          );
+        }
+        
+        // Optimize content using AI (collection-specific prompt)
+        const optimized = await optimizeContent(collection, 'category', settings);
+        
+        // Store optimization as draft metafields (don't update collection directly)
+        console.log(`[CATEGORIES-OPTIMIZE] Storing optimization as draft for collection ${collection.id}`);
+        
+        // Store optimized content as draft
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/collections/${categoryId}/metafields.json`,
+          {
+            metafield: {
+              namespace: 'asb',
+              key: 'optimized_content_draft',
+              value: JSON.stringify({
+                title: optimized.optimizedTitle,
+                description: optimized.optimizedDescription,
+                llmDescription: optimized.llmDescription,
+                summary: optimized.summary,
+                faqs: optimized.faqs,
+                optimizedAt: new Date().toISOString()
+              }),
+              type: 'json'
+            }
+          },
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        results.push({
+          id: categoryId,
+          title: collection.title,
+          status: 'success',
+          optimized: optimized
+        });
+        
+      } catch (error) {
+        console.error(`[CATEGORIES-OPTIMIZE] Error processing category ${categoryId}:`, error);
+        results.push({
+          id: categoryId,
+          status: 'error',
+          error: error.message
+        });
+      }
+    }
+    
+    console.log(`[CATEGORIES-OPTIMIZE] Completed optimization for ${categoryIds.length} categories`);
+    res.json({
+      success: true,
+      results: results,
+      summary: {
+        total: categoryIds.length,
+        successful: results.filter(r => r.status === 'success').length,
+        failed: results.filter(r => r.status === 'error').length
+      }
+    });
+  } catch (error) {
+    console.error('Category optimization error:', error);
+    res.status(500).json({ error: 'Failed to optimize categories: ' + error.message });
+  }
+});
+
 // API: Get optimization status for specific item
 app.get('/api/optimize/status/:type/:id', simpleVerifyShop, async (req, res) => {
   try {
@@ -2261,11 +2449,13 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
       });
     }
     
-    // Handle product and page rollback (existing logic)
+    // Handle product, page, and category rollback (existing logic)
     const endpoint = type === 'product' 
       ? `products/${id}/metafields`
       : type === 'page'
       ? `pages/${id}/metafields`
+      : type === 'category'
+      ? `collections/${id}/metafields`
       : `articles/${id}/metafields`;
     
     console.log(`[ROLLBACK] Getting metafields for ${type} ${id}`);
@@ -2319,6 +2509,24 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
       console.log(`Restoring page ${id} with data:`, updateData);
       await axios.put(
         `https://${shop}/admin/api/2024-01/pages/${id}.json`,
+        updateData,
+        {
+          headers: { 'X-Shopify-Access-Token': accessToken }
+        }
+      );
+    } else if (type === 'category') {
+      // For categories (collections), restore the original content
+      const updateData = {
+        collection: {
+          id: parseInt(id),
+          title: originalData.title,
+          description: originalData.description
+        }
+      };
+      
+      console.log(`Restoring category ${id} with data:`, updateData);
+      await axios.put(
+        `https://${shop}/admin/api/2024-01/collections/${id}.json`,
         updateData,
         {
           headers: { 'X-Shopify-Access-Token': accessToken }
@@ -2854,6 +3062,110 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
   } catch (error) {
     console.error('Pages error:', error);
     res.status(500).json({ error: 'Failed to fetch pages' });
+  }
+});
+
+// API: Get categories (Shopify collections)
+app.get('/api/categories', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req;
+    const { limit = 50, page = 1 } = req.query;
+    
+    // Check if shop has valid access token from OAuth flow
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      console.log('No valid OAuth token, returning mock data for categories:', shop);
+      // Return mock data when no OAuth token
+      const categories = [
+        {
+          id: 1,
+          title: 'Men\'s Clothing',
+          handle: 'mens-clothing',
+          description: 'High-quality men\'s apparel and accessories',
+          published_scope: 'web',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          optimized: false,
+          hasDraft: false
+        },
+        {
+          id: 2,
+          title: 'Women\'s Fashion',
+          handle: 'womens-fashion',
+          description: 'Stylish women\'s clothing and accessories',
+          published_scope: 'web',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          optimized: false,
+          hasDraft: false
+        }
+      ];
+      
+      return res.json({
+        categories,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: categories.length
+        }
+      });
+    }
+    
+    // Fetch real collections from Shopify API
+    console.log('Fetching real collections from Shopify for shop:', shop);
+    const { accessToken } = shopInfo;
+    
+    const response = await axios.get(
+      `https://${shop}/admin/api/2024-01/collections.json?limit=${limit}&fields=id,title,handle,description,published_scope,created_at,updated_at`,
+      {
+        headers: { 'X-Shopify-Access-Token': accessToken }
+      }
+    );
+    
+    const collections = response.data.collections || [];
+    console.log(`Fetched ${collections.length} collections from Shopify`);
+    
+    // Check optimization status and drafts for each collection
+    const categoriesWithStatus = await Promise.all(collections.map(async (collection) => {
+      try {
+        // Check for optimization metafields
+        const metafieldsResponse = await axios.get(
+          `https://${shop}/admin/api/2024-01/collections/${collection.id}/metafields.json?namespace=asb`,
+          {
+            headers: { 'X-Shopify-Access-Token': accessToken }
+          }
+        );
+        
+        const metafields = metafieldsResponse.data.metafields || [];
+        const optimizedContentField = metafields.find(m => m.key === 'optimized_content');
+        const draftContentField = metafields.find(m => m.key === 'optimized_content_draft');
+        
+        return {
+          ...collection,
+          optimized: !!optimizedContentField,
+          hasDraft: !!draftContentField
+        };
+      } catch (error) {
+        console.log(`Error checking metafields for collection ${collection.id}:`, error.message);
+        return {
+          ...collection,
+          optimized: false,
+          hasDraft: false
+        };
+      }
+    }));
+    
+    res.json({
+      categories: categoriesWithStatus,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: categoriesWithStatus.length
+      }
+    });
+  } catch (error) {
+    console.error('Categories error:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
   }
 });
 

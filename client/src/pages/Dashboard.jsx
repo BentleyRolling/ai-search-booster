@@ -21,10 +21,12 @@ const Dashboard = () => {
   const [blogs, setBlogs] = useState([]);
   const [articles, setArticles] = useState([]);
   const [pages, setPages] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedBlogs, setSelectedBlogs] = useState([]);
   const [selectedArticles, setSelectedArticles] = useState([]);
   const [selectedPages, setSelectedPages] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [usage, setUsage] = useState(null);
   const [settings, setSettings] = useState({
     targetLLM: 'general',
@@ -152,6 +154,7 @@ const Dashboard = () => {
             fetchProducts(shopParam),
             fetchBlogs(shopParam),
             fetchPages(shopParam),
+            fetchCategories(shopParam),
             fetchUsage(shopParam)
           ]).then(() => {
             clearTimeout(loadingTimeout);
@@ -300,6 +303,22 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Failed to fetch pages:', error);
       setPages([]);
+    }
+  };
+
+  const fetchCategories = async (shopName) => {
+    try {
+      console.log('Dashboard: Fetching categories for shop:', shopName);
+      const response = await authFetch(`${API_BASE}/api/categories?shop=${shopName}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log('Dashboard: Categories data received:', data);
+      setCategories(data.categories || []);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+      setCategories([]);
     }
   };
 
@@ -463,6 +482,158 @@ const Dashboard = () => {
     } finally {
       setOptimizing(false);
       setTimeout(() => setOptimizationProgress(null), 1000); // Keep progress visible for a moment
+    }
+  };
+
+  const optimizePages = async () => {
+    console.log('optimizePages called, selectedPages:', selectedPages);
+    
+    if (selectedPages.length === 0) {
+      addNotification('Please select pages to optimize', 'warning');
+      return;
+    }
+    
+    setOptimizing(true);
+    setOptimizationProgress({ type: 'pages', current: 0, total: selectedPages.length });
+    addNotification(`Starting optimization of ${selectedPages.length} pages...`, 'info');
+    
+    try {
+      let successCount = 0;
+      let failedCount = 0;
+      
+      for (let i = 0; i < selectedPages.length; i++) {
+        const pageId = selectedPages[i];
+        
+        try {
+          console.log(`Optimizing page ${i + 1}/${selectedPages.length}: ${pageId}`);
+          const response = await authFetch(`${API_BASE}/api/optimize/pages?shop=${shop}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              shop,
+              pageIds: [pageId],
+              settings: {
+                targetLLM: settings.targetLLM,
+                keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
+                tone: settings.tone
+              }
+            })
+          });
+          
+          if (!response.ok) {
+            failedCount++;
+            continue;
+          }
+          
+          const data = await response.json();
+          
+          if (data.results && data.results[0]?.status === 'success') {
+            successCount++;
+          } else {
+            failedCount++;
+          }
+        } catch (itemError) {
+          console.error(`Failed to optimize page ${pageId}:`, itemError);
+          failedCount++;
+        }
+        
+        setOptimizationProgress({ type: 'pages', current: i + 1, total: selectedPages.length });
+      }
+      
+      if (successCount > 0) {
+        addNotification(`Successfully optimized ${successCount} pages!`, 'success');
+      }
+      if (failedCount > 0) {
+        addNotification(`${failedCount} pages failed to optimize`, 'error');
+      }
+      
+      fetchStatus(shop);
+      fetchPages(shop);
+      fetchHistory(shop);
+      fetchUsage(shop);
+      setSelectedPages([]);
+    } catch (error) {
+      console.error('Page optimization error:', error);
+      addNotification('Failed to optimize pages. Please try again.', 'error');
+    } finally {
+      setOptimizing(false);
+      setTimeout(() => setOptimizationProgress(null), 1000);
+    }
+  };
+
+  const optimizeCategories = async () => {
+    console.log('optimizeCategories called, selectedCategories:', selectedCategories);
+    
+    if (selectedCategories.length === 0) {
+      addNotification('Please select categories to optimize', 'warning');
+      return;
+    }
+    
+    setOptimizing(true);
+    setOptimizationProgress({ type: 'categories', current: 0, total: selectedCategories.length });
+    addNotification(`Starting optimization of ${selectedCategories.length} categories...`, 'info');
+    
+    try {
+      let successCount = 0;
+      let failedCount = 0;
+      
+      for (let i = 0; i < selectedCategories.length; i++) {
+        const categoryId = selectedCategories[i];
+        
+        try {
+          console.log(`Optimizing category ${i + 1}/${selectedCategories.length}: ${categoryId}`);
+          const response = await authFetch(`${API_BASE}/api/optimize/categories?shop=${shop}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              shop,
+              categoryIds: [categoryId],
+              settings: {
+                targetLLM: settings.targetLLM,
+                keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
+                tone: settings.tone
+              }
+            })
+          });
+          
+          if (!response.ok) {
+            failedCount++;
+            continue;
+          }
+          
+          const data = await response.json();
+          
+          if (data.results && data.results[0]?.status === 'success') {
+            successCount++;
+          } else {
+            failedCount++;
+          }
+        } catch (itemError) {
+          console.error(`Failed to optimize category ${categoryId}:`, itemError);
+          failedCount++;
+        }
+        
+        setOptimizationProgress({ type: 'categories', current: i + 1, total: selectedCategories.length });
+      }
+      
+      if (successCount > 0) {
+        addNotification(`Successfully optimized ${successCount} categories!`, 'success');
+      }
+      if (failedCount > 0) {
+        addNotification(`${failedCount} categories failed to optimize`, 'error');
+      }
+      
+      fetchStatus(shop);
+      fetchCategories(shop);
+      fetchHistory(shop);
+      fetchUsage(shop);
+      setSelectedCategories([]);
+    } catch (error) {
+      console.error('Category optimization error:', error);
+      addNotification('Failed to optimize categories. Please try again.', 'error');
+    } finally {
+      setOptimizing(false);
+      setTimeout(() => setOptimizationProgress(null), 1000);
     }
   };
 
@@ -1581,6 +1752,26 @@ const Dashboard = () => {
             </>
           )}
           
+          {activeTab === 'categories' && (
+            <>
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-500">Total Categories</h3>
+                  <Package className="w-5 h-5 text-gray-400" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900">{categories?.length || 0}</p>
+              </div>
+              
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-500">Optimized Categories</h3>
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                </div>
+                <p className="text-3xl font-bold text-green-600">{categories?.filter(c => c.optimized)?.length || 0}</p>
+              </div>
+            </>
+          )}
+          
           {/* Usage - Always shown on all tabs for billing accuracy */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
@@ -1641,6 +1832,38 @@ const Dashboard = () => {
                   <span>Blogs</span>
                   <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
                     {selectedBlogs.length} selected
+                  </span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('pages')}
+                className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'pages' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Globe className="w-4 h-4" />
+                  <span>Pages</span>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                    {selectedPages.length} selected
+                  </span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('categories')}
+                className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'categories' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Package className="w-4 h-4" />
+                  <span>Categories</span>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                    {selectedCategories.length} selected
                   </span>
                 </div>
               </button>
@@ -1989,6 +2212,292 @@ const Dashboard = () => {
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         rollback('article', article.id);
+                                      }}
+                                      className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      title="Rollback to original content"
+                                    >
+                                      <RotateCcw className="w-3 h-3" />
+                                      <span>Rollback</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Pages Tab */}
+            {activeTab === 'pages' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold">Select Pages to Optimize</h2>
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={() => {
+                          if (selectedPages.length === pages.length) {
+                            setSelectedPages([]);
+                          } else {
+                            setSelectedPages(pages.map(p => p.id.toString()));
+                          }
+                        }}
+                        className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-1 text-sm"
+                        title={selectedPages.length === pages.length ? "Deselect all pages" : "Select all pages"}
+                      >
+                        <CheckCircle className="w-3 h-3" />
+                        <span>{selectedPages.length === pages.length ? 'Deselect All' : 'Select All'}</span>
+                      </button>
+                      <button
+                        onClick={optimizePages}
+                        disabled={optimizing || selectedPages.length === 0}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      >
+                        {optimizing ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Optimizing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Globe className="w-4 h-4" />
+                            <span>Optimize Selected ({selectedPages.length})</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {pages.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No pages found</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {pages.map((page) => (
+                        <div
+                          key={page.id}
+                          onClick={() => {
+                            const pageId = page.id.toString();
+                            setSelectedPages(prev => 
+                              prev.includes(pageId) 
+                                ? prev.filter(id => id !== pageId)
+                                : [...prev, pageId]
+                            );
+                          }}
+                          className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                            selectedPages.includes(page.id.toString())
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedPages.includes(page.id.toString())}
+                              onChange={() => {}}
+                              className="mt-1"
+                            />
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{page.title}</h4>
+                              <p className="text-sm text-gray-500 mt-1">Handle: {page.handle}</p>
+                              <p className="text-sm text-gray-500">Updated: {new Date(page.updated_at).toLocaleDateString()}</p>
+                              
+                              <div className="mt-3 flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  {page.optimized && (
+                                    <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                      ✓ Optimized
+                                    </span>
+                                  )}
+                                  {page.hasDraft && (
+                                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
+                                      📝 Draft Ready
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {/* Action Buttons */}
+                                <div className="flex items-center space-x-1 flex-shrink-0">
+                                  {page.hasDraft && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePreviewDraft('page', page.id);
+                                      }}
+                                      className="px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      title="Preview draft content"
+                                    >
+                                      <Eye className="w-3 h-3" />
+                                      <span>Preview</span>
+                                    </button>
+                                  )}
+                                  
+                                  {page.hasDraft && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        publishDraft('page', page.id);
+                                      }}
+                                      className="px-1.5 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      title="Publish draft optimization"
+                                    >
+                                      <CheckCircle className="w-3 h-3" />
+                                      <span>Publish</span>
+                                    </button>
+                                  )}
+                                  
+                                  {page.optimized && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        rollback('page', page.id);
+                                      }}
+                                      className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      title="Rollback to original content"
+                                    >
+                                      <RotateCcw className="w-3 h-3" />
+                                      <span>Rollback</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Categories Tab */}
+            {activeTab === 'categories' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold">Select Categories to Optimize</h2>
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={() => {
+                          if (selectedCategories.length === categories.length) {
+                            setSelectedCategories([]);
+                          } else {
+                            setSelectedCategories(categories.map(c => c.id.toString()));
+                          }
+                        }}
+                        className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-1 text-sm"
+                        title={selectedCategories.length === categories.length ? "Deselect all categories" : "Select all categories"}
+                      >
+                        <CheckCircle className="w-3 h-3" />
+                        <span>{selectedCategories.length === categories.length ? 'Deselect All' : 'Select All'}</span>
+                      </button>
+                      <button
+                        onClick={optimizeCategories}
+                        disabled={optimizing || selectedCategories.length === 0}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      >
+                        {optimizing ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Optimizing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Package className="w-4 h-4" />
+                            <span>Optimize Selected ({selectedCategories.length})</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {categories.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No categories found</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {categories.map((category) => (
+                        <div
+                          key={category.id}
+                          onClick={() => {
+                            const categoryId = category.id.toString();
+                            setSelectedCategories(prev => 
+                              prev.includes(categoryId) 
+                                ? prev.filter(id => id !== categoryId)
+                                : [...prev, categoryId]
+                            );
+                          }}
+                          className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                            selectedCategories.includes(category.id.toString())
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedCategories.includes(category.id.toString())}
+                              onChange={() => {}}
+                              className="mt-1"
+                            />
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{category.title}</h4>
+                              <p className="text-sm text-gray-500 mt-1">Handle: {category.handle}</p>
+                              <p className="text-sm text-gray-500">Description: {category.description?.substring(0, 50)}...</p>
+                              
+                              <div className="mt-3 flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  {category.optimized && (
+                                    <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                      ✓ Optimized
+                                    </span>
+                                  )}
+                                  {category.hasDraft && (
+                                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
+                                      📝 Draft Ready
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {/* Action Buttons */}
+                                <div className="flex items-center space-x-1 flex-shrink-0">
+                                  {category.hasDraft && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePreviewDraft('category', category.id);
+                                      }}
+                                      className="px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      title="Preview draft content"
+                                    >
+                                      <Eye className="w-3 h-3" />
+                                      <span>Preview</span>
+                                    </button>
+                                  )}
+                                  
+                                  {category.hasDraft && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        publishDraft('category', category.id);
+                                      }}
+                                      className="px-1.5 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      title="Publish draft optimization"
+                                    >
+                                      <CheckCircle className="w-3 h-3" />
+                                      <span>Publish</span>
+                                    </button>
+                                  )}
+                                  
+                                  {category.optimized && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        rollback('category', category.id);
                                       }}
                                       className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
                                       title="Rollback to original content"
