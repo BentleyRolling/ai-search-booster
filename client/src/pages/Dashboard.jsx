@@ -2254,21 +2254,68 @@ const Dashboard = () => {
                         <span>{selectedPages.length === pages.length ? 'Deselect All' : 'Select All'}</span>
                       </button>
                       <button
+                        onClick={testProxyRouting}
+                        className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center space-x-1 text-sm"
+                        title="Test app proxy routing - check console logs"
+                      >
+                        <Search className="w-3 h-3" />
+                        <span>Test API</span>
+                      </button>
+                      <button
                         onClick={optimizePages}
                         disabled={optimizing || selectedPages.length === 0}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                       >
                         {optimizing ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
                             <span>Optimizing...</span>
                           </>
                         ) : (
                           <>
-                            <Globe className="w-4 h-4" />
-                            <span>Optimize Selected ({selectedPages.length})</span>
+                            <Sparkles className="w-4 h-4" />
+                            <span>Optimize Selected</span>
                           </>
                         )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          const drafts = pages.filter(p => p.hasDraft);
+                          if (drafts.length === 0) {
+                            addNotification('No drafts to publish', 'info');
+                            return;
+                          }
+                          showConfirmation(
+                            'Publish Drafts',
+                            `Publish ${drafts.length} draft optimizations? This will make the draft content live on your store.`,
+                            () => {
+                              Promise.all(drafts.map(p => performPublishDraft('page', p.id)))
+                                .then(async () => {
+                                  addNotification(`Successfully published ${drafts.length} drafts`, 'success');
+                                  await Promise.all([
+                                    fetchPages(shop),
+                                    fetchStatus(shop)
+                                  ]);
+                                })
+                                .catch(err => addNotification('Some drafts failed to publish', 'error'));
+                            }
+                          );
+                        }}
+                        disabled={optimizing || !pages.some(p => p.hasDraft)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        title="Publish all draft optimizations"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Publish Drafts</span>
+                      </button>
+                      <button
+                        onClick={() => rollbackAllOptimizations('page')}
+                        disabled={optimizing || !pages.some(p => p.optimized)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        title="Rollback all page optimizations"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>Rollback All</span>
                       </button>
                     </div>
                   </div>
@@ -2397,21 +2444,68 @@ const Dashboard = () => {
                         <span>{selectedCategories.length === categories.length ? 'Deselect All' : 'Select All'}</span>
                       </button>
                       <button
+                        onClick={testProxyRouting}
+                        className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center space-x-1 text-sm"
+                        title="Test app proxy routing - check console logs"
+                      >
+                        <Search className="w-3 h-3" />
+                        <span>Test API</span>
+                      </button>
+                      <button
                         onClick={optimizeCategories}
                         disabled={optimizing || selectedCategories.length === 0}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                       >
                         {optimizing ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
                             <span>Optimizing...</span>
                           </>
                         ) : (
                           <>
-                            <Package className="w-4 h-4" />
-                            <span>Optimize Selected ({selectedCategories.length})</span>
+                            <Sparkles className="w-4 h-4" />
+                            <span>Optimize Selected</span>
                           </>
                         )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          const drafts = categories.filter(c => c.hasDraft);
+                          if (drafts.length === 0) {
+                            addNotification('No drafts to publish', 'info');
+                            return;
+                          }
+                          showConfirmation(
+                            'Publish Drafts',
+                            `Publish ${drafts.length} draft optimizations? This will make the draft content live on your store.`,
+                            () => {
+                              Promise.all(drafts.map(c => performPublishDraft('category', c.id)))
+                                .then(async () => {
+                                  addNotification(`Successfully published ${drafts.length} drafts`, 'success');
+                                  await Promise.all([
+                                    fetchCategories(shop),
+                                    fetchStatus(shop)
+                                  ]);
+                                })
+                                .catch(err => addNotification('Some drafts failed to publish', 'error'));
+                            }
+                          );
+                        }}
+                        disabled={optimizing || !categories.some(c => c.hasDraft)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        title="Publish all draft optimizations"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Publish Drafts</span>
+                      </button>
+                      <button
+                        onClick={() => rollbackAllOptimizations('category')}
+                        disabled={optimizing || !categories.some(c => c.optimized)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        title="Rollback all category optimizations"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>Rollback All</span>
                       </button>
                     </div>
                   </div>
