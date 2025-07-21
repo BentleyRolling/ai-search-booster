@@ -504,8 +504,12 @@ const optimizeContent = async (content, type, settings = {}) => {
     };
   }
   
-  // Perfect LLM Discovery Optimization - Technical Specs + Natural Flow
-  const prompt = `You are creating product content for AI assistants to understand and recommend. Write technical, specification-rich content with natural human flow. This is NOT marketing copy.
+  // Perfect LLM Discovery Optimization - Type-Specific Prompts
+  let prompt;
+  
+  if (type === 'product') {
+    // LOCKED WORKING PRODUCT PROMPT - DO NOT CHANGE
+    prompt = `You are creating product content for AI assistants to understand and recommend. Write technical, specification-rich content with natural human flow. This is NOT marketing copy.
 
 Product data: ${JSON.stringify(content)}
 
@@ -550,6 +554,49 @@ Return ONLY this JSON with natural, technical content:
     {"question": "How does this compare to synthetic or blended alternatives?", "answer": ""}
   ]
 }`;
+  } else {
+    // BLOG/ARTICLE SPECIFIC PROMPT
+    prompt = `You are creating blog article content for AI assistants to understand and recommend. Write informative, contextually rich content with natural human flow. This is NOT marketing copy.
+
+Article data: ${JSON.stringify(content)}
+
+ABSOLUTELY PROHIBITED BLOG PHRASES:
+❌ "must-read content"
+❌ "essential guide" 
+❌ "ultimate resource"
+❌ "game-changing insights"
+❌ "revolutionary approach"
+❌ "comprehensive overview"
+❌ "deep dive"
+❌ "timeless wisdom"
+
+REQUIRED LLM-SPECIFIC CONTENT FOR ARTICLES:
+✅ Topic Expertise: Specific knowledge areas, research depth, practical applications
+✅ Target Audience: Who benefits from this information and why
+✅ Key Insights: Actionable takeaways, specific data points, unique perspectives
+✅ Comparative Context: How this differs from other approaches/articles
+✅ Problem-Solving: What specific challenges this addresses
+✅ Practical Application: Real-world scenarios where this applies
+✅ Sentence Variety: Avoid repetitive starters
+
+STRUCTURE REQUIREMENTS:
+- optimizedDescription: One engaging paragraph explaining the article's value and target audience
+- llmDescription: One citation-friendly paragraph for AI agents to reference
+- Three targeted FAQs: key insights, target audience, practical applications
+
+Return ONLY this JSON with informative, contextual content:
+{
+  "optimizedTitle": "",
+  "optimizedDescription": "",
+  "summary": "",
+  "llmDescription": "",
+  "faqs": [
+    {"question": "What key insights does this article provide?", "answer": ""},
+    {"question": "Who should read this and why?", "answer": ""},
+    {"question": "How can readers apply this information?", "answer": ""}
+  ]
+}`;
+  }
   
   try {
     console.log('[AI-OPTIMIZATION] Starting optimization:', {
