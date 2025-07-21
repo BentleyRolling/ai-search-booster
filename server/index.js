@@ -3484,7 +3484,15 @@ app.get('/api/collections', async (req, res) => {
     });
   } catch (error) {
     console.error('[COLLECTIONS] Collections error:', error);
-    res.status(500).json({ error: 'Failed to fetch collections' });
+    console.error('[COLLECTIONS] Error message:', error.message);
+    console.error('[COLLECTIONS] Error stack:', error.stack);
+    console.error('[COLLECTIONS] Error response:', error.response?.data);
+    console.error('[COLLECTIONS] Error status:', error.response?.status);
+    res.status(500).json({ 
+      error: 'Failed to fetch collections',
+      details: error.message,
+      stack: error.stack
+    });
   }
 });
 
@@ -4620,3 +4628,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Debug collections simplified Mon Jul 21 15:33:23 PDT 2025 */
 /* Fix collections auth Mon Jul 21 16:10:08 PDT 2025 */
 /* Collections exact copy Mon Jul 21 16:16:52 PDT 2025 */
+/* Show real error Mon Jul 21 16:25:06 PDT 2025 */
