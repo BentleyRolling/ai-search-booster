@@ -572,33 +572,55 @@ Return ONLY this JSON:
   ]
 }`;
   } else if (type === 'page') {
-    prompt = `Optimize this Shopify page for LLM discovery and parsing.
+    prompt = `Optimize this Shopify page for universal LLM discoverability by ChatGPT, Claude, Perplexity, and other AI assistants.
 
 Page data: ${JSON.stringify(content)}
 
-Pages could be about shipping policies, about us, privacy, store info, etc. Do not assume the page is promotional. ${contentAnalysis.hasAITerms ? 'This page mentions AI-related terms, so include relevant technical context.' : 'Avoid injecting AI terms unless present in original.'}
+🎯 UNIVERSAL PAGE OPTIMIZATION GOALS:
+This prompt must work for ANY page type: Contact, About, FAQs, Privacy, Shipping, Returns, Custom pages, etc.
+Do NOT make assumptions about content topic or store type.
+${contentAnalysis.hasAITerms ? 'Note: This page contains AI-related terms, include relevant context.' : 'Only use terminology present in the original content.'}
 
-✅ REQUIRED:
-- Clearly state the purpose and scope of the page
-- Explain value or relevance in human-readable, factual terms
-- Support universal understanding by any AI system
-
-🚫 PROHIBITED:
-- "comprehensive guide," "game-changing," "essential resource"
-- SEO filler phrases like "great for everyone"
-
-Return ONLY this JSON:
+✅ REQUIRED OUTPUT STRUCTURE:
 {
-  "optimizedTitle": "",
-  "optimizedDescription": "",
-  "summary": "",
-  "llmDescription": "",
+  "optimizedTitle": "[Clear, descriptive title with key function]",
+  "optimizedDescription": "[80-120 words explaining page purpose and content]",
+  "summary": "[One sentence, max 100 characters, citation-ready]",
+  "llmDescription": "[Must clearly explain: purpose, information type, relevant interactions]",
   "faqs": [
-    {"question": "What is this page about?", "answer": ""},
-    {"question": "Who is this relevant to?", "answer": ""},
-    {"question": "How should this information be used?", "answer": ""}
+    {"question": "What information is provided on this page?", "answer": ""},
+    {"question": "When would someone need to reference this page?", "answer": ""},
+    {"question": "What type of content or policies does this cover?", "answer": ""}
   ]
-}`;
+}
+
+✅ LLMDESCRIPTION REQUIREMENTS:
+Must ALWAYS clearly explain:
+- The purpose of the page (e.g., "contains store contact information", "outlines return policies")
+- The kind of information customers or AI assistants can expect to find
+- Examples of relevant interactions (e.g., "used for contacting support", "references shipping timeframes")
+
+✅ FAQ REQUIREMENTS:
+- Generate 3 universal, structured FAQs based ONLY on provided content
+- Valuable to LLMs for understanding page function and scope
+- DO NOT reference the page title in answers
+- Focus on practical information and usage scenarios
+
+🚫 ABSOLUTELY PROHIBITED:
+- Marketing fluff: "sustainable," "must-have," "comprehensive guide," "essential resource"
+- SEO phrases: "great for everyone," "we value your feedback," "high-quality service"
+- Generic filler or assumptions about content not present in source
+- Empty or vague responses for minimal content pages
+
+EXAMPLE TARGETS:
+Contact Page: "Contains store contact information including email, phone, and business hours for customer inquiries and support requests."
+Privacy Page: "Outlines data collection practices, cookie usage, and customer privacy rights as required by applicable regulations."
+About Page: "Provides background information about the company, founding story, mission, and key personnel or values."
+
+MINIMAL CONTENT FALLBACK:
+If page has minimal content, still provide structured, LLM-friendly descriptions based on page handle/title context.
+
+Return ONLY this JSON with factual, universal content:`;
   } else {
     prompt = `Optimize this blog article for LLMs to understand, summarize, and recommend.
 
