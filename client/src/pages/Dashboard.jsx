@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { useCitations } from '../hooks/useCitations';
@@ -35,6 +35,8 @@ const Dashboard = () => {
   });
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
+  const [helpTab, setHelpTab] = useState('instructions');
+  const [expandedFaq, setExpandedFaq] = useState(null);
   const [testResults, setTestResults] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [optimizationProgress, setOptimizationProgress] = useState(null);
@@ -2677,6 +2679,179 @@ const Dashboard = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Help Section */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+          <HelpCircle className="w-5 h-5 mr-2" />
+          Help & Support
+        </h2>
+        
+        {/* Help Tabs */}
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setHelpTab('instructions')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                helpTab === 'instructions'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <BookOpen className="w-4 h-4" />
+                <span>Instructions</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setHelpTab('support')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                helpTab === 'support'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <MessageSquare className="w-4 h-4" />
+                <span>Support & FAQ</span>
+              </div>
+            </button>
+          </nav>
+        </div>
+
+        {/* Instructions Tab */}
+        {helpTab === 'instructions' && (
+          <div className="prose prose-blue max-w-none">
+            <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                🧭 How to Use AI Search Booster
+              </h3>
+              
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                    ✅ Step 1: Connect Your Shopify Store
+                  </h4>
+                  <p className="text-gray-700 text-sm">
+                    Once installed, AI Search Booster automatically connects through OAuth. No setup required.
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                    ✅ Step 2: Select What You Want to Optimize
+                  </h4>
+                  <p className="text-gray-700 text-sm mb-2">Use the tabs above to view:</p>
+                  <ul className="text-sm text-gray-700 ml-4 list-disc">
+                    <li>Products</li>
+                    <li>Blog Posts</li>
+                    <li>Pages</li>
+                    <li>Collections</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                    ✅ Step 3: Click "Optimize"
+                  </h4>
+                  <ul className="text-sm text-gray-700 ml-4 list-disc space-y-1">
+                    <li>🟦 Click <strong>"Optimize All"</strong> to process everything</li>
+                    <li>✅ Or select specific items and click <strong>"Optimize Selected"</strong></li>
+                  </ul>
+                  <p className="text-gray-700 text-sm mt-2">A draft is created for each item.</p>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                    ✅ Step 4: Preview & Approve
+                  </h4>
+                  <p className="text-gray-700 text-sm mb-2">Each draft includes:</p>
+                  <ul className="text-sm text-gray-700 ml-4 list-disc space-y-1">
+                    <li>LLM-optimized summary and description</li>
+                    <li>Embedded JSON-LD</li>
+                    <li>&lt;div data-llm&gt; blocks</li>
+                    <li>FAQ schema</li>
+                  </ul>
+                  <p className="text-gray-700 text-sm mt-2">You can:</p>
+                  <ul className="text-sm text-gray-700 ml-4 list-disc space-y-1">
+                    <li>✅ <strong>Publish</strong></li>
+                    <li>🔄 <strong>Rollback</strong></li>
+                    <li>♻️ <strong>Re-optimize</strong></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                    ✅ Step 5: Track Progress
+                  </h4>
+                  <p className="text-gray-700 text-sm mb-2">Use the dashboard stats:</p>
+                  <ul className="text-sm text-gray-700 ml-4 list-disc space-y-1">
+                    <li>Optimized items</li>
+                    <li>Usage count</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Support & FAQ Tab */}
+        {helpTab === 'support' && (
+          <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              🧰 Support & FAQ
+            </h3>
+            
+            <div className="space-y-3">
+              {[
+                {
+                  question: "What does AI Search Booster do?",
+                  answer: "It enhances your Shopify content to be discoverable by ChatGPT, Claude, Gemini, and Perplexity — using JSON-LD, semantic summaries, FAQs, and invisible AI-readable blocks."
+                },
+                {
+                  question: "Will this change how my store looks?",
+                  answer: "No. All content is invisible to human users and does not affect your Shopify theme."
+                },
+                {
+                  question: "Can I undo changes?",
+                  answer: "Yes — all content is nondestructive. You can: Preview before publishing, Rollback at any time, View original content anytime."
+                },
+                {
+                  question: "How is this different from SEO?",
+                  answer: "This is not Google SEO. This is for discoverability in LLM answers, not search engines. It prioritizes semantic clarity, FAQs, JSON-LD, and LLM-friendly structure."
+                },
+                {
+                  question: "How often should I re-optimize?",
+                  answer: "Re-optimize whenever you: Change your product/page/blog content, Add new content, Want to adapt to better LLM parsing formats."
+                },
+                {
+                  question: "How do I get help?",
+                  answer: "Email: AskMaxEvo@gmail.com"
+                }
+              ].map((faq, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg">
+                  <button
+                    className="w-full px-4 py-3 text-left flex justify-between items-center hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                    onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
+                  >
+                    <span className="font-medium text-gray-900">❓ {faq.question}</span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-gray-500 transform transition-transform ${
+                        expandedFaq === index ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                  {expandedFaq === index && (
+                    <div className="px-4 pb-3">
+                      <p className="text-gray-700 text-sm">{faq.answer}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
