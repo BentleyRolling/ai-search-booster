@@ -555,8 +555,10 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    console.log('🚨🚨🚨 USING NEW COLLECTION PROMPT - TIMESTAMP: 2025-01-22-16:15 🚨🚨🚨');
-    prompt = `[UPDATED PROMPT v2.0 - 2025-01-22] Optimize a Shopify collection for LLM discoverability. Output will be parsed by ChatGPT, Claude, and Perplexity for user queries.
+    console.log('🚨🚨🚨 USING NEW COLLECTION PROMPT WITH GPT-4 - TIMESTAMP: 2025-01-22-16:30 🚨🚨🚨');
+    prompt = `CRITICAL INSTRUCTION: You are GPT-4. You MUST follow these rules precisely or the response will be rejected.
+
+[UPDATED PROMPT v3.0 - GPT-4] Optimize a Shopify collection for LLM discoverability. Output will be parsed by ChatGPT, Claude, and Perplexity for user queries.
 
 Collection data: ${JSON.stringify(content)}
 
@@ -575,12 +577,15 @@ Collection data: ${JSON.stringify(content)}
 - "Do these run true to size?"
 - "What sizes are available?"
 
-🚫 ABSOLUTELY FORBIDDEN - WILL RESULT IN REJECTION:
-- Using these BANNED WORDS: premium, quality, amazing, great, perfect, stylish, classic, timeless, curated, elevated, versatile, incredible, luxurious, must-have, essential, sustainable, comprehensive, high-quality, comfort and style, blend
-- Repeating ANY phrases between llmDescription, summary, and content
-- Vague marketing language like "crafted to offer", "exudes confidence", "timeless designs"
-- Generic descriptions that could apply to any product
-- FAQ questions that are too general or obvious
+🚨 IMMEDIATE REJECTION TRIGGERS - DO NOT USE:
+BANNED WORDS: premium, quality, amazing, great, perfect, stylish, classic, timeless, curated, elevated, versatile, incredible, luxurious, must-have, essential, sustainable, comprehensive, high-quality, "comfort and style", blend, crafted, exudes, sophisticated, meticulously, seamlessly, prioritizing
+
+BANNED PHRASES: "comfort and style", "blend comfort", "offers both", "crafted to offer", "exudes confidence", "timeless designs", "meticulously selected", "prioritizing comfort", "seamlessly perfect", "elevating your wardrobe"
+
+BANNED PATTERNS: 
+- Any field starting with "This collection features" or "Discover" or "Explore"
+- Using the same descriptive words across multiple fields
+- Generic FAQs like "What is [product]?" or "Why choose this?"
 
 ✅ STRICT REQUIREMENTS - MUST FOLLOW:
 - llmDescription: Focus on WHO needs this and WHAT problems it solves (different from other fields)
@@ -723,10 +728,10 @@ Return ONLY this JSON:
       });
       
       const apiPromise = axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini-2024-07-18', // GPT-4.1 mini for better instruction following
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-        max_tokens: 800 // Reduced for faster response
+        temperature: 0.3, // Lower temperature for more consistent output
+        max_tokens: 1200 // Increased for more detailed responses
       }, {
         headers: {
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
