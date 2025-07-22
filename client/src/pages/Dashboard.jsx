@@ -1198,7 +1198,7 @@ const Dashboard = () => {
       console.log('[PUBLISH] Success response:', data);
       addNotification('Draft published successfully', 'success');
       
-      // Update the product/blog status to reflect the publication
+      // Update the product/blog/page/collection status to reflect the publication
       if (type === 'product') {
         setProducts(prev => prev.map(p => 
           p.id.toString() === id.toString() ? { ...p, optimized: true } : p
@@ -1207,12 +1207,22 @@ const Dashboard = () => {
         setBlogs(prev => prev.map(b => 
           b.id.toString() === id.toString() ? { ...b, optimized: true } : b
         ));
+      } else if (type === 'page') {
+        setPages(prev => prev.map(p => 
+          p.id.toString() === id.toString() ? { ...p, optimized: true } : p
+        ));
+      } else if (type === 'collection') {
+        setCollections(prev => prev.map(c => 
+          c.id.toString() === id.toString() ? { ...c, optimized: true } : c
+        ));
       }
       
       // Refresh data
       fetchStatus(shop);
       fetchProducts(shop);
       fetchBlogs(shop);
+      fetchPages(shop);
+      fetchCollections(shop);
       fetchHistory(shop);
       
       return data;

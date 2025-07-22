@@ -4681,3 +4681,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Fix collections endpoints Mon Jul 21 16:35:18 PDT 2025 */
 /* Debug publish errors Mon Jul 21 16:44:37 PDT 2025 */
 /* Fix publish endpoints Mon Jul 21 16:53:44 PDT 2025 */
+/* Update pages/collections state Mon Jul 21 17:06:05 PDT 2025 */
