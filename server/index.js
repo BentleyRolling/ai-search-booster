@@ -712,7 +712,7 @@ Return ONLY this JSON:
       // 🎯 COST-OPTIMIZED MODEL SELECTION
       let selectedModel;
       if (type === 'collection') {
-        selectedModel = 'gpt-4o'; // Full GPT-4o for complex collection optimization
+        selectedModel = 'gpt-4o-mini-2024-07-18'; // Cost-effective 4.1 mini - post-processing corruption was the real issue
       } else if (['product', 'page', 'article'].includes(type)) {
         selectedModel = 'gpt-4o-mini-2024-07-18'; // Cost-effective 4.1 mini for simpler tasks
       } else {
