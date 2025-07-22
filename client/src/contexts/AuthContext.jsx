@@ -85,9 +85,9 @@ export const AuthProvider = ({ children }) => {
           console.log('[ASB-DEBUG] AuthProvider: Making fetch with options:', fetchOptions);
           console.log('[ASB-DEBUG] AuthProvider: Final URL with shop param:', finalUrl);
           
-          // Add timeout for hanging requests
+          // Add timeout for hanging requests - increased for GPT-4 optimization calls
           const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Request timeout after 8 seconds')), 8000);
+            setTimeout(() => reject(new Error('Request timeout after 45 seconds')), 45000);
           });
           
           const result = await Promise.race([fetchFunction(finalUrl, fetchOptions), timeoutPromise]);

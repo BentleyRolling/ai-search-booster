@@ -722,9 +722,9 @@ Return ONLY this JSON:
       console.log('🔍 CONTENT TITLE:', content?.title || content?.name || 'No title');
       console.log('🕐 DEPLOYMENT TIMESTAMP: 2025-01-22-15:47');
       
-      // Add a race condition with timeout
+      // Add a race condition with timeout - increased for GPT-4
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('OpenAI API timeout after 15 seconds')), 15000);
+        setTimeout(() => reject(new Error('OpenAI API timeout after 30 seconds')), 30000);
       });
       
       const apiPromise = axios.post('https://api.openai.com/v1/chat/completions', {
@@ -737,7 +737,7 @@ Return ONLY this JSON:
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        timeout: 12000 // 12 second timeout
+        timeout: 25000 // 25 second timeout for GPT-4
       });
       
       try {
