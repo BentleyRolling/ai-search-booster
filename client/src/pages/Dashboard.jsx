@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { useCitations } from '../hooks/useCitations';
@@ -763,6 +763,23 @@ const Dashboard = () => {
           
           if (data.results && data.results[0]?.status === 'success') {
             successCount++;
+            
+            // Log quality scores for user awareness
+            const result = data.results[0];
+            if (result.riskScore !== undefined || result.visibilityScore !== undefined) {
+              console.log(`Collection ${collectionId} quality scores:`, {
+                risk: result.riskScore,
+                visibility: result.visibilityScore,
+                rolledBack: result.rollbackTriggered
+              });
+              
+              // Show specific feedback for high-risk items
+              if (result.rollbackTriggered) {
+                addNotification(`Collection ID ${collectionId}: High-risk content detected, original preserved`, 'warning');
+              } else if (result.riskScore > 0.5) {
+                addNotification(`Collection ID ${collectionId}: Optimized with medium risk score (${(result.riskScore * 100).toFixed(0)}%)`, 'info');
+              }
+            }
           } else {
             failedCount++;
           }
@@ -834,10 +851,26 @@ const Dashboard = () => {
           }
           
           const data = await response.json();
-          const blogSuccessCount = data.summary?.successful || 0;
           
-          if (blogSuccessCount > 0) {
-            successCount += blogSuccessCount;
+          if (data.results && data.results[0]?.status === 'success') {
+            successCount++;
+            
+            // Log quality scores for user awareness
+            const result = data.results[0];
+            if (result.riskScore !== undefined || result.visibilityScore !== undefined) {
+              console.log(`Blog ${blogId} quality scores:`, {
+                risk: result.riskScore,
+                visibility: result.visibilityScore,
+                rolledBack: result.rollbackTriggered
+              });
+              
+              // Show specific feedback for high-risk items
+              if (result.rollbackTriggered) {
+                addNotification(`Blog ID ${blogId}: High-risk content detected, original preserved`, 'warning');
+              } else if (result.riskScore > 0.5) {
+                addNotification(`Blog ID ${blogId}: Optimized with medium risk score (${(result.riskScore * 100).toFixed(0)}%)`, 'info');
+              }
+            }
           } else {
             failedCount++;
           }
@@ -926,10 +959,31 @@ const Dashboard = () => {
           }
           
           const data = await response.json();
-          const blogSuccessCount = data.summary?.successful || 0;
           
-          if (blogSuccessCount > 0) {
-            successCount += blogSuccessCount;
+          if (data.results && data.results.length > 0) {
+            data.results.forEach(result => {
+              if (result.status === 'success') {
+                successCount++;
+                
+                // Log quality scores for user awareness
+                if (result.riskScore !== undefined || result.visibilityScore !== undefined) {
+                  console.log(`Article in blog ${blogId} quality scores:`, {
+                    risk: result.riskScore,
+                    visibility: result.visibilityScore,
+                    rolledBack: result.rollbackTriggered
+                  });
+                  
+                  // Show specific feedback for high-risk items
+                  if (result.rollbackTriggered) {
+                    addNotification(`Article in blog ${blogId}: High-risk content detected, original preserved`, 'warning');
+                  } else if (result.riskScore > 0.5) {
+                    addNotification(`Article in blog ${blogId}: Optimized with medium risk score (${(result.riskScore * 100).toFixed(0)}%)`, 'info');
+                  }
+                }
+              } else {
+                failedCount++;
+              }
+            });
           } else {
             failedCount += blogArticles.length;
           }
@@ -1607,6 +1661,26 @@ const Dashboard = () => {
                     </div>
                   )}
                   
+                  {/* Usage Indicator */}
+                  {usage && (
+                    <div className="flex items-center space-x-2 bg-blue-600 text-white px-3 py-1 rounded-full">
+                      <Zap className="w-4 h-4" />
+                      <span className="text-sm font-medium">
+                        {usage.tokensUsed ? `${Math.round(usage.tokensUsed / 1000)}K tokens` : '0 tokens'}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Performance Badge */}
+                  {status && status.optimizedProducts > 0 && (
+                    <div className="flex items-center space-x-2 bg-purple-600 text-white px-3 py-1 rounded-full">
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="text-sm font-medium">
+                        {optimizationPercentage}% optimized
+                      </span>
+                    </div>
+                  )}
+                  
                   {/* Monitoring Status */}
                   <div className="flex items-center space-x-2">
                     <Monitor className={`w-5 h-5 ${isMonitoring ? 'text-green-400' : 'text-gray-400'}`} />
@@ -2008,26 +2082,47 @@ const Dashboard = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-gray-500">Usage This Month</h3>
-              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-blue-500 transition-all duration-500"
-                  style={{ width: `${usage ? ((usage.optimizations?.total || 0) / (usage.limits?.monthlyOptimizations || 1000) * 100) : 0}%` }}
-                />
+              <div className="flex items-center space-x-2">
+                <Zap className="w-4 h-4 text-blue-500" />
+                <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-blue-500 transition-all duration-500"
+                    style={{ width: `${usage ? ((usage.optimizations?.total || 0) / (usage.limits?.monthlyOptimizations || 1000) * 100) : 0}%` }}
+                  />
+                </div>
               </div>
             </div>
-            <p className="text-lg font-bold text-blue-600">
-              {usage?.optimizations?.total || 0} / {usage?.limits?.monthlyOptimizations || 1000}
-            </p>
+            <div className="space-y-1">
+              <p className="text-lg font-bold text-blue-600">
+                {usage?.optimizations?.total || 0} / {usage?.limits?.monthlyOptimizations || 1000}
+              </p>
+              <p className="text-xs text-gray-500">
+                {usage?.tokensUsed ? `${Math.round(usage.tokensUsed / 1000)}K tokens used` : 'No tokens used'}
+              </p>
+            </div>
           </div>
           
-          {/* Shopify Store Status - Always shown on all tabs */}
+          {/* Enterprise Performance - Always shown on all tabs */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-500">Shopify Store</h3>
-              <Globe className="w-5 h-5 text-blue-500" />
+              <h3 className="text-sm font-medium text-gray-500">Enterprise Status</h3>
+              <div className="flex items-center space-x-1">
+                <TrendingUp className="w-4 h-4 text-purple-500" />
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              </div>
             </div>
-            <p className="text-lg font-semibold text-green-600">Optimized</p>
-            <p className="text-xs text-gray-500 mt-1">JSON-LD & LLM Schema Active</p>
+            <div className="space-y-1">
+              <p className="text-lg font-semibold text-purple-600">
+                {optimizationPercentage}% Optimized
+              </p>
+              <p className="text-xs text-gray-500">
+                Production-Grade • Auto-Rollback
+              </p>
+              <div className="flex items-center space-x-1 mt-2">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
+                <span className="text-xs text-green-600">JSON-LD Active</span>
+              </div>
+            </div>
           </div>
         </div>
 
