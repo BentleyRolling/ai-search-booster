@@ -510,6 +510,14 @@ const optimizeContent = async (content, type, settings = {}) => {
   // Universal LLM Optimization - works for any industry/store type
   let prompt;
   
+  console.log('🔍 PROMPT SELECTION DEBUG:', {
+    type: type,
+    typeOf: typeof type,
+    exactMatch: type === 'collection',
+    stringValue: String(type),
+    trimmed: String(type).trim()
+  });
+  
   if (type === 'product') {
     prompt = `Generate optimized content for a Shopify product that improves its chances of being cited or understood by LLMs like ChatGPT, Claude, or Perplexity.
 
