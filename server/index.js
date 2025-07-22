@@ -709,13 +709,26 @@ Return ONLY this JSON:
       console.log('🔍 CONTENT TITLE:', content?.title || content?.name || 'No title');
       console.log('🕐 DEPLOYMENT TIMESTAMP: 2025-01-22-15:47');
       
+      // 🎯 COST-OPTIMIZED MODEL SELECTION
+      let selectedModel;
+      if (type === 'collection') {
+        selectedModel = 'gpt-4o'; // Full GPT-4o for complex collection optimization
+      } else if (['product', 'page', 'article'].includes(type)) {
+        selectedModel = 'gpt-4o-mini-2024-07-18'; // Cost-effective 4.1 mini for simpler tasks
+      } else {
+        selectedModel = 'gpt-4o-mini-2024-07-18'; // Default to mini for unknown types
+        console.log(`⚠️ WARNING: Unknown type '${type}', defaulting to gpt-4o-mini`);
+      }
+      
+      console.log(`🤖 SELECTED MODEL: ${selectedModel} for type: ${type}`);
+      
       // Add a race condition with timeout - increased for GPT-4
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('OpenAI API timeout after 30 seconds')), 30000);
       });
       
       const apiPromise = axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'gpt-4o-mini-2024-07-18', // GPT-4.1 mini for better instruction following
+        model: selectedModel, // 🎯 DYNAMIC MODEL SELECTION BASED ON TYPE
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3, // Lower temperature for more consistent output
         max_tokens: 1200 // Increased for more detailed responses
