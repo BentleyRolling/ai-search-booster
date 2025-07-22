@@ -2552,7 +2552,7 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
       : type === 'page'
       ? `pages/${id}/metafields`
       : type === 'collection'
-      ? `collections/${id}/metafields`
+      ? `custom_collections/${id}/metafields`  // Fix: use custom_collections not collections
       : `articles/${id}/metafields`;
     
     console.log(`[ROLLBACK] Getting metafields for ${type} ${id}`);
@@ -2614,16 +2614,16 @@ app.post('/api/rollback/:type/:id', simpleVerifyShop, async (req, res) => {
     } else if (type === 'collection') {
       // For collections, restore the original content
       const updateData = {
-        collection: {
+        custom_collection: {  // Fix: use custom_collection not collection
           id: parseInt(id),
           title: originalData.title,
-          description: originalData.description
+          body_html: originalData.body_html  // Fix: use body_html for collections like other resources
         }
       };
       
       console.log(`Restoring collection ${id} with data:`, updateData);
       await axios.put(
-        `https://${shop}/admin/api/2024-01/collections/${id}.json`,
+        `https://${shop}/admin/api/2024-01/custom_collections/${id}.json`,  // Fix: use custom_collections endpoint
         updateData,
         {
           headers: { 'X-Shopify-Access-Token': accessToken }
@@ -4682,3 +4682,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Debug publish errors Mon Jul 21 16:44:37 PDT 2025 */
 /* Fix publish endpoints Mon Jul 21 16:53:44 PDT 2025 */
 /* Update pages/collections state Mon Jul 21 17:06:05 PDT 2025 */
+/* Fix rollback collections Mon Jul 21 17:12:52 PDT 2025 */
