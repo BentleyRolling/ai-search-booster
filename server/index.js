@@ -8,7 +8,7 @@ import { initCitationJobs } from './jobs/citationScheduler.js';
 import { initializeCitationRoutes } from './routes/citations.js';
 
 // === Production Infrastructure Modules === 
-// Deployment timestamp: 2025-07-22 Backend Force Deploy
+// Collections Fix Deployed: 2025-07-22 15:52 UTC
 import * as scoringUtils from './utils/scoringUtils.js';
 import * as rollbackUtils from './utils/rollbackUtils.js';
 import * as logger from './utils/logger.js';
