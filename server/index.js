@@ -510,13 +510,14 @@ const optimizeContent = async (content, type, settings = {}) => {
   // Universal LLM Optimization - works for any industry/store type
   let prompt;
   
-  console.log('🔍 PROMPT SELECTION DEBUG:', {
+  const debugInfo = {
     type: type,
     typeOf: typeof type,
     exactMatch: type === 'collection',
     stringValue: String(type),
     trimmed: String(type).trim()
-  });
+  };
+  console.log('🔍 PROMPT SELECTION DEBUG:', debugInfo);
   
   if (type === 'product') {
     prompt = `Generate optimized content for a Shopify product that improves its chances of being cited or understood by LLMs like ChatGPT, Claude, or Perplexity.
@@ -857,6 +858,48 @@ const simpleVerifyShop = (req, res, next) => {
   req.shop = shop;
   next();
 };
+
+// API: Debug endpoint to test prompt selection
+app.post('/api/debug/prompt-selection', async (req, res) => {
+  try {
+    const { content, type, settings } = req.body;
+    
+    const debugInfo = {
+      type: type,
+      typeOf: typeof type,
+      exactMatch: type === 'collection',
+      stringValue: String(type),
+      trimmed: String(type).trim(),
+      inputType: req.body.type,
+      bodyKeys: Object.keys(req.body)
+    };
+    
+    console.log('🔍 DEBUG ENDPOINT - PROMPT SELECTION:', debugInfo);
+    
+    // Test the condition directly
+    let promptType = 'unknown';
+    if (type === 'product') {
+      promptType = 'product';
+    } else if (type === 'collection') {
+      promptType = 'collection';
+      console.log('🚨🚨🚨 COLLECTION CONDITION MATCHED IN DEBUG! 🚨🚨🚨');
+    } else if (type === 'page') {
+      promptType = 'page';
+    } else {
+      promptType = 'article/fallback';
+    }
+    
+    res.json({
+      debug: debugInfo,
+      promptType: promptType,
+      message: 'Debug information captured'
+    });
+    
+  } catch (error) {
+    console.error('Debug endpoint error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // API: Preview optimization
 app.post('/api/optimize/preview', simpleVerifyShop, async (req, res) => {
