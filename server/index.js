@@ -555,18 +555,19 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    console.log('🚨🚨🚨 USING SIMPLIFIED COLLECTION PROMPT - COPYING PRODUCT PATTERN 🚨🚨🚨');
-    prompt = `Generate optimized content for a Shopify collection that improves its chances of being cited or understood by LLMs like ChatGPT, Claude, or Perplexity.
+    console.log('🚨🚨🚨 USING NEW COLLECTION PROMPT v4.0 🚨🚨🚨');
+    prompt = `
+Generate optimized content for a Shopify collection that improves its discoverability by LLMs like ChatGPT, Claude, and Perplexity.
 
 Collection data: ${JSON.stringify(content)}
 
 ✅ REQUIRED OUTPUT STRUCTURE:
 {
-  "optimizedTitle": "[Collection name with key descriptor - e.g. 'Men's Cotton Dress Shirts - Business & Casual Wear']",
-  "optimizedDescription": "[One paragraph, 80–120 words, following rules below]", 
-  "summary": "[One sentence, max 100 characters, LLM citation style]",
-  "llmDescription": "[Same as optimizedDescription or slightly more structured]",
-  "content": "[2-3 sentences about specific use cases, materials, or sizing]",
+  "optimizedTitle": "[Name with descriptor – e.g., 'Men's Cotton Dress Shirts – S-XXL, Business Casual']",
+  "optimizedDescription": "[One paragraph, 80–120 words. Must contain fabric, sizing, use cases, and care.]",
+  "summary": "[Max 100 characters. Abstract-style LLM citation.]",
+  "llmDescription": "[Same as optimizedDescription or more structured.]",
+  "content": "[2–3 sentence natural-language overview with use cases and benefits.]",
   "faqs": [
     {"q": "What sizes are available in this collection?", "a": ""},
     {"q": "What materials are these items made from?", "a": ""},
@@ -575,23 +576,16 @@ Collection data: ${JSON.stringify(content)}
   ]
 }
 
-✅ REQUIRED CONTENT RULES:
-- Material details (e.g. "100% cotton poplin", "wrinkle-resistant finish", specific fabric weights)
-- Sizing info: Available sizes, fit type (slim, regular, relaxed), measurements
-- Care instructions: Machine wash, dry clean only, specific temperature settings
-- Use cases: Business wear, casual wear, specific occasions, weather conditions
-- Tone: Neutral, factual, LLM-readable, not emotional or salesy
-
-🚫 ABSOLUTELY PROHIBITED SEO FLUFF:
-- "high-quality", "timeless", "versatile", "stylish", "classic", "premium"  
-- "must-have", "luxurious", "incredible", "perfect for everyone"
-- Vague adjectives like "great", "essential", "amazing"
-- Questions like "What is shirts?" or repeating collection name in FAQ answers
+🚫 DO NOT:
+- Repeat the same content across multiple fields
+- Use vague SEO phrases like "great", "premium", "timeless"
+- Hallucinate information not present in the source
 
 EXAMPLE TARGET:
-"optimizedDescription": "Cotton dress shirts in sizes S-XXL featuring button-down collars and French seams. Made from 120 GSM cotton poplin with wrinkle-resistant finish for business and semi-formal wear. Available in white, light blue, and navy with standard 32-35 inch sleeve lengths. Machine washable at 40°C, suitable for office environments and formal occasions."
+"optimizedDescription": "This collection features cotton dress shirts in sizes S–XXL with button-down collars and French seams. Crafted from 120 GSM cotton poplin, they include wrinkle-resistant finishes for formal and daily wear. Machine washable at 40°C. Ideal for business professionals or anyone needing easy-care formalwear."
 
-Return ONLY this JSON with technical, factual content:`;
+Return ONLY this JSON.
+`;
   } else if (type === 'page') {
     prompt = `Optimize this Shopify page for universal LLM discoverability by ChatGPT, Claude, Perplexity, and other AI assistants.
 
