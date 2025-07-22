@@ -7,6 +7,11 @@ import rateLimit from 'express-rate-limit';
 import { initCitationJobs } from './jobs/citationScheduler.js';
 import { initializeCitationRoutes } from './routes/citations.js';
 
+// === Production Infrastructure Modules ===
+import * as scoringUtils from './utils/scoringUtils.js';
+import * as rollbackUtils from './utils/rollbackUtils.js';
+import * as logger from './utils/logger.js';
+
 dotenv.config();
 
 const app = express();
@@ -810,6 +815,46 @@ Return ONLY this JSON:
           
           const parsedResponse = JSON.parse(cleanResponse);
           console.log('[AI-OPTIMIZATION] Parsed OpenAI response:', parsedResponse);
+          
+          // === PRODUCTION SCORING & SAFETY INFRASTRUCTURE ===
+          console.log('[SCORING] Calculating content quality scores...');
+          
+          // Calculate hallucination risk and visibility scores
+          const riskScore = scoringUtils.calculateHallucinationRisk(parsedResponse, content, keywordsArray);
+          const visibilityScore = scoringUtils.calculateVisibilityScore(parsedResponse);
+          
+          console.log(`[SCORING] Risk Score: ${riskScore}, Visibility Score: ${visibilityScore}`);
+          
+          // Add scores to response for draft storage
+          parsedResponse.riskScore = riskScore;
+          parsedResponse.visibilityScore = visibilityScore;
+          parsedResponse.promptVersion = parsedResponse.promptVersion || 'v5.1-infra';
+          
+          // Log optimization session
+          await logger.logOptimizationSession({
+            shop: 'system', // Will be overridden by calling endpoint
+            contentType: type,
+            title: content.title || content.name || 'untitled',
+            modelUsed: selectedModel,
+            promptVersion: parsedResponse.promptVersion,
+            riskScore,
+            visibilityScore,
+            rollbackTriggered: false,
+            tokenEstimate: aiResponse.length / 4, // Rough token estimate
+            processingTime: Date.now() - Date.now(), // Will be calculated by calling endpoint
+            success: true
+          });
+          
+          // Check if rollback is needed
+          if (rollbackUtils.shouldRollback(riskScore)) {
+            console.warn(`[ROLLBACK] High risk detected (${riskScore}) - content may need review`);
+            await logger.logWarning('High hallucination risk detected', {
+              contentType: type,
+              title: content.title || content.name,
+              riskScore,
+              visibilityScore
+            });
+          }
           
           // Validate required fields
           if (!parsedResponse.optimizedTitle || !parsedResponse.optimizedDescription || !parsedResponse.summary) {
@@ -2462,40 +2507,112 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
         }
         
         // Optimize content using AI (collection-specific prompt)
+        const sessionStart = Date.now();
+        console.log(`[COLLECTIONS-OPTIMIZE] Starting AI optimization for collection ${collection.title}`);
+        
         const optimized = await optimizeContent(collection, 'collection', settings);
         
-        // Store optimization as draft metafields (don't update collection directly)
-        console.log(`[COLLECTIONS-OPTIMIZE] Storing optimization as draft for collection ${collection.id}`);
+        // === PRODUCTION ROLLBACK SAFETY CHECK ===
+        const riskScore = optimized.riskScore || 0;
+        const visibilityScore = optimized.visibilityScore || 0;
         
-        // Store optimized content as draft
-        await axios.post(
-          `https://${shop}/admin/api/2024-01/custom_collections/${collectionId}/metafields.json`,
-          {
-            metafield: {
-              namespace: 'asb',
-              key: 'optimized_content_draft',
-              value: JSON.stringify({
-                title: optimized.optimizedTitle,
-                optimizedDescription: optimized.optimizedDescription,
-                content: optimized.content,
-                llmDescription: optimized.llmDescription,
-                summary: optimized.summary,
-                faqs: optimized.faqs,
-                optimizedAt: new Date().toISOString()
-              }),
-              type: 'json'
+        console.log(`[COLLECTIONS-OPTIMIZE] Quality scores - Risk: ${riskScore}, Visibility: ${visibilityScore}`);
+        
+        // Create rollback save function for this collection
+        const rollbackSaveFn = async (draftId, originalContent) => {
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/custom_collections/${collectionId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'asb',
+                key: 'optimized_content_draft',
+                value: JSON.stringify({
+                  title: originalContent.title,
+                  optimizedDescription: originalContent.description || 'Original description preserved due to safety rollback',
+                  content: originalContent.description || 'Original content preserved',
+                  llmDescription: `Original collection: ${originalContent.title}`,
+                  summary: `${originalContent.title} collection`,
+                  faqs: [{
+                    q: "What is this collection about?",
+                    a: originalContent.description || `Information about ${originalContent.title}`
+                  }],
+                  rolledBack: true,
+                  rollbackAt: new Date().toISOString()
+                }),
+                type: 'json'
+              }
+            },
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
             }
-          },
-          {
-            headers: { 'X-Shopify-Access-Token': accessToken }
-          }
-        );
+          );
+        };
+        
+        // Execute rollback if high risk detected
+        const rollbackExecuted = await rollbackUtils.executeRollbackIfNeeded({
+          riskScore,
+          draftId: collectionId,
+          originalContent: collection,
+          saveFn: rollbackSaveFn,
+          shop,
+          contentType: 'collection',
+          title: collection.title
+        });
+        
+        if (!rollbackExecuted) {
+          // Safe to store optimized content as draft
+          console.log(`[COLLECTIONS-OPTIMIZE] Storing optimization as draft for collection ${collection.id}`);
+          
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/custom_collections/${collectionId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'asb',
+                key: 'optimized_content_draft',
+                value: JSON.stringify({
+                  title: optimized.optimizedTitle,
+                  optimizedDescription: optimized.optimizedDescription,
+                  content: optimized.content,
+                  llmDescription: optimized.llmDescription,
+                  summary: optimized.summary,
+                  faqs: optimized.faqs,
+                  riskScore: optimized.riskScore,
+                  visibilityScore: optimized.visibilityScore,
+                  promptVersion: optimized.promptVersion,
+                  optimizedAt: new Date().toISOString()
+                }),
+                type: 'json'
+              }
+            },
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
+            }
+          );
+        }
+        
+        // Log optimization session with complete metadata
+        await logger.logOptimizationSession({
+          shop,
+          contentType: 'collection',
+          title: collection.title,
+          modelUsed: 'gpt-4o-mini-2024-07-18',
+          promptVersion: optimized.promptVersion || 'v5.1-infra',
+          riskScore,
+          visibilityScore,
+          rollbackTriggered: rollbackExecuted,
+          tokenEstimate: JSON.stringify(optimized).length / 4,
+          processingTime: Date.now() - sessionStart,
+          success: !rollbackExecuted
+        });
         
         results.push({
           id: collectionId,
           title: collection.title,
           status: 'success',
-          optimized: optimized
+          optimized: optimized,
+          riskScore,
+          visibilityScore,
+          rollbackTriggered: rollbackExecuted
         });
         
       } catch (error) {
