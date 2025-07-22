@@ -575,17 +575,20 @@ Collection data: ${JSON.stringify(content)}
 - "Do these run true to size?"
 - "What sizes are available?"
 
-🚫 ABSOLUTELY FORBIDDEN:
-- Repeating the same sentence or phrases in multiple fields
-- Vague filler like "shirts for men for comfort and style"
-- Broken questions like "What is shirts?"
-- Marketing fluff: premium, quality, amazing, great, perfect, stylish, classic, timeless, curated, elevated, versatile, incredible, luxurious, must-have, essential, sustainable, comprehensive
+🚫 ABSOLUTELY FORBIDDEN - WILL RESULT IN REJECTION:
+- Using these BANNED WORDS: premium, quality, amazing, great, perfect, stylish, classic, timeless, curated, elevated, versatile, incredible, luxurious, must-have, essential, sustainable, comprehensive, high-quality, comfort and style, blend
+- Repeating ANY phrases between llmDescription, summary, and content
+- Vague marketing language like "crafted to offer", "exudes confidence", "timeless designs"
+- Generic descriptions that could apply to any product
+- FAQ questions that are too general or obvious
 
-✅ REQUIREMENTS:
-- Each field must be substantively different
-- Use specific, helpful details
-- Write like you're training an LLM on what this collection means
-- Valid JSON with ALL fields present
+✅ STRICT REQUIREMENTS - MUST FOLLOW:
+- llmDescription: Focus on WHO needs this and WHAT problems it solves (different from other fields)
+- summary: State the UNIQUE VALUE, not generic descriptions
+- content: Write SPECIFIC details about materials, fit, occasions (different from other fields)
+- faqs: Ask SPECIFIC product questions customers actually need answered
+- NO overlap between any fields
+- Use CONCRETE details, not abstract marketing language
 
 Return ONLY this JSON structure:
 {
