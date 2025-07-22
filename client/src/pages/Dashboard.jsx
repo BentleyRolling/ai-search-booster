@@ -3459,9 +3459,9 @@ const Dashboard = () => {
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <h4 className="font-medium text-yellow-800 mb-2">Optimized Content</h4>
                         <div className="space-y-3 text-sm text-yellow-700">
-                          {selectedDraft.data.draft.content?.optimizedTitle && (
+                          {selectedDraft.data.draft.content?.title && (
                             <div>
-                              <strong>Title:</strong> {selectedDraft.data.draft.content.optimizedTitle}
+                              <strong>Title:</strong> {selectedDraft.data.draft.content.title}
                             </div>
                           )}
                           {selectedDraft.data.draft.content?.optimizedDescription && (
@@ -3481,7 +3481,7 @@ const Dashboard = () => {
                               <strong>Summary:</strong> {selectedDraft.data.draft.content.summary}
                             </div>
                           )}
-                          {selectedDraft.data.draft.content?.description && !selectedDraft.data.draft.content?.optimizedTitle && (
+                          {selectedDraft.data.draft.content?.description && !selectedDraft.data.draft.content?.title && (
                             <div>
                               <strong>Content:</strong>
                               <div className="mt-1 whitespace-pre-wrap">{selectedDraft.data.draft.content.description}</div>
