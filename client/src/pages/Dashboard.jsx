@@ -3160,14 +3160,14 @@ const Dashboard = () => {
                         </div>
                       </div>
                       
-                      {selectedDraft.data.draft.faq && (
+                      {(selectedDraft.data.draft.content?.faqs || selectedDraft.data.draft.faq) && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                           <h4 className="font-medium text-blue-800 mb-2">FAQ</h4>
                           <div className="space-y-2">
-                            {(selectedDraft.data.draft.faq?.questions || selectedDraft.data.draft.faq || []).map((faq, index) => (
+                            {(selectedDraft.data.draft.content?.faqs || selectedDraft.data.draft.faq?.questions || selectedDraft.data.draft.faq || []).map((faq, index) => (
                               <div key={index} className="text-sm">
-                                <div className="font-medium text-blue-700">Q: {faq.question}</div>
-                                <div className="text-blue-600">A: {faq.answer}</div>
+                                <div className="font-medium text-blue-700">Q: {faq.q || faq.question}</div>
+                                <div className="text-blue-600">A: {faq.a || faq.answer}</div>
                               </div>
                             ))}
                           </div>

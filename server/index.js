@@ -550,7 +550,9 @@ Return ONLY this JSON with technical, factual content:`;
 
 Collection data: ${JSON.stringify(content)}
 
-🚫 ABSOLUTELY FORBIDDEN WORDS: versatile, high-quality, premium, stylish, classic, timeless, must-have, luxurious, incredible, perfect, great, essential, amazing, carefully selected, curated, elevate
+🚫 ABSOLUTELY FORBIDDEN WORDS: versatile, high-quality, premium, stylish, classic, timeless, must-have, luxurious, incredible, perfect, great, essential, amazing, carefully selected, curated, elevate, quality, comfortable, range, variety, diverse, explore, designed
+
+🚨 CRITICAL: If you use ANY forbidden words, the response will be rejected. Use specific, factual descriptions instead.
 
 ✅ MANDATORY REQUIREMENTS:
 1. Each field must be completely different - NO repetition
