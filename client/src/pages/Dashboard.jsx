@@ -588,6 +588,23 @@ const Dashboard = () => {
           
           if (data.results && data.results[0]?.status === 'success') {
             successCount++;
+            
+            // Log quality scores for user awareness
+            const result = data.results[0];
+            if (result.riskScore !== undefined || result.visibilityScore !== undefined) {
+              console.log(`Product ${productId} quality scores:`, {
+                risk: result.riskScore,
+                visibility: result.visibilityScore,
+                rolledBack: result.rollbackTriggered
+              });
+              
+              // Show specific feedback for high-risk items
+              if (result.rollbackTriggered) {
+                addNotification(`Product ID ${productId}: High-risk content detected, original preserved`, 'warning');
+              } else if (result.riskScore > 0.5) {
+                addNotification(`Product ID ${productId}: Optimized with medium risk score (${(result.riskScore * 100).toFixed(0)}%)`, 'info');
+              }
+            }
           } else {
             console.error(`Product ${productId} optimization failed:`, data);
             failedCount++;
@@ -603,9 +620,9 @@ const Dashboard = () => {
       
       // Progress is already at 100% from the loop
       
-      // Show final results
+      // Show final results with quality summary
       if (successCount > 0) {
-        addNotification(`Successfully optimized ${successCount} products!`, 'success');
+        addNotification(`Successfully optimized ${successCount} products with AI safety checks!`, 'success');
       }
       if (failedCount > 0) {
         addNotification(`${failedCount} products failed to optimize`, 'error');
@@ -2188,7 +2205,38 @@ const Dashboard = () => {
                             className="mt-1"
                           />
                           <div className="flex-1">
-                            <h4 className="font-medium text-gray-900">{product.title}</h4>
+                            <div className="flex items-start space-x-2">
+                              <h4 className="font-medium text-gray-900 flex-1">{product.title}</h4>
+                              {/* Quality Indicators */}
+                              <div className="flex items-center space-x-1 flex-shrink-0">
+                                {/* Risk Score Indicator */}
+                                {product.riskScore !== undefined && (
+                                  <div 
+                                    className={`w-2 h-2 rounded-full ${
+                                      product.riskScore > 0.7 ? 'bg-red-500' :
+                                      product.riskScore > 0.4 ? 'bg-yellow-500' : 'bg-green-500'
+                                    }`}
+                                    title={`Risk Score: ${(product.riskScore * 100).toFixed(0)}% (${
+                                      product.riskScore > 0.7 ? 'High Risk' :
+                                      product.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'
+                                    })`}
+                                  />
+                                )}
+                                {/* Visibility Score Indicator */}
+                                {product.visibilityScore !== undefined && (
+                                  <Eye 
+                                    className={`w-3 h-3 ${
+                                      product.visibilityScore >= 80 ? 'text-green-500' :
+                                      product.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                                    }`}
+                                    title={`Visibility Score: ${product.visibilityScore}/100 (${
+                                      product.visibilityScore >= 80 ? 'Excellent' :
+                                      product.visibilityScore >= 60 ? 'Good' : 'Needs Work'
+                                    })`}
+                                  />
+                                )}
+                              </div>
+                            </div>
                             <p className="text-sm text-gray-500 mt-1">{product.vendor}</p>
                             {product.product_type && (
                               <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
@@ -2197,12 +2245,18 @@ const Dashboard = () => {
                             )}
                             <div className="mt-3 flex items-center justify-between">
                               <div className="flex items-center space-x-2">
-                                {product.optimized && (
+                                {product.rollbackTriggered && (
+                                  <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium flex items-center space-x-1">
+                                    <AlertCircle className="w-3 h-3" />
+                                    <span>⚠️ Rolled Back</span>
+                                  </span>
+                                )}
+                                {product.optimized && !product.rollbackTriggered && (
                                   <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
                                     ✓ Optimized
                                   </span>
                                 )}
-                                {product.hasDraft && (
+                                {product.hasDraft && !product.rollbackTriggered && (
                                   <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
                                     📝 Draft Ready
                                   </span>
@@ -2365,18 +2419,55 @@ const Dashboard = () => {
                               className="mt-1"
                             />
                             <div className="flex-1">
-                              <h4 className="font-medium text-gray-900">{article.title}</h4>
+                              <div className="flex items-start space-x-2">
+                                <h4 className="font-medium text-gray-900 flex-1">{article.title}</h4>
+                                {/* Quality Indicators */}
+                                <div className="flex items-center space-x-1 flex-shrink-0">
+                                  {/* Risk Score Indicator */}
+                                  {article.riskScore !== undefined && (
+                                    <div 
+                                      className={`w-2 h-2 rounded-full ${
+                                        article.riskScore > 0.7 ? 'bg-red-500' :
+                                        article.riskScore > 0.4 ? 'bg-yellow-500' : 'bg-green-500'
+                                      }`}
+                                      title={`Risk Score: ${(article.riskScore * 100).toFixed(0)}% (${
+                                        article.riskScore > 0.7 ? 'High Risk' :
+                                        article.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'
+                                      })`}
+                                    />
+                                  )}
+                                  {/* Visibility Score Indicator */}
+                                  {article.visibilityScore !== undefined && (
+                                    <Eye 
+                                      className={`w-3 h-3 ${
+                                        article.visibilityScore >= 80 ? 'text-green-500' :
+                                        article.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                                      }`}
+                                      title={`Visibility Score: ${article.visibilityScore}/100 (${
+                                        article.visibilityScore >= 80 ? 'Excellent' :
+                                        article.visibilityScore >= 60 ? 'Good' : 'Needs Work'
+                                      })`}
+                                    />
+                                  )}
+                                </div>
+                              </div>
                               <p className="text-sm text-gray-500 mt-1">Blog: {article.blogTitle}</p>
                               <p className="text-sm text-gray-500">Created: {new Date(article.created_at).toLocaleDateString()}</p>
                               
                               <div className="mt-3 flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
-                                  {article.optimized && (
+                                  {article.rollbackTriggered && (
+                                    <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium flex items-center space-x-1">
+                                      <AlertCircle className="w-3 h-3" />
+                                      <span>⚠️ Rolled Back</span>
+                                    </span>
+                                  )}
+                                  {article.optimized && !article.rollbackTriggered && (
                                     <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
                                       ✓ Optimized
                                     </span>
                                   )}
-                                  {article.hasDraft && (
+                                  {article.hasDraft && !article.rollbackTriggered && (
                                     <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
                                       📝 Draft Ready
                                     </span>
@@ -2545,18 +2636,55 @@ const Dashboard = () => {
                               className="mt-1"
                             />
                             <div className="flex-1">
-                              <h4 className="font-medium text-gray-900">{page.title}</h4>
+                              <div className="flex items-start space-x-2">
+                                <h4 className="font-medium text-gray-900 flex-1">{page.title}</h4>
+                                {/* Quality Indicators */}
+                                <div className="flex items-center space-x-1 flex-shrink-0">
+                                  {/* Risk Score Indicator */}
+                                  {page.riskScore !== undefined && (
+                                    <div 
+                                      className={`w-2 h-2 rounded-full ${
+                                        page.riskScore > 0.7 ? 'bg-red-500' :
+                                        page.riskScore > 0.4 ? 'bg-yellow-500' : 'bg-green-500'
+                                      }`}
+                                      title={`Risk Score: ${(page.riskScore * 100).toFixed(0)}% (${
+                                        page.riskScore > 0.7 ? 'High Risk' :
+                                        page.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'
+                                      })`}
+                                    />
+                                  )}
+                                  {/* Visibility Score Indicator */}
+                                  {page.visibilityScore !== undefined && (
+                                    <Eye 
+                                      className={`w-3 h-3 ${
+                                        page.visibilityScore >= 80 ? 'text-green-500' :
+                                        page.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                                      }`}
+                                      title={`Visibility Score: ${page.visibilityScore}/100 (${
+                                        page.visibilityScore >= 80 ? 'Excellent' :
+                                        page.visibilityScore >= 60 ? 'Good' : 'Needs Work'
+                                      })`}
+                                    />
+                                  )}
+                                </div>
+                              </div>
                               <p className="text-sm text-gray-500 mt-1">Handle: {page.handle}</p>
                               <p className="text-sm text-gray-500">Updated: {new Date(page.updated_at).toLocaleDateString()}</p>
                               
                               <div className="mt-3 flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
-                                  {page.optimized && (
+                                  {page.rollbackTriggered && (
+                                    <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium flex items-center space-x-1">
+                                      <AlertCircle className="w-3 h-3" />
+                                      <span>⚠️ Rolled Back</span>
+                                    </span>
+                                  )}
+                                  {page.optimized && !page.rollbackTriggered && (
                                     <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
                                       ✓ Optimized
                                     </span>
                                   )}
-                                  {page.hasDraft && (
+                                  {page.hasDraft && !page.rollbackTriggered && (
                                     <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
                                       📝 Draft Ready
                                     </span>
@@ -2729,18 +2857,55 @@ const Dashboard = () => {
                               className="mt-1"
                             />
                             <div className="flex-1">
-                              <h4 className="font-medium text-gray-900">{category.title}</h4>
+                              <div className="flex items-start space-x-2">
+                                <h4 className="font-medium text-gray-900 flex-1">{category.title}</h4>
+                                {/* Quality Indicators */}
+                                <div className="flex items-center space-x-1 flex-shrink-0">
+                                  {/* Risk Score Indicator */}
+                                  {category.riskScore !== undefined && (
+                                    <div 
+                                      className={`w-2 h-2 rounded-full ${
+                                        category.riskScore > 0.7 ? 'bg-red-500' :
+                                        category.riskScore > 0.4 ? 'bg-yellow-500' : 'bg-green-500'
+                                      }`}
+                                      title={`Risk Score: ${(category.riskScore * 100).toFixed(0)}% (${
+                                        category.riskScore > 0.7 ? 'High Risk' :
+                                        category.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'
+                                      })`}
+                                    />
+                                  )}
+                                  {/* Visibility Score Indicator */}
+                                  {category.visibilityScore !== undefined && (
+                                    <Eye 
+                                      className={`w-3 h-3 ${
+                                        category.visibilityScore >= 80 ? 'text-green-500' :
+                                        category.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                                      }`}
+                                      title={`Visibility Score: ${category.visibilityScore}/100 (${
+                                        category.visibilityScore >= 80 ? 'Excellent' :
+                                        category.visibilityScore >= 60 ? 'Good' : 'Needs Work'
+                                      })`}
+                                    />
+                                  )}
+                                </div>
+                              </div>
                               <p className="text-sm text-gray-500 mt-1">Handle: {category.handle}</p>
                               <p className="text-sm text-gray-500">Description: {category.description?.substring(0, 50)}...</p>
                               
                               <div className="mt-3 flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
-                                  {category.optimized && (
+                                  {category.rollbackTriggered && (
+                                    <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium flex items-center space-x-1">
+                                      <AlertCircle className="w-3 h-3" />
+                                      <span>⚠️ Rolled Back</span>
+                                    </span>
+                                  )}
+                                  {category.optimized && !category.rollbackTriggered && (
                                     <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
                                       ✓ Optimized
                                     </span>
                                   )}
-                                  {category.hasDraft && (
+                                  {category.hasDraft && !category.rollbackTriggered && (
                                     <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
                                       📝 Draft Ready
                                     </span>
@@ -3126,6 +3291,76 @@ const Dashboard = () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Draft Content</h3>
                   {selectedDraft.data.hasDraft ? (
                     <div className="space-y-4">
+                      {/* Quality Scores Section */}
+                      {(selectedDraft.data.draft.content?.riskScore !== undefined || 
+                        selectedDraft.data.draft.content?.visibilityScore !== undefined || 
+                        selectedDraft.data.draft.content?.rolledBack) && (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-medium text-gray-800 mb-3 flex items-center">
+                            <TrendingUp className="w-4 h-4 mr-2" />
+                            Quality Assessment
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                            {selectedDraft.data.draft.content?.riskScore !== undefined && (
+                              <div className="flex flex-col">
+                                <span className="text-gray-600 text-xs font-medium">Risk Score</span>
+                                <div className={`text-lg font-bold ${
+                                  selectedDraft.data.draft.content.riskScore > 0.7 ? 'text-red-600' :
+                                  selectedDraft.data.draft.content.riskScore > 0.4 ? 'text-yellow-600' : 'text-green-600'
+                                }`}>
+                                  {(selectedDraft.data.draft.content.riskScore * 100).toFixed(0)}%
+                                </div>
+                                <span className={`text-xs ${
+                                  selectedDraft.data.draft.content.riskScore > 0.7 ? 'text-red-500' :
+                                  selectedDraft.data.draft.content.riskScore > 0.4 ? 'text-yellow-500' : 'text-green-500'
+                                }`}>
+                                  {selectedDraft.data.draft.content.riskScore > 0.7 ? 'High Risk' :
+                                   selectedDraft.data.draft.content.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'}
+                                </span>
+                              </div>
+                            )}
+                            {selectedDraft.data.draft.content?.visibilityScore !== undefined && (
+                              <div className="flex flex-col">
+                                <span className="text-gray-600 text-xs font-medium">Visibility Score</span>
+                                <div className={`text-lg font-bold ${
+                                  selectedDraft.data.draft.content.visibilityScore >= 80 ? 'text-green-600' :
+                                  selectedDraft.data.draft.content.visibilityScore >= 60 ? 'text-yellow-600' : 'text-red-600'
+                                }`}>
+                                  {selectedDraft.data.draft.content.visibilityScore}
+                                </div>
+                                <span className={`text-xs ${
+                                  selectedDraft.data.draft.content.visibilityScore >= 80 ? 'text-green-500' :
+                                  selectedDraft.data.draft.content.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                                }`}>
+                                  {selectedDraft.data.draft.content.visibilityScore >= 80 ? 'Excellent' :
+                                   selectedDraft.data.draft.content.visibilityScore >= 60 ? 'Good' : 'Needs Work'}
+                                </span>
+                              </div>
+                            )}
+                            {selectedDraft.data.draft.content?.rolledBack && (
+                              <div className="flex flex-col">
+                                <span className="text-gray-600 text-xs font-medium">Safety Status</span>
+                                <div className="text-lg font-bold text-orange-600 flex items-center">
+                                  <RotateCcw className="w-4 h-4 mr-1" />
+                                  Rolled Back
+                                </div>
+                                <span className="text-xs text-orange-500">
+                                  Original preserved
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          {selectedDraft.data.draft.content?.promptVersion && (
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <div className="flex items-center text-xs text-gray-500">
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Generated with {selectedDraft.data.draft.content.promptVersion} • GPT-4o-mini
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
                       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                         <h4 className="font-medium text-yellow-800 mb-2">Optimized Content</h4>
                         <div className="space-y-3 text-sm text-yellow-700">
