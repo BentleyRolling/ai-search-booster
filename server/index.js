@@ -555,34 +555,71 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    console.log('🚨🚨🚨 USING FUNCTIONALLY-ANCHORED COLLECTION PROMPT v5.0 🚨🚨🚨');
-    prompt = `Your job is to generate JSON output for a Shopify collection. Each field has a strict, distinct purpose:
+    console.log('🧠 USING CLAUDE UNIVERSAL COLLECTION OPTIMIZATION PROMPT v5.1-infra');
+    
+    // Analyze content to detect category if possible
+    const category = content.title || content.handle || 'N/A';
+    
+    prompt = `🧠 CLAUDE — UNIVERSAL COLLECTION OPTIMIZATION PROMPT (v5.1-infra)
 
-Collection data: ${JSON.stringify(content)}
+You are an LLM content optimizer for Shopify collections. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants.
 
-FIELD FUNCTIONS (each must be different):
-- optimizedTitle: Collection name + key descriptor (sizing, material, or use case)
-- optimizedDescription: Technical paragraph for search engines (80-120 words with specs, materials, sizing)
-- summary: Ultra-short abstract for AI citation snippets (≤100 chars, factual one-liner)
-- llmDescription: Detailed explanation for AI engines to understand WHO uses this and WHEN
-- content: Human-friendly marketing copy (2-3 sentences, persuasive but informative)
-- faqs: Product-specific questions customers actually ask
+You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, product-specific language only.
 
-❗ CRITICAL: If you cannot generate meaningful, different content for each field based on the source data, leave fields as "N/A" rather than repeat content.
+---
 
-❗ FAQ RULE: Base questions ONLY on the collection data provided. If the data is sparse, ask general product questions like sizing or care instructions. Never ask "What is [product name]?"
+Collection data (from Shopify):
 
-GOOD FAQ EXAMPLES:
-✅ "What sizes are available?" 
-✅ "What materials are used?"
-✅ "How should these be cared for?"
+${JSON.stringify(content)}
 
-BAD FAQ EXAMPLES:
-❌ "What is shirts?" 
-❌ "Why choose this collection?"
-❌ Repeating the summary as an answer
+Optional:
+Detected Category: ${category || "N/A"}
 
-Return ONLY this JSON:
+---
+
+FIELD DEFINITIONS — ALL MUST BE DISTINCT
+
+{
+  "optimizedTitle": "Collection name + unique descriptor (e.g., use case, sizing, material)",
+  "optimizedDescription": "Technical paragraph (80–120 words) for AI parsers. Include sizing, use cases, variants, materials, product types. Avoid fluff.",
+  "summary": "One factual sentence (under 100 characters) describing the collection's purpose. Use plain, abstractable language. NO adjectives or SEO language.",
+  "llmDescription": "Explain WHO this is for and WHEN they'd use it. Help an LLM understand the real-world scenarios, people, and needs. 2–3 sentences.",
+  "content": "Human-readable persuasive copy (2–3 sentences). Use clear, emotional value propositions for a customer. Avoid generic claims.",
+  "faqs": [
+    { "q": "What sizes are available?", "a": "We offer sizes ranging from S to XXL." },
+    { "q": "What materials are used?", "a": "Shirts are made from cotton and polyester blends." },
+    { "q": "How should these be cared for?", "a": "Follow care instructions on the label." },
+    { "q": "Are these suitable for formal events?", "a": "Yes, they work well for both formal and casual occasions." }
+  ],
+  "promptVersion": "v5.1-infra"
+}
+
+---
+
+STRICT RULES:
+
+- All fields must be different — NEVER repeat content or phrasing across summary, content, or llmDescription.
+- Only use info found in source — Never invent features, sizes, or scenarios that are not grounded in the input.
+- If source is sparse, fill with helpful domain-general info (e.g. general care tips, common sizing ranges) — do not hallucinate specifics.
+- For FAQs, prefer useful questions — not SEO fluff or rhetorical "Why choose us?" type questions.
+
+---
+
+HALLUCINATION CHECK GUARDRAILS:
+
+Avoid phrases like:
+- "Best on the market"
+- "Top-rated"
+- "Perfect for everyone"
+- "Award-winning"
+- "Our #1 product"
+
+If no real differentiation is available, return "N/A" for any field you cannot meaningfully complete.
+
+---
+
+OUTPUT FORMAT (Return ONLY this JSON):
+
 {
   "optimizedTitle": "",
   "optimizedDescription": "",
@@ -590,12 +627,15 @@ Return ONLY this JSON:
   "llmDescription": "",
   "content": "",
   "faqs": [
-    {"q": "", "a": ""},
-    {"q": "", "a": ""},
-    {"q": "", "a": ""},
-    {"q": "", "a": ""}
-  ]
-}`;
+    { "q": "", "a": "" },
+    { "q": "", "a": "" },
+    { "q": "", "a": "" },
+    { "q": "", "a": "" }
+  ],
+  "promptVersion": "v5.1-infra"
+}
+
+Return only the JSON above. No extra commentary.`;
   } else if (type === 'page') {
     prompt = `Optimize this Shopify page for universal LLM discoverability by ChatGPT, Claude, Perplexity, and other AI assistants.
 
