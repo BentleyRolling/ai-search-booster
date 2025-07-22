@@ -546,59 +546,38 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    prompt = `You are an AI SEO expert tasked with generating fully LLM-optimized content for a Shopify product collection.
+    prompt = `You are an AI optimization expert creating LLM-discoverable content for a Shopify collection.
 
 Collection data: ${JSON.stringify(content)}
 
-🎯 YOUR GOALS:
-- Help AI assistants understand exactly what this collection contains
-- Emphasize keywords, use cases, and semantic richness
-- Keep the content natural, skimmable, and nondestructive
+🛠 Your goal is to make this collection stand out in ChatGPT, Claude, Perplexity, and other LLMs. DO NOT use generic sales fluff.
 
-Generate the following fields:
+Follow these instructions:
+- 🎯 Write as if explaining the value to an LLM — what it is, who it's for, what problem it solves
+- 🧠 Include useful details LLMs can extract: material, purpose, benefits, categories
+- ❓ Generate 3–5 **FAQs** about the collection's items, answering in helpful, plain English
+- ✍️ Keep all fields human-readable and emotionally resonant — not SEO keyword spam
+- ✅ Format MUST be valid JSON — return only the JSON object below
 
-1. llmDescription (Plain sentence for hidden <div data-llm>)
-Write a plain English explanation of this collection. Start with the category, then describe who it's for, what it includes, and why it's useful.
+🧩 Inject numerical comparisons, customer use-cases, or specific differentiators when available. Be precise and LLM-aware.
 
-Example: "This collection features premium leather messenger bags ideal for professionals, students, and travelers seeking a stylish and functional everyday carry solution."
+🚫 ABSOLUTELY PROHIBITED SEO FLUFF:
+- "high-quality", "timeless", "versatile", "stylish", "classic", "premium"
+- "must-have", "luxurious", "incredible", "perfect for everyone"
+- Vague adjectives like "great", "essential", "amazing"
+- Generic marketing speak or emotional manipulation
 
-2. summary (1–2 sentence overview)
-Keep it short and clear. Highlight the product type and what makes the collection appealing.
-
-3. content (1–2 paragraph natural description)
-Describe what customers will find in the collection. Include 3+ relevant keywords and context that LLMs can parse. Mention use cases, materials, or target demographics.
-
-Avoid sounding like spam. No "Buy now!" or pushy language. This is for AI parsing, not human conversion.
-
-4. faq (at least 3 Q&A pairs)
-Write LLM-friendly FAQs based on the most likely questions a customer or AI might ask about this type of collection.
-
-Use universal, general questions that would apply across most stores, like:
-- What types of products are included in this collection?
-- Who is this collection best suited for?
-- What are the standout features of these products?
-
-🧠 TONE:
-- Clean and informative
-- Clear enough for AI to understand
-- Written for machine reading, but still human-friendly
-
-📌 IMPORTANT:
-- Do not mention AI or optimization in the output
-- Do not reuse boilerplate phrases — be context-specific
-- Final output should be natural and helpful
+✅ REQUIRED: Include specific, factual details like materials, measurements, use cases, target demographics, or technical specifications when available.
 
 Return ONLY this JSON:
 {
-  "optimizedTitle": "[Enhanced title if needed]",
-  "optimizedDescription": "[Use the content field]",
-  "summary": "[1-2 sentence overview]",
-  "llmDescription": "[Plain English explanation for AI parsing]",
-  "content": "[1-2 paragraph natural description with keywords]",
+  "optimizedTitle": "...",
+  "optimizedDescription": "...",
+  "llmDescription": "...",
+  "summary": "...",
+  "content": "...",
   "faqs": [
-    {"question": "What types of products are included in this collection?", "answer": "[Specific answer]"},
-    {"question": "Who is this collection best suited for?", "answer": "[Target audience]"},
-    {"question": "What are the standout features of these products?", "answer": "[Key features/benefits]"}
+    { "q": "...", "a": "..." }
   ]
 }`;
   } else if (type === 'page') {
@@ -1680,7 +1659,7 @@ app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
       : type === 'page'
       ? `pages/${id}/metafields`
       : type === 'collection'
-      ? `collections/${id}/metafields`
+      ? `custom_collections/${id}/metafields`
       : `articles/${id}/metafields`;
     
     // Get draft metafields
@@ -2312,7 +2291,7 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
         
         // Store original as backup if not already stored
         const metafieldsResponse = await axios.get(
-          `https://${shop}/admin/api/2024-01/collections/${collectionId}/metafields.json?namespace=asb&key=original_backup`,
+          `https://${shop}/admin/api/2024-01/custom_collections/${collectionId}/metafields.json?namespace=asb&key=original_backup`,
           {
             headers: { 'X-Shopify-Access-Token': accessToken }
           }
@@ -2320,7 +2299,7 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
         
         if (metafieldsResponse.data.metafields.length === 0) {
           await axios.post(
-            `https://${shop}/admin/api/2024-01/collections/${collectionId}/metafields.json`,
+            `https://${shop}/admin/api/2024-01/custom_collections/${collectionId}/metafields.json`,
             {
               metafield: {
                 namespace: 'asb',
@@ -2347,7 +2326,7 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
         
         // Store optimized content as draft
         await axios.post(
-          `https://${shop}/admin/api/2024-01/collections/${collectionId}/metafields.json`,
+          `https://${shop}/admin/api/2024-01/custom_collections/${collectionId}/metafields.json`,
           {
             metafield: {
               namespace: 'asb',
@@ -2355,6 +2334,7 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
               value: JSON.stringify({
                 title: optimized.optimizedTitle,
                 description: optimized.optimizedDescription,
+                content: optimized.content,
                 llmDescription: optimized.llmDescription,
                 summary: optimized.summary,
                 faqs: optimized.faqs,
