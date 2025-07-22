@@ -761,7 +761,14 @@ Return ONLY this JSON:
         console.log('[AI-OPTIMIZATION] OpenAI response:', aiResponse);
         
         try {
-          const parsedResponse = JSON.parse(aiResponse);
+          // 🔧 Clean JSON response - remove code block markers if present
+          let cleanResponse = aiResponse.trim();
+          if (cleanResponse.startsWith('```json')) {
+            cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+            console.log('[AI-OPTIMIZATION] Cleaned code block markers from response');
+          }
+          
+          const parsedResponse = JSON.parse(cleanResponse);
           console.log('[AI-OPTIMIZATION] Parsed OpenAI response:', parsedResponse);
           
           // Validate required fields
@@ -833,7 +840,15 @@ Return ONLY this JSON:
       });
       
       const aiResponse = response.data.content[0].text;
-      return JSON.parse(aiResponse);
+      
+      // 🔧 Clean JSON response - remove code block markers if present
+      let cleanResponse = aiResponse.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+        console.log('[AI-OPTIMIZATION] Cleaned code block markers from Anthropic response');
+      }
+      
+      return JSON.parse(cleanResponse);
     } else {
       // No AI API keys available - throw error instead of fallback
       throw new Error('No AI API keys configured (OpenAI or Anthropic required)');
