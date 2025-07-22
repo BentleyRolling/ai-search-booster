@@ -793,16 +793,21 @@ Return ONLY this JSON:
               }
             ];
           } else {
-            // Clean up any empty or malformed FAQ entries
-            parsedResponse.faqs = parsedResponse.faqs.filter(faq => 
-              faq && 
-              typeof faq.question === 'string' && 
-              typeof faq.answer === 'string' && 
-              faq.question.trim() && 
-              faq.answer.trim() &&
-              faq.question !== '' &&
-              faq.answer !== ''
-            );
+            // Clean up any empty or malformed FAQ entries - handle both q/a and question/answer formats
+            parsedResponse.faqs = parsedResponse.faqs.filter(faq => {
+              if (!faq) return false;
+              
+              // Handle both formats: {q: "", a: ""} and {question: "", answer: ""}
+              const question = faq.question || faq.q;
+              const answer = faq.answer || faq.a;
+              
+              return typeof question === 'string' && 
+                     typeof answer === 'string' && 
+                     question.trim() && 
+                     answer.trim() &&
+                     question !== '' &&
+                     answer !== '';
+            });
             
             // If all FAQs were filtered out, add a default one
             if (parsedResponse.faqs.length === 0) {
