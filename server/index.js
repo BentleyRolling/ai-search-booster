@@ -546,43 +546,36 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    prompt = `You are optimizing a Shopify collection for LLM discoverability. Output will be parsed by ChatGPT, Claude, and Perplexity.
+    prompt = `Optimize a Shopify collection for LLM discoverability. Output will be parsed by ChatGPT, Claude, and Perplexity for user queries.
 
 Collection data: ${JSON.stringify(content)}
 
-🧠 REQUIRED LOGIC:
+🧠 STRICT FIELD RULES:
 
-1. 🧩 Each field must be **substantively different** — no copy/paste or phrase reuse between summary, llmDescription, and content.
+**llmDescription**: Explain the collection clearly for an AI. Who is this for? What needs does it meet? Use natural, keyword-rich English. Must be completely different from summary and content - NO overlap.
 
-2. 🤖 llmDescription must explain the collection clearly for an LLM:
-   - Who is it for?
-   - What kinds of products are in it?
-   - What situations or needs does it solve?
-   - Use clear, rich language with keywords.
+**summary**: 1-2 sentence abstract summarizing the VALUE and PURPOSE of the collection. Not just "shirts for men" but what makes this collection useful or unique.
 
-3. 📦 content must describe the full collection in natural human language:
-   - Talk about fit, materials, styles, colors, intended use (e.g., business, casual, outdoor).
-   - Make it helpful — imagine a human buyer skimming it.
+**content**: Natural, human-readable, persuasive copy. 3-5 sentences about the collection, its uses, materials, situations, and value. Must be different from other fields.
 
-4. ❓ faqs must contain 3–5 **genuinely helpful questions and answers**, e.g.:
-   - "What sizes are available?"
-   - "Are these machine washable?"
-   - "Do these shirts run true to size?"
-   - "Are these shirts slim fit or regular?"
+**faqs**: Write 3-5 actual questions a human would ask. Examples:
+- "What materials are used in these products?"
+- "Do these items shrink in the wash?"
+- "Are these regular fit or slim fit?"
+- "Do these run true to size?"
+- "What sizes are available?"
 
-5. ✍️ Use plain English, not marketing fluff. Prioritize clarity over SEO tricks.
+🚫 ABSOLUTELY FORBIDDEN:
+- Repeating the same sentence or phrases in multiple fields
+- Vague filler like "shirts for men for comfort and style"
+- Broken questions like "What is shirts?"
+- Marketing fluff: premium, quality, amazing, great, perfect, stylish, classic, timeless, curated, elevated, versatile, incredible, luxurious, must-have, essential, sustainable, comprehensive
 
-6. 🚫 Do not hallucinate questions like "What is shirts?" — that's nonsense. Ask helpful, product-relevant questions.
-
-7. ✅ Output MUST be valid JSON and include **every field** listed below.
-
-🚫 FORBIDDEN: vague, repetitive, marketing fluff, premium, quality, amazing, great, perfect, stylish, classic, timeless, curated, elevated, versatile, incredible, luxurious, must-have, essential
-
-EXAMPLE GOOD FAQ:
-"What sizes are available in this collection?" → "Sizes XS to 3XL, with detailed size charts showing chest, waist, and length measurements."
-
-EXAMPLE BAD FAQ:
-"What is this collection?" → Too vague and unhelpful.
+✅ REQUIREMENTS:
+- Each field must be substantively different
+- Use specific, helpful details
+- Write like you're training an LLM on what this collection means
+- Valid JSON with ALL fields present
 
 Return ONLY this JSON structure:
 {
