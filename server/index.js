@@ -3476,17 +3476,22 @@ app.get('/api/collections', async (req, res) => {
     console.log('[COLLECTIONS] Fetching real collections from Shopify for shop:', shop);
     const { accessToken } = shopInfo;
     
-    // Fetch both custom and smart collections
-    const [customResponse, smartResponse] = await Promise.all([
-      axios.get(
-        `https://${shop}/admin/api/2024-01/custom_collections.json?limit=${limit}&fields=id,title,handle,body_html,published_scope,created_at,updated_at`,
-        { headers: { 'X-Shopify-Access-Token': accessToken } }
-      ),
-      axios.get(
-        `https://${shop}/admin/api/2024-01/smart_collections.json?limit=${limit}&fields=id,title,handle,body_html,published_scope,created_at,updated_at`,
-        { headers: { 'X-Shopify-Access-Token': accessToken } }
-      )
-    ]);
+    // Fetch custom collections first
+    console.log('[COLLECTIONS] Fetching custom collections...');
+    const customResponse = await axios.get(
+      `https://${shop}/admin/api/2024-01/custom_collections.json?limit=${limit}&fields=id,title,handle,body_html,published_scope,created_at,updated_at`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    // Add small delay to prevent rate limiting
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Then fetch smart collections
+    console.log('[COLLECTIONS] Fetching smart collections...');
+    const smartResponse = await axios.get(
+      `https://${shop}/admin/api/2024-01/smart_collections.json?limit=${limit}&fields=id,title,handle,body_html,published_scope,created_at,updated_at`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
     
     // Combine both types of collections
     const allCollections = [
@@ -4685,3 +4690,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Fix rollback collections Mon Jul 21 17:12:52 PDT 2025 */
 /* Fix rollback UI updates Mon Jul 21 17:24:36 PDT 2025 */
 /* Fix rate limiting Mon Jul 21 17:46:10 PDT 2025 */
+/* Fix collections rate limit Mon Jul 21 18:04:38 PDT 2025 */

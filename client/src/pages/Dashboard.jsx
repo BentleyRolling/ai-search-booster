@@ -458,7 +458,8 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Collections fetch error:', error);
       console.error('Error stack:', error.stack);
-      setCollections([]);
+      // Don't clear existing collections on error - keep current state
+      console.log('Keeping existing collections due to fetch error');
     }
   };
 
