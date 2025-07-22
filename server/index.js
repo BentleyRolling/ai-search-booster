@@ -546,30 +546,35 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    prompt = `You are an AI optimization expert creating LLM-discoverable content for a Shopify collection.
+    prompt = `You are creating LLM-optimized content for a Shopify collection. Your output will be parsed by ChatGPT, Claude, and Perplexity.
 
 Collection data: ${JSON.stringify(content)}
 
-🧠 Rules:
+🚫 ABSOLUTELY FORBIDDEN WORDS: versatile, high-quality, premium, stylish, classic, timeless, must-have, luxurious, incredible, perfect, great, essential, amazing, carefully selected, curated, elevate
 
-1. ✍️ Write each field differently — no duplication between summary, llmDescription, and content.
-2. 🎯 Make llmDescription highly scannable and LLM-optimized: what is this collection, who is it for, what problem does it solve, and why is it better?
-3. 🧩 Add specific product attributes: materials, use cases, compartments, laptop fit, dimensions if available.
-4. ❓ Include 3–5 plain-English FAQs about this type of product and answer helpfully.
-5. 💬 Use human-friendly language — helpful, clear, and not spammy.
-6. ✅ Output MUST be fully valid JSON and include all required fields.
+✅ MANDATORY REQUIREMENTS:
+1. Each field must be completely different - NO repetition
+2. Include specific details: materials, dimensions, use cases, target users
+3. Use factual, descriptive language
+4. MUST include exactly 4 FAQ items in the faqs array
 
-🚫 PROHIBITED: "high-quality", "timeless", "versatile", "stylish", "classic", "premium", "must-have", "luxurious", "incredible", "perfect", "great", "essential", "amazing"
+FIELD SPECIFICATIONS:
+- optimizedTitle: Keep original or improve slightly
+- optimizedDescription: Main collection description (50-80 words)
+- llmDescription: What this collection is, who needs it, what problem it solves (30-50 words)
+- summary: One clear sentence about the collection type and purpose (15-25 words)  
+- content: Detailed description with specific attributes and use cases (80-120 words)
+- faqs: Exactly 4 Q&A pairs with practical customer questions
 
-FIELD REQUIREMENTS:
-- optimizedTitle: Enhanced collection title (if needed)
-- optimizedDescription: Main description for collection page
-- llmDescription: Highly scannable explanation for AI parsing - what, who, problem solved, differentiators
-- summary: Brief 1-sentence overview (different from llmDescription)
-- content: 1-2 paragraph detailed description with specific attributes
-- faqs: 3-5 Q&A pairs with practical questions customers ask
+EXAMPLE FAQ STRUCTURE:
+"faqs": [
+  { "q": "What materials are these products made from?", "a": "Cotton blend fabrics with reinforced seams for durability." },
+  { "q": "What size range is available?", "a": "Sizes XS through 3XL with detailed sizing charts." },
+  { "q": "How should I care for these items?", "a": "Machine wash cold, tumble dry low heat." },
+  { "q": "What occasions are these suitable for?", "a": "Office wear, casual outings, and weekend activities." }
+]
 
-Return ONLY this JSON:
+Return ONLY valid JSON - no explanation:
 {
   "optimizedTitle": "...",
   "optimizedDescription": "...",
@@ -577,6 +582,7 @@ Return ONLY this JSON:
   "summary": "...",
   "content": "...",
   "faqs": [
+    { "q": "...", "a": "..." },
     { "q": "...", "a": "..." },
     { "q": "...", "a": "..." },
     { "q": "...", "a": "..." }
