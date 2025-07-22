@@ -1069,7 +1069,7 @@ const Dashboard = () => {
           // Close modal immediately after successful API call
           setOptimizing(false);
           
-          // Update the product/blog status to reflect the rollback
+          // Update the product/blog/page/collection status to reflect the rollback
           if (type === 'product') {
             setProducts(prev => prev.map(p => 
               p.id.toString() === id.toString() ? { ...p, optimized: false } : p
@@ -1082,6 +1082,14 @@ const Dashboard = () => {
                 article.id.toString() === id.toString() ? { ...article, optimized: false } : article
               ) || []
             })));
+          } else if (type === 'page') {
+            setPages(prev => prev.map(p => 
+              p.id.toString() === id.toString() ? { ...p, optimized: false } : p
+            ));
+          } else if (type === 'collection') {
+            setCollections(prev => prev.map(c => 
+              c.id.toString() === id.toString() ? { ...c, optimized: false } : c
+            ));
           }
           
           // Refresh data in background (don't block modal closure or throw errors)
@@ -1092,6 +1100,8 @@ const Dashboard = () => {
                 fetchStatus(shop).catch(err => console.log('Status refresh failed:', err.message)),
                 fetchProducts(shop).catch(err => console.log('Products refresh failed:', err.message)),
                 fetchBlogs(shop).catch(err => console.log('Blogs refresh failed:', err.message)),
+                fetchPages(shop).catch(err => console.log('Pages refresh failed:', err.message)),
+                fetchCollections(shop).catch(err => console.log('Collections refresh failed:', err.message)),
                 fetchHistory(shop).catch(err => console.log('History refresh failed:', err.message)),
                 fetchUsage(shop).catch(err => console.log('Usage refresh failed:', err.message))
               ]);
