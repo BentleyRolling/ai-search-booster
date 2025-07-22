@@ -773,9 +773,26 @@ Return ONLY this JSON:
         setTimeout(() => reject(new Error('OpenAI API timeout after 30 seconds')), 30000);
       });
       
+      // 🔧 PROPER CHAT MODE: System + User messages for structured output
+      let messages;
+      if (type === 'collection') {
+        messages = [
+          {
+            role: 'system',
+            content: 'You are an LLM content optimizer for Shopify collections. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants. You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, product-specific language only. Return ONLY valid JSON in the exact format specified.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ];
+      } else {
+        messages = [{ role: 'user', content: prompt }];
+      }
+      
       const apiPromise = axios.post('https://api.openai.com/v1/chat/completions', {
         model: selectedModel, // 🎯 DYNAMIC MODEL SELECTION BASED ON TYPE
-        messages: [{ role: 'user', content: prompt }],
+        messages: messages,
         temperature: 0.3, // Lower temperature for more consistent output
         max_tokens: 1200 // Increased for more detailed responses
       }, {
@@ -807,11 +824,21 @@ Return ONLY this JSON:
         console.log('[AI-OPTIMIZATION] OpenAI response:', aiResponse);
         
         try {
-          // 🔧 Clean JSON response - remove code block markers if present
+          // 🔧 STRICT JSON EXTRACTION - Extract only the JSON object
           let cleanResponse = aiResponse.trim();
+          
+          // Remove any markdown code block markers
           if (cleanResponse.startsWith('```json')) {
             cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/```$/, '').trim();
             console.log('[AI-OPTIMIZATION] Cleaned code block markers from response');
+          }
+          
+          // Extract JSON object between { and }
+          const jsonStart = cleanResponse.indexOf('{');
+          const jsonEnd = cleanResponse.lastIndexOf('}') + 1;
+          if (jsonStart !== -1 && jsonEnd > jsonStart) {
+            cleanResponse = cleanResponse.substring(jsonStart, jsonEnd);
+            console.log('[AI-OPTIMIZATION] Extracted JSON object from response');
           }
           
           const parsedResponse = JSON.parse(cleanResponse);
@@ -857,20 +884,47 @@ Return ONLY this JSON:
             });
           }
           
-          // Validate required fields
-          if (!parsedResponse.optimizedTitle || !parsedResponse.optimizedDescription || !parsedResponse.summary) {
-            console.error('[AI-OPTIMIZATION] Missing required fields in OpenAI response:', {
-              hasTitle: !!parsedResponse.optimizedTitle,
-              hasDescription: !!parsedResponse.optimizedDescription,
-              hasSummary: !!parsedResponse.summary,
-              hasFaqs: !!parsedResponse.faqs,
-              faqsLength: parsedResponse.faqs?.length || 0
-            });
-            throw new Error('OpenAI response missing required fields');
+          // 🔧 STRICT FIELD VALIDATION for collections
+          if (type === 'collection') {
+            const requiredFields = ['optimizedTitle', 'optimizedDescription', 'summary', 'llmDescription', 'content', 'faqs'];
+            const missingFields = requiredFields.filter(field => !parsedResponse[field] || parsedResponse[field] === 'N/A' || parsedResponse[field] === '');
+            
+            if (missingFields.length > 0) {
+              console.error('[AI-OPTIMIZATION] Missing or empty required fields:', missingFields);
+              console.error('[AI-OPTIMIZATION] Parsed response:', parsedResponse);
+              throw new Error(`OpenAI response missing required fields: ${missingFields.join(', ')}`);
+            }
+            
+            // Validate FAQs structure
+            if (!Array.isArray(parsedResponse.faqs) || parsedResponse.faqs.length < 4) {
+              console.error('[AI-OPTIMIZATION] Invalid FAQs structure:', parsedResponse.faqs);
+              throw new Error('OpenAI response must include exactly 4 FAQs');
+            }
+            
+            // Validate each FAQ has both question and answer
+            const invalidFaqs = parsedResponse.faqs.filter(faq => !faq.q || !faq.a || faq.q.trim() === '' || faq.a.trim() === '');
+            if (invalidFaqs.length > 0) {
+              console.error('[AI-OPTIMIZATION] Invalid FAQ entries:', invalidFaqs);
+              throw new Error('All FAQs must have both question (q) and answer (a)');
+            }
+            
+            console.log('[AI-OPTIMIZATION] ✅ All required fields validated for collections');
+          } else {
+            // Legacy validation for other types
+            if (!parsedResponse.optimizedTitle || !parsedResponse.optimizedDescription || !parsedResponse.summary) {
+              console.error('[AI-OPTIMIZATION] Missing required fields in OpenAI response:', {
+                hasTitle: !!parsedResponse.optimizedTitle,
+                hasDescription: !!parsedResponse.optimizedDescription,
+                hasSummary: !!parsedResponse.summary,
+                hasFaqs: !!parsedResponse.faqs,
+                faqsLength: parsedResponse.faqs?.length || 0
+              });
+              throw new Error('OpenAI response missing required fields');
+            }
           }
           
-          // Validate FAQs structure
-          if (!parsedResponse.faqs || !Array.isArray(parsedResponse.faqs) || parsedResponse.faqs.length === 0) {
+          // Legacy FAQ validation for non-collections only
+          if (type !== 'collection' && (!parsedResponse.faqs || !Array.isArray(parsedResponse.faqs) || parsedResponse.faqs.length === 0)) {
             console.error('[AI-OPTIMIZATION] Invalid FAQs in OpenAI response:', parsedResponse.faqs);
             parsedResponse.faqs = [
               {
