@@ -699,6 +699,9 @@ Return ONLY this JSON:
     
     if (OPENAI_API_KEY) {
       console.log('[AI-OPTIMIZATION] Using OpenAI API');
+      console.log('🧠 FINAL PROMPT SENT TO OPENAI:', prompt);
+      console.log('🔍 CONTENT TYPE:', type);
+      console.log('🔍 CONTENT TITLE:', content?.title || content?.name || 'No title');
       
       // Add a race condition with timeout
       const timeoutPromise = new Promise((_, reject) => {
