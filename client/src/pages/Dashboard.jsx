@@ -1092,20 +1092,36 @@ const Dashboard = () => {
             ));
           }
           
-          // Refresh data in background (don't block modal closure or throw errors)
+          // Refresh data in background with rate limiting protection
           setTimeout(async () => {
             try {
-              console.log('Refreshing data after rollback...');
+              console.log('Refreshing data after rollback with rate limit protection...');
+              
+              // Refresh in smaller batches with delays to avoid rate limits
+              await fetchStatus(shop).catch(err => console.log('Status refresh failed:', err.message));
+              
+              await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+              
               await Promise.all([
-                fetchStatus(shop).catch(err => console.log('Status refresh failed:', err.message)),
                 fetchProducts(shop).catch(err => console.log('Products refresh failed:', err.message)),
+                fetchPages(shop).catch(err => console.log('Pages refresh failed:', err.message))
+              ]);
+              
+              await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+              
+              await Promise.all([
                 fetchBlogs(shop).catch(err => console.log('Blogs refresh failed:', err.message)),
-                fetchPages(shop).catch(err => console.log('Pages refresh failed:', err.message)),
-                fetchCollections(shop).catch(err => console.log('Collections refresh failed:', err.message)),
+                fetchCollections(shop).catch(err => console.log('Collections refresh failed:', err.message))
+              ]);
+              
+              await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+              
+              await Promise.all([
                 fetchHistory(shop).catch(err => console.log('History refresh failed:', err.message)),
                 fetchUsage(shop).catch(err => console.log('Usage refresh failed:', err.message))
               ]);
-              console.log('Background refresh completed');
+              
+              console.log('Background refresh completed with rate limiting');
             } catch (error) {
               console.log('Background refresh error (non-blocking):', error.message);
             }
@@ -1227,13 +1243,20 @@ const Dashboard = () => {
         ));
       }
       
-      // Refresh data
-      fetchStatus(shop);
-      fetchProducts(shop);
-      fetchBlogs(shop);
-      fetchPages(shop);
-      fetchCollections(shop);
-      fetchHistory(shop);
+      // Refresh data with rate limiting protection
+      setTimeout(async () => {
+        try {
+          await fetchStatus(shop);
+          await new Promise(resolve => setTimeout(resolve, 300));
+          await Promise.all([fetchProducts(shop), fetchPages(shop)]);
+          await new Promise(resolve => setTimeout(resolve, 300));
+          await Promise.all([fetchBlogs(shop), fetchCollections(shop)]);
+          await new Promise(resolve => setTimeout(resolve, 300));
+          await fetchHistory(shop);
+        } catch (error) {
+          console.log('Publish refresh error (non-blocking):', error.message);
+        }
+      }, 100);
       
       return data;
     } catch (error) {

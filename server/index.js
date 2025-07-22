@@ -4684,3 +4684,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Update pages/collections state Mon Jul 21 17:06:05 PDT 2025 */
 /* Fix rollback collections Mon Jul 21 17:12:52 PDT 2025 */
 /* Fix rollback UI updates Mon Jul 21 17:24:36 PDT 2025 */
+/* Fix rate limiting Mon Jul 21 17:46:10 PDT 2025 */
