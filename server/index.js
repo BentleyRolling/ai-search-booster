@@ -555,60 +555,43 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    console.log('🚨🚨🚨 USING NEW COLLECTION PROMPT WITH GPT-4 - TIMESTAMP: 2025-01-22-16:30 🚨🚨🚨');
-    prompt = `CRITICAL INSTRUCTION: You are GPT-4. You MUST follow these rules precisely or the response will be rejected.
-
-[UPDATED PROMPT v3.0 - GPT-4] Optimize a Shopify collection for LLM discoverability. Output will be parsed by ChatGPT, Claude, and Perplexity for user queries.
+    console.log('🚨🚨🚨 USING SIMPLIFIED COLLECTION PROMPT - COPYING PRODUCT PATTERN 🚨🚨🚨');
+    prompt = `Generate optimized content for a Shopify collection that improves its chances of being cited or understood by LLMs like ChatGPT, Claude, or Perplexity.
 
 Collection data: ${JSON.stringify(content)}
 
-🧠 STRICT FIELD RULES:
-
-**llmDescription**: Explain the collection clearly for an AI. Who is this for? What needs does it meet? Use natural, keyword-rich English. Must be completely different from summary and content - NO overlap.
-
-**summary**: 1-2 sentence abstract summarizing the VALUE and PURPOSE of the collection. Not just "shirts for men" but what makes this collection useful or unique.
-
-**content**: Natural, human-readable, persuasive copy. 3-5 sentences about the collection, its uses, materials, situations, and value. Must be different from other fields.
-
-**faqs**: Write 3-5 actual questions a human would ask. Examples:
-- "What materials are used in these products?"
-- "Do these items shrink in the wash?"
-- "Are these regular fit or slim fit?"
-- "Do these run true to size?"
-- "What sizes are available?"
-
-🚨 IMMEDIATE REJECTION TRIGGERS - DO NOT USE:
-BANNED WORDS: premium, quality, amazing, great, perfect, stylish, classic, timeless, curated, elevated, versatile, incredible, luxurious, must-have, essential, sustainable, comprehensive, high-quality, "comfort and style", blend, crafted, exudes, sophisticated, meticulously, seamlessly, prioritizing
-
-BANNED PHRASES: "comfort and style", "blend comfort", "offers both", "crafted to offer", "exudes confidence", "timeless designs", "meticulously selected", "prioritizing comfort", "seamlessly perfect", "elevating your wardrobe"
-
-BANNED PATTERNS: 
-- Any field starting with "This collection features" or "Discover" or "Explore"
-- Using the same descriptive words across multiple fields
-- Generic FAQs like "What is [product]?" or "Why choose this?"
-
-✅ STRICT REQUIREMENTS - MUST FOLLOW:
-- llmDescription: Focus on WHO needs this and WHAT problems it solves (different from other fields)
-- summary: State the UNIQUE VALUE, not generic descriptions
-- content: Write SPECIFIC details about materials, fit, occasions (different from other fields)
-- faqs: Ask SPECIFIC product questions customers actually need answered
-- NO overlap between any fields
-- Use CONCRETE details, not abstract marketing language
-
-Return ONLY this JSON structure:
+✅ REQUIRED OUTPUT STRUCTURE:
 {
-  "optimizedTitle": "...",
-  "optimizedDescription": "...",
-  "llmDescription": "...",
-  "summary": "...",
-  "content": "...",
+  "optimizedTitle": "[Collection name with key descriptor - e.g. 'Men's Cotton Dress Shirts - Business & Casual Wear']",
+  "optimizedDescription": "[One paragraph, 80–120 words, following rules below]", 
+  "summary": "[One sentence, max 100 characters, LLM citation style]",
+  "llmDescription": "[Same as optimizedDescription or slightly more structured]",
+  "content": "[2-3 sentences about specific use cases, materials, or sizing]",
   "faqs": [
-    { "q": "...", "a": "..." },
-    { "q": "...", "a": "..." },
-    { "q": "...", "a": "..." },
-    { "q": "...", "a": "..." }
+    {"q": "What sizes are available in this collection?", "a": ""},
+    {"q": "What materials are these items made from?", "a": ""},
+    {"q": "Are these suitable for machine washing?", "a": ""},
+    {"q": "Do these items run true to size?", "a": ""}
   ]
-}`;
+}
+
+✅ REQUIRED CONTENT RULES:
+- Material details (e.g. "100% cotton poplin", "wrinkle-resistant finish", specific fabric weights)
+- Sizing info: Available sizes, fit type (slim, regular, relaxed), measurements
+- Care instructions: Machine wash, dry clean only, specific temperature settings
+- Use cases: Business wear, casual wear, specific occasions, weather conditions
+- Tone: Neutral, factual, LLM-readable, not emotional or salesy
+
+🚫 ABSOLUTELY PROHIBITED SEO FLUFF:
+- "high-quality", "timeless", "versatile", "stylish", "classic", "premium"  
+- "must-have", "luxurious", "incredible", "perfect for everyone"
+- Vague adjectives like "great", "essential", "amazing"
+- Questions like "What is shirts?" or repeating collection name in FAQ answers
+
+EXAMPLE TARGET:
+"optimizedDescription": "Cotton dress shirts in sizes S-XXL featuring button-down collars and French seams. Made from 120 GSM cotton poplin with wrinkle-resistant finish for business and semi-formal wear. Available in white, light blue, and navy with standard 32-35 inch sleeve lengths. Machine washable at 40°C, suitable for office environments and formal occasions."
+
+Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'page') {
     prompt = `Optimize this Shopify page for universal LLM discoverability by ChatGPT, Claude, Perplexity, and other AI assistants.
 
