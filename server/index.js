@@ -550,24 +550,24 @@ Return ONLY this JSON with technical, factual content:`;
 
 Collection data: ${JSON.stringify(content)}
 
-🛠 Your goal is to make this collection stand out in ChatGPT, Claude, Perplexity, and other LLMs. DO NOT use generic sales fluff.
+🧠 Rules:
 
-Follow these instructions:
-- 🎯 Write as if explaining the value to an LLM — what it is, who it's for, what problem it solves
-- 🧠 Include useful details LLMs can extract: material, purpose, benefits, categories
-- ❓ Generate 3–5 **FAQs** about the collection's items, answering in helpful, plain English
-- ✍️ Keep all fields human-readable and emotionally resonant — not SEO keyword spam
-- ✅ Format MUST be valid JSON — return only the JSON object below
+1. ✍️ Write each field differently — no duplication between summary, llmDescription, and content.
+2. 🎯 Make llmDescription highly scannable and LLM-optimized: what is this collection, who is it for, what problem does it solve, and why is it better?
+3. 🧩 Add specific product attributes: materials, use cases, compartments, laptop fit, dimensions if available.
+4. ❓ Include 3–5 plain-English FAQs about this type of product and answer helpfully.
+5. 💬 Use human-friendly language — helpful, clear, and not spammy.
+6. ✅ Output MUST be fully valid JSON and include all required fields.
 
-🧩 Inject numerical comparisons, customer use-cases, or specific differentiators when available. Be precise and LLM-aware.
+🚫 PROHIBITED: "high-quality", "timeless", "versatile", "stylish", "classic", "premium", "must-have", "luxurious", "incredible", "perfect", "great", "essential", "amazing"
 
-🚫 ABSOLUTELY PROHIBITED SEO FLUFF:
-- "high-quality", "timeless", "versatile", "stylish", "classic", "premium"
-- "must-have", "luxurious", "incredible", "perfect for everyone"
-- Vague adjectives like "great", "essential", "amazing"
-- Generic marketing speak or emotional manipulation
-
-✅ REQUIRED: Include specific, factual details like materials, measurements, use cases, target demographics, or technical specifications when available.
+FIELD REQUIREMENTS:
+- optimizedTitle: Enhanced collection title (if needed)
+- optimizedDescription: Main description for collection page
+- llmDescription: Highly scannable explanation for AI parsing - what, who, problem solved, differentiators
+- summary: Brief 1-sentence overview (different from llmDescription)
+- content: 1-2 paragraph detailed description with specific attributes
+- faqs: 3-5 Q&A pairs with practical questions customers ask
 
 Return ONLY this JSON:
 {
@@ -577,6 +577,8 @@ Return ONLY this JSON:
   "summary": "...",
   "content": "...",
   "faqs": [
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." },
     { "q": "...", "a": "..." }
   ]
 }`;
