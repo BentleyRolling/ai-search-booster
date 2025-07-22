@@ -555,37 +555,47 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    console.log('🚨🚨🚨 USING NEW COLLECTION PROMPT v4.0 🚨🚨🚨');
-    prompt = `
-Generate optimized content for a Shopify collection that improves its discoverability by LLMs like ChatGPT, Claude, and Perplexity.
+    console.log('🚨🚨🚨 USING FUNCTIONALLY-ANCHORED COLLECTION PROMPT v5.0 🚨🚨🚨');
+    prompt = `Your job is to generate JSON output for a Shopify collection. Each field has a strict, distinct purpose:
 
 Collection data: ${JSON.stringify(content)}
 
-✅ REQUIRED OUTPUT STRUCTURE:
+FIELD FUNCTIONS (each must be different):
+- optimizedTitle: Collection name + key descriptor (sizing, material, or use case)
+- optimizedDescription: Technical paragraph for search engines (80-120 words with specs, materials, sizing)
+- summary: Ultra-short abstract for AI citation snippets (≤100 chars, factual one-liner)
+- llmDescription: Detailed explanation for AI engines to understand WHO uses this and WHEN
+- content: Human-friendly marketing copy (2-3 sentences, persuasive but informative)
+- faqs: Product-specific questions customers actually ask
+
+❗ CRITICAL: If you cannot generate meaningful, different content for each field based on the source data, leave fields as "N/A" rather than repeat content.
+
+❗ FAQ RULE: Base questions ONLY on the collection data provided. If the data is sparse, ask general product questions like sizing or care instructions. Never ask "What is [product name]?"
+
+GOOD FAQ EXAMPLES:
+✅ "What sizes are available?" 
+✅ "What materials are used?"
+✅ "How should these be cared for?"
+
+BAD FAQ EXAMPLES:
+❌ "What is shirts?" 
+❌ "Why choose this collection?"
+❌ Repeating the summary as an answer
+
+Return ONLY this JSON:
 {
-  "optimizedTitle": "[Name with descriptor – e.g., 'Men's Cotton Dress Shirts – S-XXL, Business Casual']",
-  "optimizedDescription": "[One paragraph, 80–120 words. Must contain fabric, sizing, use cases, and care.]",
-  "summary": "[Max 100 characters. Abstract-style LLM citation.]",
-  "llmDescription": "[Same as optimizedDescription or more structured.]",
-  "content": "[2–3 sentence natural-language overview with use cases and benefits.]",
+  "optimizedTitle": "",
+  "optimizedDescription": "",
+  "summary": "",
+  "llmDescription": "",
+  "content": "",
   "faqs": [
-    {"q": "What sizes are available in this collection?", "a": ""},
-    {"q": "What materials are these items made from?", "a": ""},
-    {"q": "Are these suitable for machine washing?", "a": ""},
-    {"q": "Do these items run true to size?", "a": ""}
+    {"q": "", "a": ""},
+    {"q": "", "a": ""},
+    {"q": "", "a": ""},
+    {"q": "", "a": ""}
   ]
-}
-
-🚫 DO NOT:
-- Repeat the same content across multiple fields
-- Use vague SEO phrases like "great", "premium", "timeless"
-- Hallucinate information not present in the source
-
-EXAMPLE TARGET:
-"optimizedDescription": "This collection features cotton dress shirts in sizes S–XXL with button-down collars and French seams. Crafted from 120 GSM cotton poplin, they include wrinkle-resistant finishes for formal and daily wear. Machine washable at 40°C. Ideal for business professionals or anyone needing easy-care formalwear."
-
-Return ONLY this JSON.
-`;
+}`;
   } else if (type === 'page') {
     prompt = `Optimize this Shopify page for universal LLM discoverability by ChatGPT, Claude, Perplexity, and other AI assistants.
 
