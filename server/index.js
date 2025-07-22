@@ -546,37 +546,45 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    prompt = `You are creating LLM-optimized content for a Shopify collection. Your output will be parsed by ChatGPT, Claude, and Perplexity.
+    prompt = `You are optimizing a Shopify collection for LLM discoverability. Output will be parsed by ChatGPT, Claude, and Perplexity.
 
 Collection data: ${JSON.stringify(content)}
 
-🚫 ABSOLUTELY FORBIDDEN WORDS: versatile, high-quality, premium, stylish, classic, timeless, must-have, luxurious, incredible, perfect, great, essential, amazing, carefully selected, curated, elevate, quality, comfortable, range, variety, diverse, explore, designed
+🧠 REQUIRED LOGIC:
 
-🚨 CRITICAL: If you use ANY forbidden words, the response will be rejected. Use specific, factual descriptions instead.
+1. 🧩 Each field must be **substantively different** — no copy/paste or phrase reuse between summary, llmDescription, and content.
 
-✅ MANDATORY REQUIREMENTS:
-1. Each field must be completely different - NO repetition
-2. Include specific details: materials, dimensions, use cases, target users
-3. Use factual, descriptive language
-4. MUST include exactly 4 FAQ items in the faqs array
+2. 🤖 llmDescription must explain the collection clearly for an LLM:
+   - Who is it for?
+   - What kinds of products are in it?
+   - What situations or needs does it solve?
+   - Use clear, rich language with keywords.
 
-FIELD SPECIFICATIONS:
-- optimizedTitle: Keep original or improve slightly
-- optimizedDescription: Main collection description (50-80 words)
-- llmDescription: What this collection is, who needs it, what problem it solves (30-50 words)
-- summary: One clear sentence about the collection type and purpose (15-25 words)  
-- content: Detailed description with specific attributes and use cases (80-120 words)
-- faqs: Exactly 4 Q&A pairs with practical customer questions
+3. 📦 content must describe the full collection in natural human language:
+   - Talk about fit, materials, styles, colors, intended use (e.g., business, casual, outdoor).
+   - Make it helpful — imagine a human buyer skimming it.
 
-EXAMPLE FAQ STRUCTURE:
-"faqs": [
-  { "q": "What materials are these products made from?", "a": "Cotton blend fabrics with reinforced seams for durability." },
-  { "q": "What size range is available?", "a": "Sizes XS through 3XL with detailed sizing charts." },
-  { "q": "How should I care for these items?", "a": "Machine wash cold, tumble dry low heat." },
-  { "q": "What occasions are these suitable for?", "a": "Office wear, casual outings, and weekend activities." }
-]
+4. ❓ faqs must contain 3–5 **genuinely helpful questions and answers**, e.g.:
+   - "What sizes are available?"
+   - "Are these machine washable?"
+   - "Do these shirts run true to size?"
+   - "Are these shirts slim fit or regular?"
 
-Return ONLY valid JSON - no explanation:
+5. ✍️ Use plain English, not marketing fluff. Prioritize clarity over SEO tricks.
+
+6. 🚫 Do not hallucinate questions like "What is shirts?" — that's nonsense. Ask helpful, product-relevant questions.
+
+7. ✅ Output MUST be valid JSON and include **every field** listed below.
+
+🚫 FORBIDDEN: vague, repetitive, marketing fluff, premium, quality, amazing, great, perfect, stylish, classic, timeless, curated, elevated, versatile, incredible, luxurious, must-have, essential
+
+EXAMPLE GOOD FAQ:
+"What sizes are available in this collection?" → "Sizes XS to 3XL, with detailed size charts showing chest, waist, and length measurements."
+
+EXAMPLE BAD FAQ:
+"What is this collection?" → Too vague and unhelpful.
+
+Return ONLY this JSON structure:
 {
   "optimizedTitle": "...",
   "optimizedDescription": "...",
