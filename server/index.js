@@ -702,6 +702,7 @@ Return ONLY this JSON:
       console.log('🧠 FINAL PROMPT SENT TO OPENAI:', prompt);
       console.log('🔍 CONTENT TYPE:', type);
       console.log('🔍 CONTENT TITLE:', content?.title || content?.name || 'No title');
+      console.log('🕐 DEPLOYMENT TIMESTAMP: 2025-01-22-15:47');
       
       // Add a race condition with timeout
       const timeoutPromise = new Promise((_, reject) => {
