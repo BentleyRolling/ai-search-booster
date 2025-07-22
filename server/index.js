@@ -994,7 +994,15 @@ app.post('/api/optimize/draft', simpleVerifyShop, async (req, res) => {
       {
         namespace: 'asb',
         key: 'optimized_content_draft',
-        value: optimized.optimizedDescription || optimized.summary,
+        value: JSON.stringify({
+          title: optimized.optimizedTitle,
+          optimizedDescription: optimized.optimizedDescription,
+          content: optimized.content,
+          llmDescription: optimized.llmDescription,
+          summary: optimized.summary,
+          faqs: optimized.faqs,
+          optimizedAt: new Date().toISOString()
+        }),
         type: 'multi_line_text_field'
       },
       {
@@ -2423,7 +2431,7 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
               key: 'optimized_content_draft',
               value: JSON.stringify({
                 title: optimized.optimizedTitle,
-                description: optimized.optimizedDescription,
+                optimizedDescription: optimized.optimizedDescription,
                 content: optimized.content,
                 llmDescription: optimized.llmDescription,
                 summary: optimized.summary,
