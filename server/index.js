@@ -555,8 +555,8 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    console.log('🚨🚨🚨 USING NEW COLLECTION PROMPT - IF YOU SEE THIS, THE FIX IS WORKING! 🚨🚨🚨');
-    prompt = `Optimize a Shopify collection for LLM discoverability. Output will be parsed by ChatGPT, Claude, and Perplexity for user queries.
+    console.log('🚨🚨🚨 USING NEW COLLECTION PROMPT - TIMESTAMP: 2025-01-22-16:15 🚨🚨🚨');
+    prompt = `[UPDATED PROMPT v2.0 - 2025-01-22] Optimize a Shopify collection for LLM discoverability. Output will be parsed by ChatGPT, Claude, and Perplexity for user queries.
 
 Collection data: ${JSON.stringify(content)}
 
