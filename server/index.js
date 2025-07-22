@@ -546,29 +546,59 @@ EXAMPLE TARGET:
 
 Return ONLY this JSON with technical, factual content:`;
   } else if (type === 'collection') {
-    prompt = `Optimize this Shopify collection for LLMs to understand what the grouped products represent and why.
+    prompt = `You are an AI SEO expert tasked with generating fully LLM-optimized content for a Shopify product collection.
 
 Collection data: ${JSON.stringify(content)}
 
-✅ REQUIRED:
-- Describe the unifying traits of the collection (e.g., material, purpose, use case)
-- Identify who this collection is for
-- Provide real utility-based explanation (not just "best sellers" or "shop now")
+🎯 YOUR GOALS:
+- Help AI assistants understand exactly what this collection contains
+- Emphasize keywords, use cases, and semantic richness
+- Keep the content natural, skimmable, and nondestructive
 
-🚫 PROHIBITED:
-- "browse our selection," "perfect for everyone," "hand-picked favorites"
-- Marketing speak or filler
+Generate the following fields:
+
+1. llmDescription (Plain sentence for hidden <div data-llm>)
+Write a plain English explanation of this collection. Start with the category, then describe who it's for, what it includes, and why it's useful.
+
+Example: "This collection features premium leather messenger bags ideal for professionals, students, and travelers seeking a stylish and functional everyday carry solution."
+
+2. summary (1–2 sentence overview)
+Keep it short and clear. Highlight the product type and what makes the collection appealing.
+
+3. content (1–2 paragraph natural description)
+Describe what customers will find in the collection. Include 3+ relevant keywords and context that LLMs can parse. Mention use cases, materials, or target demographics.
+
+Avoid sounding like spam. No "Buy now!" or pushy language. This is for AI parsing, not human conversion.
+
+4. faq (at least 3 Q&A pairs)
+Write LLM-friendly FAQs based on the most likely questions a customer or AI might ask about this type of collection.
+
+Use universal, general questions that would apply across most stores, like:
+- What types of products are included in this collection?
+- Who is this collection best suited for?
+- What are the standout features of these products?
+
+🧠 TONE:
+- Clean and informative
+- Clear enough for AI to understand
+- Written for machine reading, but still human-friendly
+
+📌 IMPORTANT:
+- Do not mention AI or optimization in the output
+- Do not reuse boilerplate phrases — be context-specific
+- Final output should be natural and helpful
 
 Return ONLY this JSON:
 {
-  "optimizedTitle": "",
-  "optimizedDescription": "",
-  "summary": "",
-  "llmDescription": "",
+  "optimizedTitle": "[Enhanced title if needed]",
+  "optimizedDescription": "[Use the content field]",
+  "summary": "[1-2 sentence overview]",
+  "llmDescription": "[Plain English explanation for AI parsing]",
+  "content": "[1-2 paragraph natural description with keywords]",
   "faqs": [
-    {"question": "What defines this collection?", "answer": ""},
-    {"question": "Who is this collection designed for?", "answer": ""},
-    {"question": "How does this collection differ from others?", "answer": ""}
+    {"question": "What types of products are included in this collection?", "answer": "[Specific answer]"},
+    {"question": "Who is this collection best suited for?", "answer": "[Target audience]"},
+    {"question": "What are the standout features of these products?", "answer": "[Key features/benefits]"}
   ]
 }`;
   } else if (type === 'page') {
@@ -4691,3 +4721,4 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Fix rollback UI updates Mon Jul 21 17:24:36 PDT 2025 */
 /* Fix rate limiting Mon Jul 21 17:46:10 PDT 2025 */
 /* Fix collections rate limit Mon Jul 21 18:04:38 PDT 2025 */
+/* Updated collection prompt Mon Jul 21 18:14:36 PDT 2025 */
