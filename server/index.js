@@ -7,7 +7,8 @@ import rateLimit from 'express-rate-limit';
 import { initCitationJobs } from './jobs/citationScheduler.js';
 import { initializeCitationRoutes } from './routes/citations.js';
 
-// === Production Infrastructure Modules ===
+// === Production Infrastructure Modules === 
+// Deployment timestamp: 2025-07-22 Backend Force Deploy
 import * as scoringUtils from './utils/scoringUtils.js';
 import * as rollbackUtils from './utils/rollbackUtils.js';
 import * as logger from './utils/logger.js';
