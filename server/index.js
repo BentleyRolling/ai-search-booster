@@ -2006,33 +2006,97 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
         }
         
         // Optimize content using AI
+        const sessionStart = Date.now();
         console.log(`[PRODUCTS-OPTIMIZE] Starting AI optimization for product ${productId}`);
+        
         const optimized = await optimizeContent(product, 'product', settings);
         console.log(`[PRODUCTS-OPTIMIZE] AI optimization completed for product ${productId}`);
         
-        // Store optimization as draft metafields (don't update product directly)
-        console.log(`[PRODUCTS-OPTIMIZE] Storing optimization as draft for product ${productId}`);
+        // === PRODUCTION ROLLBACK SAFETY CHECK ===
+        const riskScore = optimized.riskScore || 0;
+        const visibilityScore = optimized.visibilityScore || 0;
         
-        // Store optimized content as draft
-        await axios.post(
-          `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json`,
-          {
-            metafield: {
-              namespace: 'asb',
-              key: 'optimized_content_draft',
-              value: JSON.stringify({
-                title: optimized.optimizedTitle,
-                body_html: optimized.optimizedDescription,
-                summary: optimized.summary,
-                llmDescription: optimized.llmDescription
-              }),
-              type: 'json'
+        console.log(`[PRODUCTS-OPTIMIZE] Quality scores - Risk: ${riskScore}, Visibility: ${visibilityScore}`);
+        
+        // Create rollback save function for this product
+        const rollbackSaveFn = async (draftId, originalContent) => {
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'asb',
+                key: 'optimized_content_draft',
+                value: JSON.stringify({
+                  title: originalContent.title,
+                  body_html: originalContent.body_html || 'Original description preserved due to safety rollback',
+                  summary: `${originalContent.title} - ${originalContent.product_type || 'product'}`,
+                  llmDescription: originalContent.body_html || `Original product: ${originalContent.title}`,
+                  rolledBack: true,
+                  rollbackAt: new Date().toISOString()
+                }),
+                type: 'json'
+              }
+            },
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
             }
-          },
-          {
-            headers: { 'X-Shopify-Access-Token': accessToken }
-          }
-        );
+          );
+        };
+        
+        // Execute rollback if high risk detected
+        const rollbackExecuted = await rollbackUtils.executeRollbackIfNeeded({
+          riskScore,
+          draftId: productId,
+          originalContent: product,
+          saveFn: rollbackSaveFn,
+          shop,
+          contentType: 'product',
+          title: product.title
+        });
+        
+        if (!rollbackExecuted) {
+          // Safe to store optimized content as draft
+          console.log(`[PRODUCTS-OPTIMIZE] Storing optimization as draft for product ${productId}`);
+          
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/products/${productId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'asb',
+                key: 'optimized_content_draft',
+                value: JSON.stringify({
+                  title: optimized.optimizedTitle,
+                  body_html: optimized.optimizedDescription,
+                  summary: optimized.summary,
+                  llmDescription: optimized.llmDescription,
+                  riskScore: optimized.riskScore,
+                  visibilityScore: optimized.visibilityScore,
+                  promptVersion: optimized.promptVersion,
+                  optimizedAt: new Date().toISOString()
+                }),
+                type: 'json'
+              }
+            },
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
+            }
+          );
+        }
+        
+        // Log optimization session with complete metadata
+        await logger.logOptimizationSession({
+          shop,
+          contentType: 'product',
+          title: product.title,
+          modelUsed: 'gpt-4o-mini-2024-07-18',
+          promptVersion: optimized.promptVersion || 'v5.1-product',
+          riskScore,
+          visibilityScore,
+          rollbackTriggered: rollbackExecuted,
+          tokenEstimate: JSON.stringify(optimized).length / 4,
+          processingTime: Date.now() - sessionStart,
+          success: !rollbackExecuted
+        });
         
         // Store FAQ data as draft
         await axios.post(
@@ -2077,7 +2141,10 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
           version: 'v1',
           optimized,
           originalTitle: product.title,
-          newTitle: optimized.optimizedTitle || product.title
+          newTitle: optimized.optimizedTitle || product.title,
+          riskScore,
+          visibilityScore,
+          rollbackTriggered: rollbackExecuted
         });
       } catch (error) {
         console.error(`Error optimizing product ${productId}:`, error.message);
@@ -2166,30 +2233,77 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
         }
         
         // Optimize content using AI
+        const sessionStart = Date.now();
         console.log(`[PAGES-OPTIMIZE] Starting AI optimization for page ${pageId}`);
+        
         const optimized = await optimizeContent(page, 'page', settings);
         console.log(`[PAGES-OPTIMIZE] AI optimization completed for page ${pageId}`);
         
-        // Store optimization as draft metafields (don't update page directly)
-        console.log(`[PAGES-OPTIMIZE] Storing optimization as draft for page ${page.id}`);
+        // === PRODUCTION ROLLBACK SAFETY CHECK ===
+        const riskScore = optimized.riskScore || 0;
+        const visibilityScore = optimized.visibilityScore || 0;
         
-        // Store optimized content as draft
-        await axios.post(
-          `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json`,
-          {
-            metafield: {
-              namespace: 'asb',
-              key: 'optimized_content_draft',
-              value: JSON.stringify({
-                title: optimized.optimizedTitle,
-                body_html: optimized.optimizedDescription,
-                llmDescription: optimized.llmDescription,
-                summary: optimized.summary,
-                timestamp: new Date().toISOString()
-              }),
-              type: 'json'
+        console.log(`[PAGES-OPTIMIZE] Quality scores - Risk: ${riskScore}, Visibility: ${visibilityScore}`);
+        
+        // Create rollback save function for this page
+        const rollbackSaveFn = async (draftId, originalContent) => {
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'asb',
+                key: 'optimized_content_draft',
+                value: JSON.stringify({
+                  title: originalContent.title,
+                  body_html: originalContent.body_html || 'Original content preserved due to safety rollback',
+                  llmDescription: originalContent.body_html || `Original page: ${originalContent.title}`,
+                  summary: `${originalContent.title} page`,
+                  rolledBack: true,
+                  rollbackAt: new Date().toISOString()
+                }),
+                type: 'json'
+              }
+            },
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
             }
-          },
+          );
+        };
+        
+        // Execute rollback if high risk detected
+        const rollbackExecuted = await rollbackUtils.executeRollbackIfNeeded({
+          riskScore,
+          draftId: pageId,
+          originalContent: page,
+          saveFn: rollbackSaveFn,
+          shop,
+          contentType: 'page',
+          title: page.title
+        });
+        
+        if (!rollbackExecuted) {
+          // Safe to store optimized content as draft
+          console.log(`[PAGES-OPTIMIZE] Storing optimization as draft for page ${page.id}`);
+          
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/pages/${pageId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'asb',
+                key: 'optimized_content_draft',
+                value: JSON.stringify({
+                  title: optimized.optimizedTitle,
+                  body_html: optimized.optimizedDescription,
+                  llmDescription: optimized.llmDescription,
+                  summary: optimized.summary,
+                  riskScore: optimized.riskScore,
+                  visibilityScore: optimized.visibilityScore,
+                  promptVersion: optimized.promptVersion,
+                  timestamp: new Date().toISOString()
+                }),
+                type: 'json'
+              }
+            },
           {
             headers: { 'X-Shopify-Access-Token': accessToken }
           }
@@ -2210,6 +2324,7 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
             headers: { 'X-Shopify-Access-Token': accessToken }
           }
         );
+        }
         
         // Store optimization settings as draft
         await axios.post(
@@ -2231,12 +2346,30 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
           }
         );
         
+        // Log optimization session with complete metadata
+        await logger.logOptimizationSession({
+          shop,
+          contentType: 'page',
+          title: page.title,
+          modelUsed: 'gpt-4o-mini-2024-07-18',
+          promptVersion: optimized.promptVersion || 'v5.1-page',
+          riskScore,
+          visibilityScore,
+          rollbackTriggered: rollbackExecuted,
+          tokenEstimate: JSON.stringify(optimized).length / 4,
+          processingTime: Date.now() - sessionStart,
+          success: !rollbackExecuted
+        });
+        
         results.push({
           pageId,
           status: 'success',
           optimized,
           originalTitle: page.title,
-          newTitle: optimized.optimizedTitle || page.title
+          newTitle: optimized.optimizedTitle || page.title,
+          riskScore,
+          visibilityScore,
+          rollbackTriggered: rollbackExecuted
         });
       } catch (error) {
         console.error(`Error optimizing page ${pageId}:`, error.message);
@@ -2332,27 +2465,77 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
             }
             
             // Optimize content using AI
+            const sessionStart = Date.now();
+            console.log(`[BLOGS-OPTIMIZE] Starting AI optimization for article ${article.id}`);
+            
             const optimized = await optimizeContent(article, 'article', settings);
+            console.log(`[BLOGS-OPTIMIZE] AI optimization completed for article ${article.id}`);
             
-            // Store optimization as draft metafields (don't update article directly)
-            console.log(`[BLOGS-OPTIMIZE] Storing optimization as draft for article ${article.id}`);
+            // === PRODUCTION ROLLBACK SAFETY CHECK ===
+            const riskScore = optimized.riskScore || 0;
+            const visibilityScore = optimized.visibilityScore || 0;
             
-            // Store optimized content as draft
-            await axios.post(
-              `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json`,
-              {
-                metafield: {
-                  namespace: 'asb',
-                  key: 'optimized_content_draft',
-                  value: JSON.stringify({
-                    title: optimized.optimizedTitle,
-                    body_html: optimized.optimizedDescription,
-                    summary: optimized.summary,
-                    llmDescription: optimized.llmDescription
-                  }),
-                  type: 'json'
+            console.log(`[BLOGS-OPTIMIZE] Quality scores - Risk: ${riskScore}, Visibility: ${visibilityScore}`);
+            
+            // Create rollback save function for this article
+            const rollbackSaveFn = async (draftId, originalContent) => {
+              await axios.post(
+                `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json`,
+                {
+                  metafield: {
+                    namespace: 'asb',
+                    key: 'optimized_content_draft',
+                    value: JSON.stringify({
+                      title: originalContent.title,
+                      body_html: originalContent.body_html || 'Original content preserved due to safety rollback',
+                      summary: originalContent.summary || `${originalContent.title} article`,
+                      llmDescription: originalContent.body_html || `Original article: ${originalContent.title}`,
+                      rolledBack: true,
+                      rollbackAt: new Date().toISOString()
+                    }),
+                    type: 'json'
+                  }
+                },
+                {
+                  headers: { 'X-Shopify-Access-Token': accessToken }
                 }
-              },
+              );
+            };
+            
+            // Execute rollback if high risk detected
+            const rollbackExecuted = await rollbackUtils.executeRollbackIfNeeded({
+              riskScore,
+              draftId: article.id,
+              originalContent: article,
+              saveFn: rollbackSaveFn,
+              shop,
+              contentType: 'article',
+              title: article.title
+            });
+            
+            if (!rollbackExecuted) {
+              // Safe to store optimized content as draft
+              console.log(`[BLOGS-OPTIMIZE] Storing optimization as draft for article ${article.id}`);
+              
+              await axios.post(
+                `https://${shop}/admin/api/2024-01/articles/${article.id}/metafields.json`,
+                {
+                  metafield: {
+                    namespace: 'asb',
+                    key: 'optimized_content_draft',
+                    value: JSON.stringify({
+                      title: optimized.optimizedTitle,
+                      body_html: optimized.optimizedDescription,
+                      summary: optimized.summary,
+                      llmDescription: optimized.llmDescription,
+                      riskScore: optimized.riskScore,
+                      visibilityScore: optimized.visibilityScore,
+                      promptVersion: optimized.promptVersion,
+                      optimizedAt: new Date().toISOString()
+                    }),
+                    type: 'json'
+                  }
+                },
               {
                 headers: { 'X-Shopify-Access-Token': accessToken }
               }
@@ -2373,6 +2556,7 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
                 headers: { 'X-Shopify-Access-Token': accessToken }
               }
             );
+            }
             
             // Store optimization settings as draft
             await axios.post(
@@ -2393,6 +2577,21 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
               }
             );
             
+            // Log optimization session with complete metadata
+            await logger.logOptimizationSession({
+              shop,
+              contentType: 'article',
+              title: article.title,
+              modelUsed: 'gpt-4o-mini-2024-07-18',
+              promptVersion: optimized.promptVersion || 'v5.1-article',
+              riskScore,
+              visibilityScore,
+              rollbackTriggered: rollbackExecuted,
+              tokenEstimate: JSON.stringify(optimized).length / 4,
+              processingTime: Date.now() - sessionStart,
+              success: !rollbackExecuted
+            });
+            
             console.log(`[BLOGS-OPTIMIZE] Draft optimization stored for article ${article.id}`);
             
             results.push({
@@ -2400,7 +2599,10 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
               blogId,
               status: 'success',
               message: `Successfully optimized article: ${article.title}`,
-              optimized
+              optimized,
+              riskScore,
+              visibilityScore,
+              rollbackTriggered: rollbackExecuted
             });
             
           } catch (articleError) {
