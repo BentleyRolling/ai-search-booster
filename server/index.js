@@ -5708,6 +5708,7 @@ app.post('/webhooks/shop/redact', express.raw({ type: 'application/json' }), (re
 // Start server
 app.listen(PORT, () => {
   console.log(`AI Search Booster v2 running on port ${PORT}`);
+  console.log('✅ Latest UI fixes deployed - July 23, 2025');
   console.log('Configuration:');
   console.log(`- Shopify API: ${SHOPIFY_API_KEY ? '✓' : '✗'}`);
   console.log(`- Shopify Secret: ${SHOPIFY_API_SECRET ? '✓' : '✗'}`);
