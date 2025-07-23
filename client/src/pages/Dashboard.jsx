@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import QuotaToast from '../components/QuotaToast';
 import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
@@ -473,6 +474,12 @@ const Dashboard = () => {
       }
       const data = await response.json();
       console.log('Dashboard: Tier usage data received:', data);
+      console.log('Dashboard: Setting tierUsage to:', {
+        usageThisMonth: data.usageThisMonth,
+        monthlyLimit: data.monthlyLimit,
+        currentTier: data.currentTier,
+        hasQuota: data.hasQuota
+      });
       setTierUsage(data);
       
       // Keep legacy usage for backward compatibility
@@ -1655,6 +1662,12 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Quota Toast Notification */}
+      <QuotaToast 
+        isVisible={tierUsage && !tierUsage.hasQuota}
+        usageCount={tierUsage?.usageThisMonth || 0}
+        monthlyLimit={tierUsage?.monthlyLimit || 25}
+      />
       {/* Header */}
       <header className="shadow-sm border-b relative">
         {/* Black section for logo and icons */}
@@ -2075,62 +2088,33 @@ const Dashboard = () => {
             </>
           )}
           
-          {/* AI Optimizations This Month - Tier-based Usage */}
+          {/* AI Optimizations This Month - Clean Design */}
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-500">AI Optimizations This Month</h3>
-              <div className="flex items-center space-x-2">
-                <Zap className={`w-4 h-4 ${
-                  tierUsage && !tierUsage.hasQuota ? 'text-red-500' : 'text-blue-500'
-                }`} />
-                <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-500 ${
-                      tierUsage && !tierUsage.hasQuota ? 'bg-red-500' : 'bg-blue-500'
-                    }`}
-                    style={{ width: `${tierUsage ? (tierUsage.usageThisMonth / tierUsage.monthlyLimit * 100) : 0}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <p className={`text-lg font-bold ${
+            <div className="text-center">
+              <h3 className="text-sm font-medium text-gray-500 mb-4">AI Optimizations This Month</h3>
+              
+              {/* Large Usage Counter */}
+              <p className={`text-4xl font-bold mb-2 ${
                 tierUsage && !tierUsage.hasQuota ? 'text-red-600' : 'text-blue-600'
               }`}>
                 {tierUsage?.usageThisMonth || 0} / {tierUsage?.monthlyLimit || 25}
               </p>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-500">
-                  Each content optimization = 1 usage
-                </p>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  tierUsage?.currentTier === 'Enterprise' ? 'bg-purple-100 text-purple-700' :
-                  tierUsage?.currentTier === 'Scale' ? 'bg-green-100 text-green-700' :
-                  tierUsage?.currentTier === 'Pro' ? 'bg-blue-100 text-blue-700' :
-                  tierUsage?.currentTier === 'Starter' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-gray-100 text-gray-700'
-                }`}>
-                  {tierUsage?.currentTier || 'Free'}
-                </span>
-              </div>
               
-              {/* Persistent Upgrade Button */}
-              <button
-                onClick={() => window.location.href = '/billing'}
-                className={`w-full mt-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  tierUsage && !tierUsage.hasQuota 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
-                }`}
-              >
-                {tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}
-              </button>
+              {/* Usage Description */}
+              <p className="text-xs text-gray-500 mb-3">
+                Each content optimization = 1 usage
+              </p>
               
-              {tierUsage && !tierUsage.hasQuota && (
-                <p className="text-xs text-red-500 mt-1">
-                  ⚠️ You've reached your optimization limit for this month
-                </p>
-              )}
+              {/* Tier Badge */}
+              <span className={`inline-block text-xs px-2 py-1 rounded-full ${
+                tierUsage?.currentTier === 'Enterprise' ? 'bg-purple-100 text-purple-700' :
+                tierUsage?.currentTier === 'Scale' ? 'bg-green-100 text-green-700' :
+                tierUsage?.currentTier === 'Pro' ? 'bg-blue-100 text-blue-700' :
+                tierUsage?.currentTier === 'Starter' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-gray-100 text-gray-700'
+              }`}>
+                {tierUsage?.currentTier || 'Free'}
+              </span>
             </div>
           </div>
           
@@ -2236,6 +2220,17 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Select Products to Optimize</h3>
                   <div className="flex space-x-2">
+                    {/* Upgrade Plan Button */}
+                    <button
+                      onClick={() => window.location.href = '/billing'}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1 ${
+                        tierUsage && !tierUsage.hasQuota 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                      }`}
+                    >
+                      <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
+                    </button>
                     <button
                       onClick={() => {
                         if (selectedProducts.length === products.length) {
@@ -2451,6 +2446,17 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Select Blog Articles to Optimize</h3>
                   <div className="flex space-x-2">
+                    {/* Upgrade Plan Button */}
+                    <button
+                      onClick={() => window.location.href = '/billing'}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1 ${
+                        tierUsage && !tierUsage.hasQuota 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                      }`}
+                    >
+                      <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
+                    </button>
                       <button
                         onClick={() => {
                           if (selectedArticles.length === articles.length) {
@@ -2663,6 +2669,17 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Select Pages to Optimize</h3>
                   <div className="flex space-x-2">
+                    {/* Upgrade Plan Button */}
+                    <button
+                      onClick={() => window.location.href = '/billing'}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1 ${
+                        tierUsage && !tierUsage.hasQuota 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                      }`}
+                    >
+                      <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
+                    </button>
                       <button
                         onClick={() => {
                           if (selectedPages.length === pages.length) {
@@ -2881,6 +2898,17 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Select Collections to Optimize</h3>
                   <div className="flex space-x-2">
+                    {/* Upgrade Plan Button */}
+                    <button
+                      onClick={() => window.location.href = '/billing'}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1 ${
+                        tierUsage && !tierUsage.hasQuota 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                      }`}
+                    >
+                      <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
+                    </button>
                       <button
                         onClick={() => {
                           if (selectedCollections.length === collections.length) {
