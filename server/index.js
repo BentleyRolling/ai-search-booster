@@ -3602,36 +3602,8 @@ app.get('/api/history/:shop', simpleVerifyShop, async (req, res) => {
   }
 });
 
-// API: Get usage statistics
-app.get('/api/usage', simpleVerifyShop, async (req, res) => {
-  try {
-    const { shop } = req;
-    
-    // Return mock usage data - no Shopify API calls
-    const usage = {
-      shop,
-      optimizations: {
-        products: 0,
-        blogs: 0,
-        total: 0
-      },
-      aiCalls: {
-        today: 0,
-        thisMonth: 0,
-        total: 0
-      },
-      limits: {
-        monthlyOptimizations: 1000,
-        dailyAICalls: 100
-      }
-    };
-    
-    res.json(usage);
-  } catch (error) {
-    console.error('Usage error:', error);
-    res.status(500).json({ error: 'Failed to fetch usage' });
-  }
-});
+// API: Get usage statistics (REMOVED - duplicate endpoint)
+// The real usage endpoint with persistent storage is below
 
 // API: Check consent status
 app.get('/api/consent/status', async (req, res) => {
@@ -3890,6 +3862,9 @@ app.post('/api/usage/tier', simpleVerifyShop, async (req, res) => {
     const usage = initializeShopUsage(shop);
     usage.tier = tier;
     
+    // Save updated tier to persistent storage
+    saveUsageToFile(shop, usage);
+    
     console.log(`[USAGE] Updated shop ${shop} to tier: ${tier}`);
     
     res.json({
@@ -4056,6 +4031,35 @@ app.get('/billing/confirm', async (req, res) => {
   } catch (error) {
     console.error('[BILLING] Error confirming subscription:', error);
     res.status(500).send('Failed to confirm subscription');
+  }
+});
+
+// API: Test usage debugging
+app.get('/api/test-usage', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req;
+    
+    const filePath = getUsageFilePath(shop);
+    const fileExists = fs.existsSync(filePath);
+    
+    let loadedUsage = null;
+    if (fileExists) {
+      loadedUsage = loadUsageFromFile(shop);
+    }
+    
+    const usage = initializeShopUsage(shop);
+    
+    res.json({
+      shop: shop,
+      fileExists: fileExists,
+      filePath: filePath,
+      loadedUsage: loadedUsage,
+      currentUsage: usage,
+      tierConfig: tierConfig
+    });
+  } catch (error) {
+    console.error('[TEST-USAGE] Error:', error);
+    res.status(500).json({ error: 'Failed to test usage' });
   }
 });
 

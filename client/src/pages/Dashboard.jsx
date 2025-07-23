@@ -2011,19 +2011,19 @@ const Dashboard = () => {
           {activeTab === 'products' && (
             <>
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-500">Total Products</h3>
-                  <Package className="w-5 h-5 text-gray-400" />
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-gray-500 mb-4">Total Products</h3>
+                  <p className="text-4xl font-bold text-gray-900 mb-2">{status?.totalProducts || 0}</p>
+                  <Package className="w-5 h-5 text-gray-400 mx-auto" />
                 </div>
-                <p className="text-3xl font-bold text-gray-900">{status?.totalProducts || 0}</p>
               </div>
               
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-500">Optimized Products</h3>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-gray-500 mb-4">Optimized Products</h3>
+                  <p className="text-4xl font-bold text-green-600 mb-2">{status?.optimizedProducts || 0}</p>
+                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
                 </div>
-                <p className="text-3xl font-bold text-green-600">{status?.optimizedProducts || 0}</p>
               </div>
             </>
           )}
@@ -2031,19 +2031,19 @@ const Dashboard = () => {
           {activeTab === 'blogs' && (
             <>
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-500">Total Articles</h3>
-                  <FileText className="w-5 h-5 text-gray-400" />
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-gray-500 mb-4">Total Articles</h3>
+                  <p className="text-4xl font-bold text-gray-900 mb-2">{status?.totalBlogs || 0}</p>
+                  <FileText className="w-5 h-5 text-gray-400 mx-auto" />
                 </div>
-                <p className="text-3xl font-bold text-gray-900">{status?.totalBlogs || 0}</p>
               </div>
               
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-500">Optimized Articles</h3>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-gray-500 mb-4">Optimized Articles</h3>
+                  <p className="text-4xl font-bold text-green-600 mb-2">{status?.optimizedBlogs || 0}</p>
+                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
                 </div>
-                <p className="text-3xl font-bold text-green-600">{status?.optimizedBlogs || 0}</p>
               </div>
             </>
           )}
@@ -2051,19 +2051,19 @@ const Dashboard = () => {
           {activeTab === 'pages' && (
             <>
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-500">Total Pages</h3>
-                  <Globe className="w-5 h-5 text-gray-400" />
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-gray-500 mb-4">Total Pages</h3>
+                  <p className="text-4xl font-bold text-gray-900 mb-2">{status?.totalPages || 0}</p>
+                  <Globe className="w-5 h-5 text-gray-400 mx-auto" />
                 </div>
-                <p className="text-3xl font-bold text-gray-900">{status?.totalPages || 0}</p>
               </div>
               
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-500">Optimized Pages</h3>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-gray-500 mb-4">Optimized Pages</h3>
+                  <p className="text-4xl font-bold text-green-600 mb-2">{status?.optimizedPages || 0}</p>
+                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
                 </div>
-                <p className="text-3xl font-bold text-green-600">{status?.optimizedPages || 0}</p>
               </div>
             </>
           )}
@@ -2071,19 +2071,19 @@ const Dashboard = () => {
           {activeTab === 'collections' && (
             <>
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-500">Total Collections</h3>
-                  <Package className="w-5 h-5 text-gray-400" />
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-gray-500 mb-4">Total Collections</h3>
+                  <p className="text-4xl font-bold text-gray-900 mb-2">{collections?.length || 0}</p>
+                  <Package className="w-5 h-5 text-gray-400 mx-auto" />
                 </div>
-                <p className="text-3xl font-bold text-gray-900">{collections?.length || 0}</p>
               </div>
               
               <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-500">Optimized Collections</h3>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-gray-500 mb-4">Optimized Collections</h3>
+                  <p className="text-4xl font-bold text-green-600 mb-2">{collections?.filter(c => c.optimized)?.length || 0}</p>
+                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
                 </div>
-                <p className="text-3xl font-bold text-green-600">{collections?.filter(c => c.optimized)?.length || 0}</p>
               </div>
             </>
           )}
@@ -2120,21 +2120,19 @@ const Dashboard = () => {
           
           {/* Enterprise Performance - Always shown on all tabs */}
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-500">Enterprise Status</h3>
-              <div className="flex items-center space-x-1">
+            <div className="text-center">
+              <h3 className="text-sm font-medium text-gray-500 mb-4">Enterprise Status</h3>
+              <p className="text-4xl font-bold text-purple-600 mb-2">
+                {optimizationPercentage}%
+              </p>
+              <p className="text-xs text-gray-500 mb-3">
+                Production-Grade • Auto-Rollback
+              </p>
+              <div className="flex items-center justify-center space-x-1 mb-2">
                 <TrendingUp className="w-4 h-4 text-purple-500" />
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
               </div>
-            </div>
-            <div className="space-y-1">
-              <p className="text-lg font-semibold text-purple-600">
-                {optimizationPercentage}% Optimized
-              </p>
-              <p className="text-xs text-gray-500">
-                Production-Grade • Auto-Rollback
-              </p>
-              <div className="flex items-center space-x-1 mt-2">
+              <div className="flex items-center justify-center space-x-1">
                 <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
                 <span className="text-xs text-green-600">JSON-LD Active</span>
               </div>
