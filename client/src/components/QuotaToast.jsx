@@ -5,7 +5,7 @@ const QuotaToast = ({ isVisible, usageCount, monthlyLimit }) => {
 
   return (
     <div className="fixed top-4 left-4 z-50">
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg max-w-sm">
+      <div className="bg-gray-900 border border-red-500 rounded-lg p-4 shadow-lg max-w-sm backdrop-blur-sm animate-fade-in">
         <div className="flex items-start">
           <div className="flex-shrink-0">
             <div className="w-5 h-5 text-red-400">
@@ -13,10 +13,10 @@ const QuotaToast = ({ isVisible, usageCount, monthlyLimit }) => {
             </div>
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-red-800">
+            <p className="text-sm font-medium text-white">
               You've reached your optimization limit for this month
             </p>
-            <p className="text-xs text-red-600 mt-1">
+            <p className="text-xs text-red-300 mt-1">
               {usageCount}/{monthlyLimit} optimizations used
             </p>
           </div>

@@ -1649,11 +1649,11 @@ const Dashboard = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-800/20 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+        <div className="text-center max-w-md mx-auto p-6 bg-dark-card rounded-lg shadow border border-dark-border">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-text-primary mb-2">Dashboard Error</h2>
           <p className="text-gray-600 mb-4">{error.message}</p>
-          <details className="text-left text-sm text-gray-500 mb-4">
+          <details className="text-left text-sm text-gray-300 mb-4">
             <summary className="cursor-pointer">Technical Details</summary>
             <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
               {error.stack}
@@ -1753,7 +1753,7 @@ const Dashboard = () => {
           {/* Help & Support Sections */}
           {[
             { id: 'instructions', label: 'Instructions', icon: BookOpen },
-            { id: 'support', label: 'Support & FAQ', icon: MessageSquare },
+            { id: 'support', label: 'FAQ', icon: MessageSquare },
             { id: 'terms', label: 'Terms & Disclaimer', icon: FileText },
           ].map((helpTab) => (
             <button
@@ -1871,7 +1871,7 @@ const Dashboard = () => {
                 {/* Help & Support Sections */}
                 {[
                   { id: 'instructions', label: 'Instructions', icon: BookOpen },
-                  { id: 'support', label: 'Support & FAQ', icon: MessageSquare },
+                  { id: 'support', label: 'FAQ', icon: MessageSquare },
                   { id: 'terms', label: 'Terms & Disclaimer', icon: FileText },
                 ].map((helpTab) => (
                   <button
@@ -1953,11 +1953,11 @@ const Dashboard = () => {
           {notifications.map((notification) => (
             <div
               key={notification.id}
-              className={`p-4 rounded-lg shadow-lg border-l-4 ${
-                notification.type === 'success' ? 'bg-green-900/20 border-green-400' :
-                notification.type === 'error' ? 'bg-red-50 border-red-400' :
-                notification.type === 'warning' ? 'bg-yellow-900/20 border-yellow-400' :
-                'bg-blue-900/20 border-blue-400'
+              className={`p-4 rounded-lg shadow-lg backdrop-blur-sm border-l-4 animate-fade-in ${
+                notification.type === 'success' ? 'bg-gray-900/80 border-green-400' :
+                notification.type === 'error' ? 'bg-gray-900/80 border-red-400' :
+                notification.type === 'warning' ? 'bg-gray-900/80 border-yellow-400' :
+                'bg-gray-900/80 border-blue-400'
               }`}
             >
               <div className="flex items-start">
@@ -1969,10 +1969,10 @@ const Dashboard = () => {
                 </div>
                 <div className="ml-3 flex-1">
                   <p className={`text-sm font-medium ${
-                    notification.type === 'success' ? 'text-green-800' :
-                    notification.type === 'error' ? 'text-red-800' :
-                    notification.type === 'warning' ? 'text-yellow-800' :
-                    'text-blue-800'
+                    notification.type === 'success' ? 'text-white' :
+                    notification.type === 'error' ? 'text-white' :
+                    notification.type === 'warning' ? 'text-white' :
+                    'text-white'
                   }`}>
                     {notification.message}
                   </p>
@@ -1980,12 +1980,7 @@ const Dashboard = () => {
                 <div className="ml-4 flex-shrink-0">
                   <button
                     onClick={() => removeNotification(notification.id)}
-                    className={`rounded-md inline-flex text-gray-400 hover:text-gray-600 focus:outline-none ${
-                      notification.type === 'success' ? 'hover:text-green-600' :
-                      notification.type === 'error' ? 'hover:text-red-600' :
-                      notification.type === 'warning' ? 'hover:text-yellow-600' :
-                      'hover:text-blue-600'
-                    }`}
+                    className={`rounded-md inline-flex text-gray-400 hover:text-white focus:outline-none transition-colors`}
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -2029,17 +2024,17 @@ const Dashboard = () => {
 
       {/* Progress Bar for Optimization */}
       {optimizationProgress && (
-        <div className="bg-white border-b shadow-sm">
+        <div className="bg-dark-card border-b border-dark-border shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center space-x-4">
-              <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
+              <RefreshCw className="w-5 h-5 text-accent-primary animate-spin" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-text-primary">
                   Optimizing {optimizationProgress.type}... ({optimizationProgress.current}/{optimizationProgress.total})
                 </p>
-                <div className="mt-2 bg-gray-200 rounded-full h-2">
+                <div className="mt-2 bg-gray-800 rounded-full h-2">
                   <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-green-400 h-2 rounded-full transition-all duration-300"
                     style={{ 
                       width: `${(optimizationProgress.current / optimizationProgress.total) * 100}%` 
                     }}
@@ -2053,10 +2048,10 @@ const Dashboard = () => {
 
       {/* Progress Bar for Preview Loading */}
       {previewLoading && (
-        <div className="bg-white border-b shadow-sm">
+        <div className="bg-dark-card border-b border-dark-border shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center space-x-4">
-              <Eye className="w-5 h-5 text-black animate-pulse" />
+              <Eye className="w-5 h-5 text-accent-primary animate-pulse" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-text-primary">
                   Preview Incoming!
@@ -2121,7 +2116,7 @@ const Dashboard = () => {
             </div>
             
             {/* Testing Controls */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="mt-6 pt-6 border-t border-dark-border">
               <h3 className="text-md font-semibold mb-4">Testing & Development</h3>
               <div className="space-y-3">
                 <div className="flex items-center space-x-4">
@@ -2132,7 +2127,7 @@ const Dashboard = () => {
                     <RotateCcw className="w-4 h-4" />
                     <span>Reset Consent Modal</span>
                   </button>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-300">
                     Reset consent to test the first-time launch modal again
                   </p>
                 </div>
@@ -2144,7 +2139,7 @@ const Dashboard = () => {
                     <FileText className="w-4 h-4" />
                     <span>View Legal Records</span>
                   </button>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-300">
                     Display consent records for legal verification (check browser console)
                   </p>
                 </div>
@@ -2152,7 +2147,7 @@ const Dashboard = () => {
             </div>
             
             {/* Citation Monitoring Controls */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="mt-6 pt-6 border-t border-dark-border">
               <h3 className="text-md font-semibold mb-4">Citation Monitoring</h3>
               
               {/* Debug Info - Always show for troubleshooting */}
@@ -2217,6 +2212,14 @@ const Dashboard = () => {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Section Headers */}
+        {(activeTab === 'products' || activeTab === 'blogs' || activeTab === 'pages' || activeTab === 'collections') && (
+          <h2 className="text-white text-xl font-semibold mb-6">Optimize</h2>
+        )}
+        {activeTab === 'support' && (
+          <h2 className="text-white text-xl font-semibold mb-6">Support</h2>
+        )}
+        
         {/* Tab-Specific Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {activeTab === 'products' && (
@@ -2442,7 +2445,7 @@ const Dashboard = () => {
                 </div>
                 
                 {products.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No products found</p>
+                  <p className="text-gray-300 text-center py-8">No products found</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                     {products.map((product) => (
@@ -2495,7 +2498,7 @@ const Dashboard = () => {
                                 )}
                               </div>
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">{product.vendor}</p>
+                            <p className="text-sm text-gray-300 mt-1">{product.vendor}</p>
                             {product.product_type && (
                               <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
                                 {product.product_type}
@@ -2510,7 +2513,7 @@ const Dashboard = () => {
                                   </span>
                                 )}
                                 {product.optimized && !product.rollbackTriggered && (
-                                  <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                  <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
                                     ✓ Optimized
                                   </span>
                                 )}
@@ -2543,7 +2546,7 @@ const Dashboard = () => {
                                       e.stopPropagation();
                                       publishDraft('product', product.id);
                                     }}
-                                    className="px-1.5 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-4 py-1.5 bg-blue-900 text-blue-300 border border-blue-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-blue-800 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200"
                                     title="Publish draft optimization"
                                   >
                                     <CheckCircle className="w-3 h-3" />
@@ -2557,7 +2560,7 @@ const Dashboard = () => {
                                       e.stopPropagation();
                                       rollback('product', product.id);
                                     }}
-                                    className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
                                     title="Rollback to original content"
                                   >
                                     <RotateCcw className="w-3 h-3" />
@@ -2664,7 +2667,7 @@ const Dashboard = () => {
                 </div>
                 
                 {articles.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">No blog articles found</p>
+                    <p className="text-gray-300 text-center py-8">No blog articles found</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                       {articles.map((article) => (
@@ -2674,7 +2677,7 @@ const Dashboard = () => {
                           className={`border rounded-lg p-4 cursor-pointer transition-all ${
                             selectedArticles.includes(article.id.toString())
                               ? 'border-blue-500 bg-blue-900/20'
-                              : 'border-gray-200 hover:border-gray-300'
+                              : 'border-dark-border hover:border-gray-300'
                           }`}
                         >
                           <div className="flex items-start space-x-3">
@@ -2717,8 +2720,8 @@ const Dashboard = () => {
                                   )}
                                 </div>
                               </div>
-                              <p className="text-sm text-gray-500 mt-1">Blog: {article.blogTitle}</p>
-                              <p className="text-sm text-gray-500">Created: {new Date(article.created_at).toLocaleDateString()}</p>
+                              <p className="text-sm text-gray-300 mt-1">Blog: {article.blogTitle}</p>
+                              <p className="text-sm text-gray-300">Created: {new Date(article.created_at).toLocaleDateString()}</p>
                               
                               <div className="mt-3 flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
@@ -2776,7 +2779,7 @@ const Dashboard = () => {
                                         e.stopPropagation();
                                         rollback('article', article.id);
                                       }}
-                                      className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
                                       title="Rollback to original content"
                                     >
                                       <RotateCcw className="w-3 h-3" />
@@ -2882,7 +2885,7 @@ const Dashboard = () => {
                 </div>
                 
                 {pages.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">No pages found</p>
+                    <p className="text-gray-300 text-center py-8">No pages found</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                       {pages.map((page) => (
@@ -2899,7 +2902,7 @@ const Dashboard = () => {
                           className={`border rounded-lg p-4 cursor-pointer transition-all ${
                             selectedPages.includes(page.id.toString())
                               ? 'border-blue-500 bg-blue-900/20'
-                              : 'border-gray-200 hover:border-gray-300'
+                              : 'border-dark-border hover:border-gray-300'
                           }`}
                         >
                           <div className="flex items-start space-x-3">
@@ -2942,8 +2945,8 @@ const Dashboard = () => {
                                   )}
                                 </div>
                               </div>
-                              <p className="text-sm text-gray-500 mt-1">Handle: {page.handle}</p>
-                              <p className="text-sm text-gray-500">Updated: {new Date(page.updated_at).toLocaleDateString()}</p>
+                              <p className="text-sm text-gray-300 mt-1">Handle: {page.handle}</p>
+                              <p className="text-sm text-gray-300">Updated: {new Date(page.updated_at).toLocaleDateString()}</p>
                               
                               <div className="mt-3 flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
@@ -3001,7 +3004,7 @@ const Dashboard = () => {
                                         e.stopPropagation();
                                         rollback('page', page.id);
                                       }}
-                                      className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
                                       title="Rollback to original content"
                                     >
                                       <RotateCcw className="w-3 h-3" />
@@ -3111,7 +3114,7 @@ const Dashboard = () => {
                   console.log('RENDER DEBUG: collections =', collections);
                   return collections.length === 0;
                 })() ? (
-                    <p className="text-gray-500 text-center py-8">No collections found</p>
+                    <p className="text-gray-300 text-center py-8">No collections found</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                       {collections.map((category) => (
@@ -3128,7 +3131,7 @@ const Dashboard = () => {
                           className={`border rounded-lg p-4 cursor-pointer transition-all ${
                             selectedCollections.includes(category.id.toString())
                               ? 'border-blue-500 bg-blue-900/20'
-                              : 'border-gray-200 hover:border-gray-300'
+                              : 'border-dark-border hover:border-gray-300'
                           }`}
                         >
                           <div className="flex items-start space-x-3">
@@ -3171,8 +3174,8 @@ const Dashboard = () => {
                                   )}
                                 </div>
                               </div>
-                              <p className="text-sm text-gray-500 mt-1">Handle: {category.handle}</p>
-                              <p className="text-sm text-gray-500">Description: {category.description?.substring(0, 50)}...</p>
+                              <p className="text-sm text-gray-300 mt-1">Handle: {category.handle}</p>
+                              <p className="text-sm text-gray-300">Description: {category.description?.substring(0, 50)}...</p>
                               
                               <div className="mt-3 flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
@@ -3230,7 +3233,7 @@ const Dashboard = () => {
                                         e.stopPropagation();
                                         rollback('collection', category.id);
                                       }}
-                                      className="px-1.5 py-0.5 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
                                       title="Rollback to original content"
                                     >
                                       <RotateCcw className="w-3 h-3" />
@@ -3295,18 +3298,18 @@ const Dashboard = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Version</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Item ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Version</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-dark-card divide-y divide-dark-border">
                   {history.map((item) => (
                     <tr key={item.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary capitalize">{item.type}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{item.itemId}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">{item.itemId}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
                           v{item.version || 1}
@@ -3500,7 +3503,7 @@ const Dashboard = () => {
       {/* Draft Preview Modal - Production-grade UI */}
       {showDraftModal && selectedDraft && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-dark-card rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl mx-auto border border-dark-border">
+          <div className="bg-[#1a1a1a] rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl mx-auto border border-gray-700">
             <div className="p-6">
               {/* Header with Human-Readable Title */}
               <div className="text-center border-b border-dark-border pb-4 mb-6">
@@ -3529,9 +3532,9 @@ const Dashboard = () => {
                       {(selectedDraft.data.draft.content?.riskScore !== undefined || 
                         selectedDraft.data.draft.content?.visibilityScore !== undefined || 
                         selectedDraft.data.draft.content?.rolledBack) && (
-                        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-                          <h4 className="text-md font-medium text-gray-600 mb-4 flex items-center">
-                            <TrendingUp className="w-5 h-5 mr-2 text-gray-500" />
+                        <div className="bg-[#2a2a2a] rounded-lg shadow p-6 border border-gray-700">
+                          <h4 className="text-md font-medium text-white mb-4 flex items-center">
+                            <TrendingUp className="w-5 h-5 mr-2 text-gray-300" />
                             Quality Assessment
                           </h4>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -3585,7 +3588,7 @@ const Dashboard = () => {
                             )}
                           </div>
                           {selectedDraft.data.draft.content?.promptVersion && (
-                            <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+                            <div className="mt-4 pt-4 border-t border-dark-border text-center">
                               <div className="text-xs text-gray-400">
                                 Generated by GPT‑4 • {selectedDraft.data.draft.content.promptVersion}
                               </div>
@@ -3595,40 +3598,40 @@ const Dashboard = () => {
                       )}
                       
                       {/* Optimized Content Section */}
-                      <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+                      <div className="bg-[#2a2a2a] rounded-lg shadow p-6 border border-gray-700">
                         <h4 className="text-md font-medium text-gray-600 mb-4 flex items-center">
-                          <FileText className="w-5 h-5 mr-2 text-gray-500" />
+                          <FileText className="w-5 h-5 mr-2 text-gray-300" />
                           Optimized Content
                         </h4>
                         <div className="space-y-4">
                           {selectedDraft.data.draft.content?.title && (
                             <div>
                               <h5 className="text-md font-medium text-gray-600 mb-1">Title</h5>
-                              <div className="text-base text-gray-800 font-medium">{selectedDraft.data.draft.content.title}</div>
+                              <div className="text-base text-gray-300 font-medium">{selectedDraft.data.draft.content.title}</div>
                             </div>
                           )}
                           {selectedDraft.data.draft.content?.optimizedDescription && (
                             <div>
                               <h5 className="text-md font-medium text-gray-600 mb-1">Description</h5>
-                              <div className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap break-words">{selectedDraft.data.draft.content.optimizedDescription}</div>
+                              <div className="text-base text-gray-300 leading-relaxed whitespace-pre-wrap break-words">{selectedDraft.data.draft.content.optimizedDescription}</div>
                             </div>
                           )}
                           {selectedDraft.data.draft.content?.llmDescription && (
                             <div className="bg-yellow-900/20 rounded-lg p-4 border border-yellow-200">
                               <h5 className="text-md font-medium text-gray-600 mb-1">LLM Description</h5>
-                              <div className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap break-words">{selectedDraft.data.draft.content.llmDescription}</div>
+                              <div className="text-base text-gray-300 leading-relaxed whitespace-pre-wrap break-words">{selectedDraft.data.draft.content.llmDescription}</div>
                             </div>
                           )}
                           {selectedDraft.data.draft.content?.summary && (
                             <div>
                               <h5 className="text-md font-medium text-gray-600 mb-1">Summary</h5>
-                              <div className="text-base text-gray-800">{selectedDraft.data.draft.content.summary}</div>
+                              <div className="text-base text-gray-300">{selectedDraft.data.draft.content.summary}</div>
                             </div>
                           )}
                           {selectedDraft.data.draft.content?.description && !selectedDraft.data.draft.content?.title && (
                             <div>
                               <h5 className="text-md font-medium text-gray-600 mb-1">Content</h5>
-                              <div className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap break-words">{selectedDraft.data.draft.content.description}</div>
+                              <div className="text-base text-gray-300 leading-relaxed whitespace-pre-wrap break-words">{selectedDraft.data.draft.content.description}</div>
                             </div>
                           )}
                         </div>
@@ -3636,29 +3639,29 @@ const Dashboard = () => {
                       
                       {/* FAQ Section */}
                       {(selectedDraft.data.draft.content?.faqs || selectedDraft.data.draft.faq) && (
-                        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-                          <h4 className="text-md font-medium text-gray-600 mb-4 flex items-center">
-                            <HelpCircle className="w-5 h-5 mr-2 text-gray-500" />
+                        <div className="bg-[#2a2a2a] rounded-lg shadow p-6 border border-gray-700">
+                          <h4 className="text-md font-medium text-white mb-4 flex items-center">
+                            <HelpCircle className="w-5 h-5 mr-2 text-gray-300" />
                             Frequently Asked Questions
                           </h4>
                           <div className="space-y-3">
                             {(selectedDraft.data.draft.content?.faqs || selectedDraft.data.draft.faq?.questions || selectedDraft.data.draft.faq || []).map((faq, index) => (
                               <div key={index} className="bg-blue-900/20 rounded-lg p-4 border border-blue-100">
                                 <div className="text-blue-600 font-medium mb-2 break-words">Q: {faq.q || faq.question}</div>
-                                <div className="text-gray-800 leading-relaxed break-words">A: {faq.a || faq.answer}</div>
+                                <div className="text-gray-300 leading-relaxed break-words">A: {faq.a || faq.answer}</div>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
                       
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-300">
                         Draft saved: {new Date(selectedDraft.data.draft.timestamp).toLocaleString()}
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-gray-800/20 border border-gray-200 rounded-lg p-4">
-                      <p className="text-gray-600">No draft content available</p>
+                    <div className="bg-gray-800/20 border border-dark-border rounded-lg p-4">
+                      <p className="text-text-secondary">No draft content available</p>
                     </div>
                   )}
                 </div>
@@ -3671,40 +3674,40 @@ const Dashboard = () => {
                   </h3>
                   {selectedDraft.data.hasLive ? (
                     <div className="space-y-6">
-                      <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
+                      <div className="bg-[#2a2a2a] rounded-lg shadow p-6 border border-gray-700">
                         <h4 className="text-md font-medium text-gray-600 mb-4 flex items-center">
-                          <Monitor className="w-5 h-5 mr-2 text-gray-500" />
+                          <Monitor className="w-5 h-5 mr-2 text-gray-300" />
                           Published Content
                         </h4>
-                        <div className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap break-words">
+                        <div className="text-base text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
                           {selectedDraft.data.live.content}
                         </div>
                       </div>
                       
                       {selectedDraft.data.live.faq && (
-                        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-                          <h4 className="text-md font-medium text-gray-600 mb-4 flex items-center">
-                            <HelpCircle className="w-5 h-5 mr-2 text-gray-500" />
+                        <div className="bg-[#2a2a2a] rounded-lg shadow p-6 border border-gray-700">
+                          <h4 className="text-md font-medium text-white mb-4 flex items-center">
+                            <HelpCircle className="w-5 h-5 mr-2 text-gray-300" />
                             Published FAQ
                           </h4>
                           <div className="space-y-3">
                             {selectedDraft.data.live.faq?.map((faq, index) => (
                               <div key={index} className="bg-green-900/20 rounded-lg p-4 border border-green-100">
                                 <div className="text-green-600 font-medium mb-2 break-words">Q: {faq.question}</div>
-                                <div className="text-gray-800 leading-relaxed break-words">A: {faq.answer}</div>
+                                <div className="text-gray-300 leading-relaxed break-words">A: {faq.answer}</div>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
                       
-                      <div className="text-xs text-gray-500 text-center">
+                      <div className="text-xs text-gray-300 text-center">
                         Published: {new Date(selectedDraft.data.live.timestamp).toLocaleString()}
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-gray-800/20 border border-gray-200 rounded-lg p-4">
-                      <p className="text-gray-600">No live content available</p>
+                    <div className="bg-gray-800/20 border border-dark-border rounded-lg p-4">
+                      <p className="text-text-secondary">No live content available</p>
                     </div>
                   )}
                 </div>
@@ -3739,7 +3742,7 @@ const Dashboard = () => {
       {/* Confirmation Modal */}
       {showConfirmModal && confirmConfig && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-dark-card rounded-lg shadow-xl max-w-md w-full mx-4 border border-dark-border">
+          <div className="bg-[#1a1a1a] rounded-lg shadow-xl max-w-md w-full mx-4 border border-gray-700">
             <div className="p-6">
               <h3 className="text-lg font-semibold text-text-primary mb-4">
                 {confirmConfig.title}
@@ -3769,7 +3772,7 @@ const Dashboard = () => {
       {/* Consent Modal */}
       {showConsentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-dark-card rounded-lg shadow-xl max-w-lg w-full mx-4 border border-dark-border">
+          <div className="bg-[#1a1a1a] rounded-lg shadow-xl max-w-lg w-full mx-4 border border-gray-700">
             <div className="p-6">
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-text-primary mb-4">
@@ -3829,7 +3832,7 @@ const Dashboard = () => {
       {/* Terms Popup Modal */}
       {showTermsPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-dark-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden border border-dark-border">
+          <div className="bg-[#1a1a1a] rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden border border-gray-700">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-text-primary">
@@ -3882,7 +3885,7 @@ const Dashboard = () => {
       {/* Legal Records Popup Modal */}
       {showLegalRecords && legalRecordsData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-dark-card rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden border border-dark-border">
+          <div className="bg-[#1a1a1a] rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden border border-gray-700">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-text-primary">
@@ -3912,7 +3915,7 @@ const Dashboard = () => {
                   {legalRecordsData.shopifyMetafields.length > 0 ? (
                     <div className="space-y-3">
                       {legalRecordsData.shopifyMetafields.map((field, index) => (
-                        <div key={index} className="bg-white p-3 rounded border">
+                        <div key={index} className="bg-dark-bg-secondary p-3 rounded border border-dark-border">
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <p><strong>Field:</strong> {field.key}</p>
                             <p><strong>Value:</strong> {field.value}</p>
@@ -3948,7 +3951,7 @@ const Dashboard = () => {
                   <h3 className="font-semibold text-text-primary mb-2">Legal Information</h3>
                   <div className="text-sm space-y-2">
                     <p>{legalRecordsData.legalNote}</p>
-                    <div className="mt-3 p-3 bg-white border-l-4 border-blue-500">
+                    <div className="mt-3 p-3 bg-dark-bg-secondary border-l-4 border-blue-500">
                       <p className="font-medium">For Legal Inquiries:</p>
                       <ul className="list-disc list-inside text-xs mt-1 space-y-1">
                         <li>Shopify metafields provide permanent storage with platform timestamps</li>
