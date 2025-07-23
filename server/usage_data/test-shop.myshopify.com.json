@@ -1,0 +1,19 @@
+{
+  "optimizationsThisMonth": 2,
+  "tier": "Free",
+  "monthlyResetDate": "2025-08-01T00:00:00.000Z",
+  "optimizationLog": [
+    {
+      "timestamp": "2025-07-23T04:00:00.000Z",
+      "contentType": "product",
+      "contentId": "123",
+      "usageCount": 1
+    },
+    {
+      "timestamp": "2025-07-23T04:01:00.000Z",
+      "contentType": "product",
+      "contentId": "456",
+      "usageCount": 2
+    }
+  ]
+}

@@ -59,6 +59,47 @@ app.use(express.json({ limit: '10mb' }));
 // Store for shop data (in production, use a database)
 const shopData = new Map();
 
+// === PERSISTENT USAGE STORAGE ===
+const fs = require('fs');
+const path = require('path');
+
+const USAGE_DATA_DIR = path.join(__dirname, 'usage_data');
+
+// Ensure usage data directory exists
+if (!fs.existsSync(USAGE_DATA_DIR)) {
+  fs.mkdirSync(USAGE_DATA_DIR, { recursive: true });
+}
+
+function getUsageFilePath(shop) {
+  const safeShopName = shop.replace(/[^a-zA-Z0-9.-]/g, '_');
+  return path.join(USAGE_DATA_DIR, `${safeShopName}.json`);
+}
+
+function loadUsageFromFile(shop) {
+  const filePath = getUsageFilePath(shop);
+  try {
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf8');
+      const usage = JSON.parse(data);
+      console.log(`[USAGE-FILE] Loaded usage for ${shop}:`, usage);
+      return usage;
+    }
+  } catch (error) {
+    console.error(`[USAGE-FILE] Error loading usage for ${shop}:`, error.message);
+  }
+  return null;
+}
+
+function saveUsageToFile(shop, usage) {
+  const filePath = getUsageFilePath(shop);
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(usage, null, 2));
+    console.log(`[USAGE-FILE] Saved usage for ${shop}:`, usage);
+  } catch (error) {
+    console.error(`[USAGE-FILE] Error saving usage for ${shop}:`, error.message);
+  }
+}
+
 // === AI SEARCH BOOSTER TIER CONFIGURATION ===
 const tierConfig = {
   Free: 25,
@@ -94,30 +135,34 @@ const billingPlans = {
 
 // === USAGE TRACKING FUNCTIONS ===
 function initializeShopUsage(shop) {
-  if (!shopData.has(shop)) {
-    shopData.set(shop, {});
-  }
+  console.log(`[USAGE-INIT] Initializing usage for shop: ${shop}`);
   
-  const shopInfo = shopData.get(shop);
-  if (!shopInfo.usage) {
-    shopInfo.usage = {
+  // Try to load existing usage from file
+  let usage = loadUsageFromFile(shop);
+  
+  if (!usage) {
+    // Create new usage record
+    usage = {
       optimizationsThisMonth: 0,
       tier: 'Free', // Default tier
       monthlyResetDate: getNextMonthDate(),
       optimizationLog: []
     };
+    console.log(`[USAGE-INIT] Created new usage record for ${shop}`);
+    saveUsageToFile(shop, usage);
   }
   
   // Check if monthly reset is needed
-  if (new Date() >= new Date(shopInfo.usage.monthlyResetDate)) {
-    shopInfo.usage.optimizationsThisMonth = 0;
-    shopInfo.usage.monthlyResetDate = getNextMonthDate();
-    shopInfo.usage.optimizationLog = shopInfo.usage.optimizationLog.filter(
-      log => new Date(log.timestamp) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    );
+  if (new Date() >= new Date(usage.monthlyResetDate)) {
+    console.log(`[USAGE-INIT] Monthly reset needed for ${shop}`);
+    usage.optimizationsThisMonth = 0;
+    usage.monthlyResetDate = getNextMonthDate();
+    usage.optimizationLog = [];
+    saveUsageToFile(shop, usage);
   }
   
-  return shopInfo.usage;
+  console.log(`[USAGE-INIT] Final usage for ${shop}:`, usage);
+  return usage;
 }
 
 function getNextMonthDate() {
@@ -139,8 +184,11 @@ function incrementOptimizationUsage(shop, contentType, contentId) {
     usageCount: usage.optimizationsThisMonth
   });
   
+  // CRITICAL: Save to file immediately after increment
+  saveUsageToFile(shop, usage);
+  
   console.log(`[USAGE-INCREMENT] After increment - Shop ${shop} - Optimization count: ${usage.optimizationsThisMonth}/${tierConfig[usage.tier]}`);
-  console.log(`[USAGE-INCREMENT] Shop data now:`, shopData.get(shop)?.usage);
+  console.log(`[USAGE-INCREMENT] Usage saved to file:`, usage);
   return usage;
 }
 
