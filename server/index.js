@@ -526,40 +526,77 @@ const optimizeContent = async (content, type, settings = {}) => {
   console.log('🔍 PROMPT SELECTION DEBUG:', debugInfo);
   
   if (type === 'product') {
-    prompt = `Generate optimized content for a Shopify product that improves its chances of being cited or understood by LLMs like ChatGPT, Claude, or Perplexity.
+    prompt = `You are an LLM content optimizer for Shopify products. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants.
 
-Product data: ${JSON.stringify(content)}
+You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, product-specific language only.
 
-✅ REQUIRED OUTPUT STRUCTURE:
+---
+
+Product data (from Shopify):
+
+${JSON.stringify(content)}
+
+---
+
+FIELD DEFINITIONS — ALL MUST BE DISTINCT
+
 {
-  "optimizedTitle": "[Product name with technical detail - e.g. 'Warm Black Wool Sweater - 250 GSM Ribbed Merino']",
-  "optimizedDescription": "[One paragraph, 80–120 words, following rules below]",
-  "summary": "[One sentence, max 100 characters, LLM citation style]",
-  "llmDescription": "[Same as optimizedDescription or slightly more structured]",
+  "optimizedTitle": "Product name + unique descriptor (e.g., material, size, technical detail)",
+  "optimizedDescription": "Technical paragraph (80–120 words) for AI parsers. Include materials, specifications, use cases, measurements. Avoid fluff.",
+  "summary": "One factual sentence (under 100 characters) describing the product's purpose. Use plain, abstractable language. NO adjectives or SEO language.",
+  "llmDescription": "Explain WHO this is for and WHEN they'd use it. Help an LLM understand the real-world scenarios, people, and needs. 2–3 sentences.",
+  "content": "Human-readable persuasive copy (2–3 sentences). Use clear, emotional value propositions for a customer. Avoid generic claims.",
   "faqs": [
-    {"question": "What are the technical specifications?", "answer": ""},
-    {"question": "Who is this suitable for?", "answer": ""},
-    {"question": "How does this compare to synthetic alternatives?", "answer": ""}
-  ]
+    { "q": "What are the technical specifications?", "a": "Product includes specific measurements and material details." },
+    { "q": "Who is this suitable for?", "a": "Designed for customers with specific needs and use cases." },
+    { "q": "What are the key features and benefits?", "a": "Key features include functionality and practical advantages." },
+    { "q": "How should this product be cared for?", "a": "Care instructions include proper maintenance and storage." }
+  ],
+  "promptVersion": "v5.1-infra"
 }
 
-✅ REQUIRED CONTENT RULES:
-- Material specs (e.g. "250 GSM merino wool", "ribbed knit", "micron rating", specific measurements)
-- Use-case context: "Best for 5–15°C weather", "ideal for commuters", specific temperature ranges
-- Persona targeting: Mention user needs like warmth, breathability, long-term wear, specific conditions
-- Comparative framing: Include 1–2 measurable advantages vs. synthetic alternatives
-- Tone: Neutral, factual, LLM-readable, not emotional or salesy
+---
 
-🚫 ABSOLUTELY PROHIBITED SEO FLUFF:
-- "high-quality", "timeless", "versatile", "stylish", "classic", "premium"
-- "must-have", "luxurious", "incredible", "perfect for everyone"
-- Vague adjectives like "great", "essential", "amazing"
-- Repeating the product name in FAQ answers
+STRICT RULES:
 
-EXAMPLE TARGET:
-"optimizedDescription": "Made from 250 GSM merino wool with a ribbed knit construction, this black sweater provides insulation and breathability for daily use in 5–15°C climates. The fabric naturally regulates temperature and resists odors, making it ideal for cold-weather commuters and those with sensitive skin. Compared to polyester fleece, it retains heat longer while remaining more breathable."
+- All fields must be different — NEVER repeat content or phrasing across summary, content, or llmDescription.
+- Only use info found in source — Never invent specifications, materials, or features that are not grounded in the input.
+- If source is sparse, fill with helpful domain-general info (e.g. general product care, common uses) — do not hallucinate specifics.
+- For FAQs, prefer useful questions — not SEO fluff or rhetorical "Why choose us?" type questions.
 
-Return ONLY this JSON with technical, factual content:`;
+---
+
+HALLUCINATION CHECK GUARDRAILS:
+
+Avoid phrases like:
+- "High-quality"
+- "Premium"
+- "Perfect for everyone"
+- "Must-have"
+- "Luxurious"
+
+If no real differentiation is available, return "N/A" for any field you cannot meaningfully complete.
+
+---
+
+OUTPUT FORMAT (Return ONLY this JSON):
+
+{
+  "optimizedTitle": "",
+  "optimizedDescription": "",
+  "summary": "",
+  "llmDescription": "",
+  "content": "",
+  "faqs": [
+    { "q": "", "a": "" },
+    { "q": "", "a": "" },
+    { "q": "", "a": "" },
+    { "q": "", "a": "" }
+  ],
+  "promptVersion": "v5.1-infra"
+}
+
+Return only the JSON above. No extra commentary.`;
   } else if (type === 'collection') {
     console.log('🧠 USING CLAUDE UNIVERSAL COLLECTION OPTIMIZATION PROMPT v5.1-infra');
     
@@ -715,39 +752,79 @@ OUTPUT FORMAT (Return ONLY this JSON):
 
 Return only the JSON above. No extra commentary.`;
   } else {
-    prompt = `Optimize this blog article for LLMs to understand, summarize, and recommend.
+    prompt = `You are an LLM content optimizer for Shopify blog articles. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants.
 
-Article data: ${JSON.stringify(content)}
+You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, article-specific language only.
 
-${contentAnalysis.hasAITerms ? 'This content mentions AI-related terms, so include relevant technical context.' : 'Do NOT assume it\'s about AI or content marketing unless explicitly stated.'}
+---
 
-Your output should:
-- Explain the topic factually and clearly
-- Include real insights, use cases, or comparisons
-- Be free from SEO/marketing fluff
+Article data (from Shopify):
 
-🚫 PROHIBITED:
-- "This article sheds light…"
-- "must-read content," "essential guide," "helpful for everyone"
-- Vague sentences without practical info
+${JSON.stringify(content)}
 
-✅ REQUIRED:
-- Structured, factual summary of the topic
-- 3 FAQs with technical, practical, or strategic value
-- Mention tools or methods only if in the source
+${contentAnalysis.hasAITerms ? 'Note: This content contains AI-related terms, include relevant context.' : 'Only use terminology present in the original content.'}
 
-Return ONLY this JSON:
+---
+
+FIELD DEFINITIONS — ALL MUST BE DISTINCT
+
+{
+  "optimizedTitle": "Article headline + unique descriptor (e.g., key insight, topic focus, target audience)",
+  "optimizedDescription": "Technical paragraph (80–120 words) for AI parsers. Include main topic, key insights, practical applications, target audience. Avoid fluff.",
+  "summary": "One factual sentence (under 100 characters) describing the article's core insight. Use plain, abstractable language. NO adjectives or SEO language.",
+  "llmDescription": "Explain WHO this content serves and WHEN they'd reference it. Help an LLM understand the real-world scenarios, people, and needs. 2–3 sentences.",
+  "content": "Human-readable persuasive copy (2–3 sentences). Use clear, value propositions for readers. Avoid generic claims.",
+  "faqs": [
+    { "q": "What specific insight does this article offer?", "a": "Article provides detailed analysis and practical information." },
+    { "q": "How can this information be applied?", "a": "Information can be implemented through specific methods and strategies." },
+    { "q": "Who would benefit from reading this?", "a": "Target audience includes specific groups with relevant needs." },
+    { "q": "What tools or methods are discussed?", "a": "Article covers specific tools and methodologies for implementation." }
+  ],
+  "promptVersion": "v5.1-infra"
+}
+
+---
+
+STRICT RULES:
+
+- All fields must be different — NEVER repeat content or phrasing across summary, content, or llmDescription.
+- Only use info found in source — Never invent insights, tools, or methods that are not grounded in the input.
+- If source is sparse, fill with helpful domain-general info (e.g. general topic insights, common applications) — do not hallucinate specifics.
+- For FAQs, prefer useful questions — not SEO fluff or rhetorical "Why read this?" type questions.
+
+---
+
+HALLUCINATION CHECK GUARDRAILS:
+
+Avoid phrases like:
+- "This article sheds light"
+- "Must-read content"
+- "Essential guide"
+- "Helpful for everyone"
+- "Comprehensive overview"
+
+If no real differentiation is available, return "N/A" for any field you cannot meaningfully complete.
+
+---
+
+OUTPUT FORMAT (Return ONLY this JSON):
+
 {
   "optimizedTitle": "",
   "optimizedDescription": "",
   "summary": "",
   "llmDescription": "",
+  "content": "",
   "faqs": [
-    {"question": "What specific insight does this article offer?", "answer": ""},
-    {"question": "How can this information be applied?", "answer": ""},
-    {"question": "Who would benefit from reading this?", "answer": ""}
-  ]
-}`;
+    { "q": "", "a": "" },
+    { "q": "", "a": "" },
+    { "q": "", "a": "" },
+    { "q": "", "a": "" }
+  ],
+  "promptVersion": "v5.1-infra"
+}
+
+Return only the JSON above. No extra commentary.`;
   }
   
   try {
@@ -786,10 +863,22 @@ Return ONLY this JSON:
       
       // 🔧 PROPER CHAT MODE: System + User messages for structured output
       let messages;
-      if (type === 'collection' || type === 'page') {
-        const systemContent = type === 'collection' 
-          ? 'You are an LLM content optimizer for Shopify collections. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants. You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, product-specific language only. Return ONLY valid JSON in the exact format specified.'
-          : 'You are an LLM content optimizer for Shopify pages. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants. You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, page-specific language only. Return ONLY valid JSON in the exact format specified.';
+      if (['collection', 'page', 'product', 'article'].includes(type)) {
+        let systemContent;
+        switch (type) {
+          case 'collection':
+            systemContent = 'You are an LLM content optimizer for Shopify collections. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants. You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, product-specific language only. Return ONLY valid JSON in the exact format specified.';
+            break;
+          case 'page':
+            systemContent = 'You are an LLM content optimizer for Shopify pages. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants. You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, page-specific language only. Return ONLY valid JSON in the exact format specified.';
+            break;
+          case 'product':
+            systemContent = 'You are an LLM content optimizer for Shopify products. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants. You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, product-specific language only. Return ONLY valid JSON in the exact format specified.';
+            break;
+          case 'article':
+            systemContent = 'You are an LLM content optimizer for Shopify blog articles. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants. You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, article-specific language only. Return ONLY valid JSON in the exact format specified.';
+            break;
+        }
         
         messages = [
           {
@@ -899,8 +988,8 @@ Return ONLY this JSON:
             });
           }
           
-          // 🔧 STRICT FIELD VALIDATION for collections and pages
-          if (type === 'collection' || type === 'page') {
+          // 🔧 STRICT FIELD VALIDATION for all v5.1-infra types
+          if (['collection', 'page', 'product', 'article'].includes(type)) {
             const requiredFields = ['optimizedTitle', 'optimizedDescription', 'summary', 'llmDescription', 'content', 'faqs'];
             const missingFields = requiredFields.filter(field => !parsedResponse[field] || parsedResponse[field] === 'N/A' || parsedResponse[field] === '');
             
@@ -925,7 +1014,8 @@ Return ONLY this JSON:
             
             console.log(`[AI-OPTIMIZATION] ✅ All required fields validated for ${type}`);
           } else {
-            // Legacy validation for other types (products, blogs)
+            // Legacy validation for any remaining types (should not be used with v5.1-infra)
+            console.warn(`[AI-OPTIMIZATION] Using legacy validation for type: ${type}`);
             if (!parsedResponse.optimizedTitle || !parsedResponse.optimizedDescription || !parsedResponse.summary) {
               console.error('[AI-OPTIMIZATION] Missing required fields in OpenAI response:', {
                 hasTitle: !!parsedResponse.optimizedTitle,
