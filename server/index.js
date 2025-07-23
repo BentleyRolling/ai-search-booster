@@ -4,6 +4,7 @@ import axios from 'axios';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import { jsonrepair } from 'jsonrepair';
 import { initCitationJobs } from './jobs/citationScheduler.js';
 import { initializeCitationRoutes } from './routes/citations.js';
 
@@ -925,7 +926,24 @@ Return only the JSON above. No extra commentary.`;
             console.log('[AI-OPTIMIZATION] Extracted JSON object from response');
           }
           
-          const parsedResponse = JSON.parse(cleanResponse);
+          // Safe JSON parsing with repair for malformed responses
+          let parsedResponse;
+          try {
+            parsedResponse = JSON.parse(cleanResponse);
+            console.log('[AI-OPTIMIZATION] Parsed OpenAI response directly');
+          } catch (parseError) {
+            console.log('[AI-OPTIMIZATION] Initial JSON parse failed, attempting repair...');
+            try {
+              const repairedJson = jsonrepair(cleanResponse);
+              parsedResponse = JSON.parse(repairedJson);
+              console.log('[AI-OPTIMIZATION] Successfully repaired and parsed JSON');
+            } catch (repairError) {
+              console.error('[AI-OPTIMIZATION] JSON repair also failed:', repairError.message);
+              console.error('[AI-OPTIMIZATION] Original parse error:', parseError.message);
+              console.error('[AI-OPTIMIZATION] Raw response:', cleanResponse);
+              throw new Error(`OpenAI JSON parsing failed: ${parseError.message}`);
+            }
+          }
           console.log('[AI-OPTIMIZATION] Parsed OpenAI response:', parsedResponse);
           
           // === PRODUCTION SCORING & SAFETY INFRASTRUCTURE ===
