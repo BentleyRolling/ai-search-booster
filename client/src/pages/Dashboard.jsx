@@ -1717,6 +1717,11 @@ const Dashboard = () => {
 
         {/* Navigation Menu */}
         <nav className="flex-1 p-4 space-y-2">
+          {/* Optimization Section Header */}
+          <div className="px-3 pb-2">
+            <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Optimization</h3>
+          </div>
+          
           {/* Main Content Sections */}
           {[
             { id: 'products', label: 'Products', icon: Package, count: products?.length || 0 },
@@ -1749,6 +1754,11 @@ const Dashboard = () => {
           
           {/* Divider */}
           <div className="border-t border-dark-border my-3"></div>
+          
+          {/* Support Section Header */}
+          <div className="px-3 pb-2">
+            <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Support</h3>
+          </div>
           
           {/* Help & Support Sections */}
           {[
@@ -1832,6 +1842,11 @@ const Dashboard = () => {
 
               {/* Mobile Navigation Menu */}
               <nav className="flex-1 p-4 space-y-2">
+                {/* Optimization Section Header */}
+                <div className="px-3 pb-2">
+                  <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Optimization</h3>
+                </div>
+                
                 {/* Main Content Sections */}
                 {[
                   { id: 'products', label: 'Products', icon: Package, count: products?.length || 0 },
@@ -1867,6 +1882,11 @@ const Dashboard = () => {
                 
                 {/* Divider */}
                 <div className="border-t border-dark-border my-3"></div>
+                
+                {/* Support Section Header */}
+                <div className="px-3 pb-2">
+                  <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Support</h3>
+                </div>
                 
                 {/* Help & Support Sections */}
                 {[
@@ -3370,26 +3390,26 @@ const Dashboard = () => {
                   <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 3: Click "Optimize"
                   </h4>
-                  <ul className="text-sm text-gray-300 ml-4 list-disc space-y-1">
+                  <ul className="text-sm text-white ml-4 list-disc space-y-1">
                     <li>🟦 Click <strong>"Optimize All"</strong> to process everything</li>
                     <li>✅ Or select specific items and click <strong>"Optimize Selected"</strong></li>
                   </ul>
-                  <p className="text-gray-300 text-sm mt-2">A draft is created for each item.</p>
+                  <p className="text-white text-sm mt-2">A draft is created for each item.</p>
                 </div>
 
                 <div>
                   <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 4: Preview & Approve
                   </h4>
-                  <p className="text-gray-300 text-sm mb-2">Each draft includes:</p>
-                  <ul className="text-sm text-gray-300 ml-4 list-disc space-y-1">
+                  <p className="text-white text-sm mb-2">Each draft includes:</p>
+                  <ul className="text-sm text-white ml-4 list-disc space-y-1">
                     <li>LLM-optimized summary and description</li>
                     <li>Embedded JSON-LD</li>
                     <li>&lt;div data-llm&gt; blocks</li>
                     <li>FAQ schema</li>
                   </ul>
-                  <p className="text-gray-300 text-sm mt-2">You can:</p>
-                  <ul className="text-sm text-gray-300 ml-4 list-disc space-y-1">
+                  <p className="text-white text-sm mt-2">You can:</p>
+                  <ul className="text-sm text-white ml-4 list-disc space-y-1">
                     <li>✅ <strong>Publish</strong></li>
                     <li>🔄 <strong>Rollback</strong></li>
                     <li>♻️ <strong>Re-optimize</strong></li>
@@ -3400,8 +3420,8 @@ const Dashboard = () => {
                   <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 5: Track Progress
                   </h4>
-                  <p className="text-gray-300 text-sm mb-2">Use the dashboard stats:</p>
-                  <ul className="text-sm text-gray-300 ml-4 list-disc space-y-1">
+                  <p className="text-white text-sm mb-2">Use the dashboard stats:</p>
+                  <ul className="text-sm text-white ml-4 list-disc space-y-1">
                     <li>Optimized items</li>
                     <li>Usage count</li>
                   </ul>
@@ -3413,13 +3433,14 @@ const Dashboard = () => {
 
         {/* Support & FAQ Tab */}
         {activeTab === 'support' && (
-          <div className="bg-gray-800/20 rounded-lg p-6 max-h-96 overflow-y-auto">
-            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
-              🧰 Support & FAQ
-            </h3>
+          <div className="prose prose-blue max-w-none">
+            <div className="bg-dark-bg rounded-lg p-6 max-h-96 overflow-y-auto scrollbar-dark border border-dark-border">
+              <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
+                🧰 Support & FAQ
+              </h3>
             
-            <div className="space-y-3">
-              {[
+              <div className="space-y-3">
+                {[
                 {
                   question: "What does AI Search Booster do?",
                   answer: "It enhances your Shopify content to be discoverable by ChatGPT, Claude, Gemini, and Perplexity — using JSON-LD, semantic summaries, FAQs, and invisible AI-readable blocks."
@@ -3463,19 +3484,21 @@ const Dashboard = () => {
                     </div>
                   )}
                 </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
 
         {/* Terms & Disclaimer Tab */}
         {activeTab === 'terms' && (
-          <div className="bg-gray-800/20 rounded-lg p-6 max-h-96 overflow-y-auto">
-            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
-              📜 Legal Disclaimer
-            </h3>
+          <div className="prose prose-blue max-w-none">
+            <div className="bg-dark-bg rounded-lg p-6 max-h-96 overflow-y-auto scrollbar-dark border border-dark-border">
+              <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
+                📜 Legal Disclaimer
+              </h3>
             
-            <div className="prose prose-sm text-gray-300 space-y-4">
+              <div className="prose prose-sm text-white space-y-4">
               <p>
                 AI Search Booster provides content optimization suggestions using advanced automation. While we aim to improve your store's visibility across modern search platforms, results may vary depending on your existing content, store setup, and third-party platform behavior.
               </p>
@@ -3493,9 +3516,10 @@ const Dashboard = () => {
                 <li>This tool is provided "as-is" without warranties of any kind. Use at your own discretion.</li>
               </ul>
               
-              <p className="text-xs text-gray-300 mt-6 p-3 bg-gray-100 rounded">
+              <p className="text-xs text-white mt-6 p-3 bg-dark-bg-secondary rounded border border-dark-border">
                 Consent to these terms is recorded with a timestamp and securely stored. This record may be referenced in the event of legal inquiries or disputes regarding usage.
               </p>
+              </div>
             </div>
           </div>
         )}
@@ -3864,7 +3888,7 @@ const Dashboard = () => {
                   <li>This tool is provided "as-is" without warranties of any kind. Use at your own discretion.</li>
                 </ul>
                 
-                <p className="text-xs text-gray-300 mt-6 p-3 bg-gray-100 rounded">
+                <p className="text-xs text-white mt-6 p-3 bg-dark-bg-secondary rounded border border-dark-border">
                   Consent to these terms is recorded with a timestamp and securely stored. This record may be referenced in the event of legal inquiries or disputes regarding usage.
                 </p>
               </div>
