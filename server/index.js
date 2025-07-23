@@ -59,6 +59,93 @@ app.use(express.json({ limit: '10mb' }));
 // Store for shop data (in production, use a database)
 const shopData = new Map();
 
+// === AI SEARCH BOOSTER TIER CONFIGURATION ===
+const tierConfig = {
+  Free: 25,
+  Starter: 250,
+  Pro: 1000,
+  Enterprise: Infinity
+};
+
+// === SHOPIFY BILLING PLANS ===
+const billingPlans = {
+  Starter: {
+    name: 'Starter Plan',
+    price: 9.00,
+    interval: 'EVERY_30_DAYS',
+    optimizations: 250,
+    description: '250 AI optimizations per month'
+  },
+  Pro: {
+    name: 'Pro Plan', 
+    price: 29.00,
+    interval: 'EVERY_30_DAYS',
+    optimizations: 1000,
+    description: '1,000 AI optimizations per month'
+  },
+  Enterprise: {
+    name: 'Enterprise Plan',
+    price: 'Custom',
+    interval: 'CUSTOM',
+    optimizations: 'Unlimited',
+    description: 'Unlimited optimizations with custom onboarding'
+  }
+};
+
+// === USAGE TRACKING FUNCTIONS ===
+function initializeShopUsage(shop) {
+  if (!shopData.has(shop)) {
+    shopData.set(shop, {});
+  }
+  
+  const shopInfo = shopData.get(shop);
+  if (!shopInfo.usage) {
+    shopInfo.usage = {
+      optimizationsThisMonth: 0,
+      tier: 'Free', // Default tier
+      monthlyResetDate: getNextMonthDate(),
+      optimizationLog: []
+    };
+  }
+  
+  // Check if monthly reset is needed
+  if (new Date() >= new Date(shopInfo.usage.monthlyResetDate)) {
+    shopInfo.usage.optimizationsThisMonth = 0;
+    shopInfo.usage.monthlyResetDate = getNextMonthDate();
+    shopInfo.usage.optimizationLog = shopInfo.usage.optimizationLog.filter(
+      log => new Date(log.timestamp) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    );
+  }
+  
+  return shopInfo.usage;
+}
+
+function getNextMonthDate() {
+  const now = new Date();
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  return nextMonth.toISOString();
+}
+
+function incrementOptimizationUsage(shop, contentType, contentId) {
+  const usage = initializeShopUsage(shop);
+  usage.optimizationsThisMonth += 1;
+  usage.optimizationLog.push({
+    timestamp: new Date().toISOString(),
+    contentType,
+    contentId,
+    usageCount: usage.optimizationsThisMonth
+  });
+  
+  console.log(`[USAGE] Shop ${shop} - Optimization count: ${usage.optimizationsThisMonth}/${tierConfig[usage.tier]}`);
+  return usage;
+}
+
+function hasOptimizationQuota(shop) {
+  const usage = initializeShopUsage(shop);
+  const limit = tierConfig[usage.tier] || tierConfig.Free;
+  return usage.optimizationsThisMonth < limit;
+}
+
 // Initialize citation monitoring routes
 app.use('/api/monitoring', initializeCitationRoutes(shopData));
 
@@ -2082,6 +2169,19 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
       return res.status(400).json({ error: 'Missing shop parameter' });
     }
     
+    // Check usage quota before proceeding
+    if (!hasOptimizationQuota(shop)) {
+      const usage = initializeShopUsage(shop);
+      const limit = tierConfig[usage.tier] || tierConfig.Free;
+      return res.status(429).json({ 
+        error: 'Optimization limit reached',
+        message: `You've reached your monthly limit of ${limit} optimizations. Upgrade your plan to continue.`,
+        usageThisMonth: usage.optimizationsThisMonth,
+        monthlyLimit: limit,
+        currentTier: usage.tier
+      });
+    }
+    
     // Get shop info for access token
     const shopInfo = shopData.get(shop);
     if (!shopInfo || !shopInfo.accessToken) {
@@ -2308,6 +2408,9 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
           visibilityScore,
           rollbackTriggered: rollbackExecuted
         });
+        
+        // Track successful optimization usage
+        incrementOptimizationUsage(shop, 'product', productId);
       } catch (error) {
         console.error(`Error optimizing product ${productId}:`, error.message);
         console.error('Full error details:', error);
@@ -2336,6 +2439,19 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
     const { shop } = req;
     
     console.log(`[PAGES-OPTIMIZE] Starting optimization for shop: ${shop}, pages: ${pageIds}`);
+    
+    // Check usage quota before proceeding
+    if (!hasOptimizationQuota(shop)) {
+      const usage = initializeShopUsage(shop);
+      const limit = tierConfig[usage.tier] || tierConfig.Free;
+      return res.status(429).json({
+        error: 'Optimization limit reached',
+        message: `You've reached your monthly limit of ${limit} optimizations. Upgrade your plan to continue.`,
+        usageThisMonth: usage.optimizationsThisMonth,
+        monthlyLimit: limit,
+        currentTier: usage.tier
+      });
+    }
     
     // Get shop info for access token
     const shopInfo = shopData.get(shop);
@@ -2533,6 +2649,9 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
           visibilityScore,
           rollbackTriggered: rollbackExecuted
         });
+        
+        // Track successful optimization usage
+        incrementOptimizationUsage(shop, 'page', pageId);
       } catch (error) {
         console.error(`Error optimizing page ${pageId}:`, error.message);
         console.error('Full error details:', error);
@@ -2566,6 +2685,19 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
   try {
     const { blogIds, settings } = req.body;
     const { shop } = req;
+    
+    // Check usage quota before proceeding
+    if (!hasOptimizationQuota(shop)) {
+      const usage = initializeShopUsage(shop);
+      const limit = tierConfig[usage.tier] || tierConfig.Free;
+      return res.status(429).json({
+        error: 'Optimization limit reached',
+        message: `You've reached your monthly limit of ${limit} optimizations. Upgrade your plan to continue.`,
+        usageThisMonth: usage.optimizationsThisMonth,
+        monthlyLimit: limit,
+        currentTier: usage.tier
+      });
+    }
     
     // Get shop info for access token
     const shopInfo = shopData.get(shop);
@@ -2767,6 +2899,9 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
               rollbackTriggered: rollbackExecuted
             });
             
+            // Track successful optimization usage
+            incrementOptimizationUsage(shop, 'blog', article.id);
+            
           } catch (articleError) {
             console.error(`Failed to optimize article ${article.id}:`, articleError.message);
             results.push({
@@ -2812,6 +2947,19 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
     const { shop } = req;
     
     console.log(`[COLLECTIONS-OPTIMIZE] Starting optimization for shop: ${shop}, collections: ${collectionIds}`);
+    
+    // Check usage quota before proceeding
+    if (!hasOptimizationQuota(shop)) {
+      const usage = initializeShopUsage(shop);
+      const limit = tierConfig[usage.tier] || tierConfig.Free;
+      return res.status(429).json({
+        error: 'Optimization limit reached',
+        message: `You've reached your monthly limit of ${limit} optimizations. Upgrade your plan to continue.`,
+        usageThisMonth: usage.optimizationsThisMonth,
+        monthlyLimit: limit,
+        currentTier: usage.tier
+      });
+    }
     
     // Get shop info for access token
     const shopInfo = shopData.get(shop);
@@ -2978,6 +3126,9 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
           visibilityScore,
           rollbackTriggered: rollbackExecuted
         });
+        
+        // Track successful optimization usage
+        incrementOptimizationUsage(shop, 'collection', collectionId);
         
       } catch (error) {
         console.error(`[COLLECTIONS-OPTIMIZE] Error processing collection ${collectionId}:`, error);
@@ -3639,6 +3790,210 @@ app.get('/api/consent/records', async (req, res) => {
   } catch (error) {
     console.error('[CONSENT] Records error:', error);
     res.status(500).json({ error: 'Failed to process consent records request' });
+  }
+});
+
+// API: Get usage information
+app.get('/api/usage', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req;
+    
+    const usage = initializeShopUsage(shop);
+    const monthlyLimit = tierConfig[usage.tier] || tierConfig.Free;
+    
+    res.json({
+      usageThisMonth: usage.optimizationsThisMonth,
+      monthlyLimit: monthlyLimit,
+      currentTier: usage.tier,
+      hasQuota: usage.optimizationsThisMonth < monthlyLimit,
+      resetDate: usage.monthlyResetDate,
+      recentOptimizations: usage.optimizationLog.slice(-10) // Last 10 optimizations
+    });
+  } catch (error) {
+    console.error('[USAGE] Error fetching usage:', error);
+    res.status(500).json({ error: 'Failed to fetch usage information' });
+  }
+});
+
+// API: Update user tier (for testing/admin)
+app.post('/api/usage/tier', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req;
+    const { tier } = req.body;
+    
+    if (!tierConfig[tier]) {
+      return res.status(400).json({ error: 'Invalid tier' });
+    }
+    
+    const usage = initializeShopUsage(shop);
+    usage.tier = tier;
+    
+    console.log(`[USAGE] Updated shop ${shop} to tier: ${tier}`);
+    
+    res.json({
+      success: true,
+      tier: tier,
+      newLimit: tierConfig[tier]
+    });
+  } catch (error) {
+    console.error('[USAGE] Error updating tier:', error);
+    res.status(500).json({ error: 'Failed to update tier' });
+  }
+});
+
+// === SHOPIFY BILLING INTEGRATION ===
+
+// API: Get billing plans
+app.get('/api/billing/plans', simpleVerifyShop, async (req, res) => {
+  try {
+    res.json({
+      plans: billingPlans,
+      currentTier: 'Free' // Default, will be updated based on active subscription
+    });
+  } catch (error) {
+    console.error('[BILLING] Error fetching plans:', error);
+    res.status(500).json({ error: 'Failed to fetch billing plans' });
+  }
+});
+
+// API: Create Shopify subscription charge
+app.post('/api/billing/subscribe', simpleVerifyShop, async (req, res) => {
+  try {
+    const { shop } = req;
+    const { plan } = req.body;
+    
+    if (!billingPlans[plan]) {
+      return res.status(400).json({ error: 'Invalid billing plan' });
+    }
+    
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ error: 'Shop not authenticated' });
+    }
+    
+    const planConfig = billingPlans[plan];
+    
+    // For Enterprise plan, redirect to custom onboarding
+    if (plan === 'Enterprise') {
+      return res.json({
+        redirect: '/enterprise-contact',
+        message: 'Enterprise plan requires custom onboarding'
+      });
+    }
+    
+    // Create Shopify recurring application charge
+    const chargeData = {
+      recurring_application_charge: {
+        name: planConfig.name,
+        price: planConfig.price,
+        return_url: `${process.env.APP_URL}/billing/confirm?shop=${shop}&plan=${plan}`,
+        trial_days: 7, // 7-day free trial
+        test: process.env.NODE_ENV !== 'production' // Sandbox mode for development
+      }
+    };
+    
+    try {
+      const response = await axios.post(
+        `https://${shop}/admin/api/2024-01/recurring_application_charges.json`,
+        chargeData,
+        { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+      );
+      
+      const charge = response.data.recurring_application_charge;
+      
+      // Store charge info for confirmation
+      if (!shopInfo.billing) shopInfo.billing = {};
+      shopInfo.billing.pendingCharge = {
+        id: charge.id,
+        plan: plan,
+        created: new Date().toISOString()
+      };
+      
+      res.json({
+        confirmationUrl: charge.confirmation_url,
+        chargeId: charge.id
+      });
+      
+    } catch (shopifyError) {
+      console.error('[BILLING] Shopify API error:', shopifyError.response?.data || shopifyError.message);
+      res.status(500).json({ error: 'Failed to create subscription with Shopify' });
+    }
+    
+  } catch (error) {
+    console.error('[BILLING] Error creating subscription:', error);
+    res.status(500).json({ error: 'Failed to create subscription' });
+  }
+});
+
+// API: Confirm billing subscription
+app.get('/billing/confirm', async (req, res) => {
+  try {
+    const { shop, plan, charge_id } = req.query;
+    
+    if (!shop || !plan || !charge_id) {
+      return res.status(400).send('Missing required parameters');
+    }
+    
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).send('Shop not authenticated');
+    }
+    
+    // Get charge status from Shopify
+    try {
+      const response = await axios.get(
+        `https://${shop}/admin/api/2024-01/recurring_application_charges/${charge_id}.json`,
+        { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+      );
+      
+      const charge = response.data.recurring_application_charge;
+      
+      if (charge.status === 'accepted') {
+        // Activate the charge
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/recurring_application_charges/${charge_id}/activate.json`,
+          {},
+          { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+        );
+        
+        // Update shop tier
+        const usage = initializeShopUsage(shop);
+        usage.tier = plan;
+        
+        // Store billing info
+        if (!shopInfo.billing) shopInfo.billing = {};
+        shopInfo.billing.activeCharge = {
+          id: charge_id,
+          plan: plan,
+          activated: new Date().toISOString(),
+          status: 'active'
+        };
+        delete shopInfo.billing.pendingCharge;
+        
+        console.log(`[BILLING] Successfully activated ${plan} plan for shop ${shop}`);
+        
+        // Redirect back to app with success
+        res.redirect(`${process.env.APP_URL}?shop=${shop}&billing=success&plan=${plan}`);
+        
+      } else if (charge.status === 'declined') {
+        // Clean up pending charge
+        if (shopInfo.billing) {
+          delete shopInfo.billing.pendingCharge;
+        }
+        
+        res.redirect(`${process.env.APP_URL}?shop=${shop}&billing=declined`);
+      } else {
+        res.redirect(`${process.env.APP_URL}?shop=${shop}&billing=pending`);
+      }
+      
+    } catch (shopifyError) {
+      console.error('[BILLING] Shopify confirmation error:', shopifyError.response?.data || shopifyError.message);
+      res.status(500).send('Failed to confirm subscription with Shopify');
+    }
+    
+  } catch (error) {
+    console.error('[BILLING] Error confirming subscription:', error);
+    res.status(500).send('Failed to confirm subscription');
   }
 });
 

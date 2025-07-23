@@ -28,6 +28,7 @@ const Dashboard = () => {
   const [selectedPages, setSelectedPages] = useState([]);
   const [selectedCollections, setSelectedCollections] = useState([]);
   const [usage, setUsage] = useState(null);
+  const [tierUsage, setTierUsage] = useState(null);
   const [settings, setSettings] = useState({
     targetLLM: 'general',
     keywords: '',
@@ -465,21 +466,35 @@ const Dashboard = () => {
 
   const fetchUsage = async (shopName) => {
     try {
-      console.log('Dashboard: Fetching usage for shop:', shopName);
+      console.log('Dashboard: Fetching tier-based usage for shop:', shopName);
       const response = await authFetch(`${API_BASE}/api/usage?shop=${shopName}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       const data = await response.json();
-      console.log('Dashboard: Usage data received:', data);
-      setUsage(data);
+      console.log('Dashboard: Tier usage data received:', data);
+      setTierUsage(data);
+      
+      // Keep legacy usage for backward compatibility
+      setUsage({
+        shop: shopName,
+        optimizations: { products: 0, blogs: 0, total: data.usageThisMonth || 0 },
+        aiCalls: { today: 0, thisMonth: 0, total: 0 },
+        limits: { monthlyOptimizations: data.monthlyLimit || 10, dailyAICalls: 100 }
+      });
     } catch (error) {
       console.error('Failed to fetch usage:', error);
+      setTierUsage({
+        usageThisMonth: 0,
+        monthlyLimit: 10,
+        currentTier: 'Free',
+        hasQuota: true
+      });
       setUsage({
         shop: shopName,
         optimizations: { products: 0, blogs: 0, total: 0 },
         aiCalls: { today: 0, thisMonth: 0, total: 0 },
-        limits: { monthlyOptimizations: 1000, dailyAICalls: 100 }
+        limits: { monthlyOptimizations: 10, dailyAICalls: 100 }
       });
     }
   };
@@ -1661,25 +1676,7 @@ const Dashboard = () => {
                     </div>
                   )}
                   
-                  {/* Usage Indicator */}
-                  {usage && (
-                    <div className="flex items-center space-x-2 bg-blue-600 text-white px-3 py-1 rounded-full">
-                      <Zap className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        {usage.tokensUsed ? `${Math.round(usage.tokensUsed / 1000)}K tokens` : '0 tokens'}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Performance Badge */}
-                  {status && status.optimizedProducts > 0 && (
-                    <div className="flex items-center space-x-2 bg-purple-600 text-white px-3 py-1 rounded-full">
-                      <TrendingUp className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        {optimizationPercentage}% optimized
-                      </span>
-                    </div>
-                  )}
+                  {/* Removed confusing UI elements: tokens and percentage badges */}
                   
                   {/* Monitoring Status */}
                   <div className="flex items-center space-x-2">
@@ -2078,27 +2075,49 @@ const Dashboard = () => {
             </>
           )}
           
-          {/* Usage - Always shown on all tabs for billing accuracy */}
+          {/* AI Optimizations This Month - Tier-based Usage */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-500">Usage This Month</h3>
+              <h3 className="text-sm font-medium text-gray-500">AI Optimizations This Month</h3>
               <div className="flex items-center space-x-2">
-                <Zap className="w-4 h-4 text-blue-500" />
+                <Zap className={`w-4 h-4 ${
+                  tierUsage && !tierUsage.hasQuota ? 'text-red-500' : 'text-blue-500'
+                }`} />
                 <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-blue-500 transition-all duration-500"
-                    style={{ width: `${usage ? ((usage.optimizations?.total || 0) / (usage.limits?.monthlyOptimizations || 1000) * 100) : 0}%` }}
+                    className={`h-full transition-all duration-500 ${
+                      tierUsage && !tierUsage.hasQuota ? 'bg-red-500' : 'bg-blue-500'
+                    }`}
+                    style={{ width: `${tierUsage ? (tierUsage.usageThisMonth / tierUsage.monthlyLimit * 100) : 0}%` }}
                   />
                 </div>
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-lg font-bold text-blue-600">
-                {usage?.optimizations?.total || 0} / {usage?.limits?.monthlyOptimizations || 1000}
+              <p className={`text-lg font-bold ${
+                tierUsage && !tierUsage.hasQuota ? 'text-red-600' : 'text-blue-600'
+              }`}>
+                {tierUsage?.usageThisMonth || 0} / {tierUsage?.monthlyLimit || 10}
               </p>
-              <p className="text-xs text-gray-500">
-                {usage?.tokensUsed ? `${Math.round(usage.tokensUsed / 1000)}K tokens used` : 'No tokens used'}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500">
+                  Each content optimization = 1 usage
+                </p>
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  tierUsage?.currentTier === 'Enterprise' ? 'bg-purple-100 text-purple-700' :
+                  tierUsage?.currentTier === 'Scale' ? 'bg-green-100 text-green-700' :
+                  tierUsage?.currentTier === 'Pro' ? 'bg-blue-100 text-blue-700' :
+                  tierUsage?.currentTier === 'Starter' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>
+                  {tierUsage?.currentTier || 'Free'}
+                </span>
+              </div>
+              {tierUsage && !tierUsage.hasQuota && (
+                <p className="text-xs text-red-500 mt-1">
+                  ⚠️ You've reached your optimization limit for this month
+                </p>
+              )}
             </div>
           </div>
           
@@ -2220,7 +2239,8 @@ const Dashboard = () => {
                     </button>
                     <button
                       onClick={optimizeProducts}
-                      disabled={optimizing || selectedProducts.length === 0}
+                      disabled={optimizing || selectedProducts.length === 0 || (tierUsage && !tierUsage.hasQuota)}
+                      title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected products'}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                     >
                       {optimizing ? (
@@ -2277,6 +2297,21 @@ const Dashboard = () => {
                     </button>
                   </div>
                 </div>
+                
+                {/* Upgrade Plan CTA for Products */}
+                {tierUsage && !tierUsage.hasQuota && (
+                  <div className="mt-3 text-center">
+                    <p className="text-xs text-red-500 mb-2">
+                      ⚠️ You've reached your optimization limit for this month
+                    </p>
+                    <a
+                      href="/billing"
+                      className="inline-block text-sm text-blue-600 hover:text-blue-800 underline font-medium"
+                    >
+                      Upgrade Plan to Unlock More Optimizations →
+                    </a>
+                  </div>
+                )}
                 
                 {products.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No products found</p>
@@ -2434,7 +2469,8 @@ const Dashboard = () => {
                       </button>
                       <button
                         onClick={() => optimizeArticles()}
-                        disabled={optimizing || selectedArticles.length === 0}
+                        disabled={optimizing || selectedArticles.length === 0 || (tierUsage && !tierUsage.hasQuota)}
+                        title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected articles'}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                       >
                         {optimizing ? (
@@ -2491,6 +2527,21 @@ const Dashboard = () => {
                       </button>
                     </div>
                 </div>
+                
+                {/* Upgrade Plan CTA for Blogs */}
+                {tierUsage && !tierUsage.hasQuota && (
+                  <div className="mt-3 text-center">
+                    <p className="text-xs text-red-500 mb-2">
+                      ⚠️ You've reached your optimization limit for this month
+                    </p>
+                    <a
+                      href="/billing"
+                      className="inline-block text-sm text-blue-600 hover:text-blue-800 underline font-medium"
+                    >
+                      Upgrade Plan to Unlock More Optimizations →
+                    </a>
+                  </div>
+                )}
                 
                 {articles.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No blog articles found</p>
@@ -2645,7 +2696,8 @@ const Dashboard = () => {
                       </button>
                       <button
                         onClick={optimizePages}
-                        disabled={optimizing || selectedPages.length === 0}
+                        disabled={optimizing || selectedPages.length === 0 || (tierUsage && !tierUsage.hasQuota)}
+                        title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected pages'}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                       >
                         {optimizing ? (
@@ -2701,6 +2753,21 @@ const Dashboard = () => {
                       </button>
                     </div>
                 </div>
+                
+                {/* Upgrade Plan CTA for Pages */}
+                {tierUsage && !tierUsage.hasQuota && (
+                  <div className="mt-3 text-center">
+                    <p className="text-xs text-red-500 mb-2">
+                      ⚠️ You've reached your optimization limit for this month
+                    </p>
+                    <a
+                      href="/billing"
+                      className="inline-block text-sm text-blue-600 hover:text-blue-800 underline font-medium"
+                    >
+                      Upgrade Plan to Unlock More Optimizations →
+                    </a>
+                  </div>
+                )}
                 
                 {pages.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No pages found</p>
@@ -2862,7 +2929,8 @@ const Dashboard = () => {
                       </button>
                       <button
                         onClick={optimizeCollections}
-                        disabled={optimizing || selectedCollections.length === 0}
+                        disabled={optimizing || selectedCollections.length === 0 || (tierUsage && !tierUsage.hasQuota)}
+                        title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected collections'}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                       >
                         {optimizing ? (
@@ -2918,6 +2986,21 @@ const Dashboard = () => {
                       </button>
                     </div>
                 </div>
+                
+                {/* Upgrade Plan CTA for Collections */}
+                {tierUsage && !tierUsage.hasQuota && (
+                  <div className="mt-3 text-center">
+                    <p className="text-xs text-red-500 mb-2">
+                      ⚠️ You've reached your optimization limit for this month
+                    </p>
+                    <a
+                      href="/billing"
+                      className="inline-block text-sm text-blue-600 hover:text-blue-800 underline font-medium"
+                    >
+                      Upgrade Plan to Unlock More Optimizations →
+                    </a>
+                  </div>
+                )}
                 
                 {(() => {
                   console.log('RENDER DEBUG: collections.length =', collections.length);
