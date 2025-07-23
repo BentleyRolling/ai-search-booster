@@ -643,66 +643,77 @@ OUTPUT FORMAT (Return ONLY this JSON):
 
 Return only the JSON above. No extra commentary.`;
   } else if (type === 'page') {
-    prompt = `Optimize this Shopify page for universal LLM discoverability by ChatGPT, Claude, Perplexity, and other AI assistants.
+    prompt = `You are an LLM content optimizer for Shopify pages. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants.
 
-Page data: ${JSON.stringify(content)}
+You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, page-specific language only.
 
-🎯 UNIVERSAL PAGE OPTIMIZATION GOALS:
-This prompt must work for ANY page type: Contact, About, FAQs, Privacy, Shipping, Returns, Custom pages, etc.
-Do NOT make assumptions about content topic or store type.
-${contentAnalysis.hasAITerms ? 'Note: This page contains AI-related terms, include relevant context.' : 'Only use terminology present in the original content.'}
+---
 
-✅ REQUIRED OUTPUT STRUCTURE:
+Page data (from Shopify):
+
+${JSON.stringify(content)}
+
+---
+
+FIELD DEFINITIONS — ALL MUST BE DISTINCT
+
 {
-  "optimizedTitle": "[Clear, descriptive title with key function]",
-  "optimizedDescription": "[80-120 words explaining page purpose and content]",
-  "summary": "[One sentence, max 100 characters, citation-ready]",
-  "llmDescription": "[Must clearly explain: purpose, information type, relevant interactions]",
+  "optimizedTitle": "Page name + unique descriptor (e.g., function, purpose, key benefit)",
+  "optimizedDescription": "Technical paragraph (80–120 words) for AI parsers. Include page purpose, key information, relevant policies, contact details. Avoid fluff.",
+  "summary": "One factual sentence (under 100 characters) describing the page's function. Use plain, abstractable language. NO adjectives or SEO language.",
+  "llmDescription": "Explain WHO this page serves and WHEN they'd need it. Help an LLM understand the real-world scenarios, people, and needs. 2–3 sentences.",
+  "content": "Human-readable persuasive copy (2–3 sentences). Use clear, value propositions for a customer. Avoid generic claims.",
   "faqs": [
-    {"question": "What information is provided on this page?", "answer": ""},
-    {"question": "When would someone need to reference this page?", "answer": ""},
-    {"question": "What type of content or policies does this cover?", "answer": ""}
-  ]
+    { "q": "What information does this page provide?", "a": "Page contains specific details about store policies and procedures." },
+    { "q": "When would someone need to reference this page?", "a": "Customers use this when they need specific information or support." },
+    { "q": "What type of content or policies does this cover?", "a": "Covers store-specific policies and operational information." },
+    { "q": "How can customers use the information on this page?", "a": "Information helps customers understand store procedures and contact methods." }
+  ],
+  "promptVersion": "v5.1-infra"
 }
 
-✅ LLMDESCRIPTION REQUIREMENTS:
-Must ALWAYS clearly explain:
-- The purpose of the page (e.g., "contains store contact information", "outlines return policies")
-- The kind of information customers or AI assistants can expect to find
-- Examples of relevant interactions (e.g., "used for contacting support", "references shipping timeframes")
+---
 
-✅ FAQ REQUIREMENTS:
-- Generate 3 universal, structured FAQs based ONLY on provided content
-- Valuable to LLMs for understanding page function and scope
-- DO NOT reference the page title in answers
-- Focus on practical information and usage scenarios
+STRICT RULES:
 
-🚫 ABSOLUTELY PROHIBITED:
-- Marketing fluff: "sustainable," "must-have," "comprehensive guide," "essential resource"
-- SEO phrases: "great for everyone," "we value your feedback," "high-quality service"
-- Generic filler or assumptions about content not present in source
-- Empty or vague responses for minimal content pages
+- All fields must be different — NEVER repeat content or phrasing across summary, content, or llmDescription.
+- Only use info found in source — Never invent contact details, policies, or scenarios that are not grounded in the input.
+- If source is sparse, fill with helpful domain-general info (e.g. general store policies, common page purposes) — do not hallucinate specifics.
+- For FAQs, prefer useful questions — not SEO fluff or rhetorical "Why choose us?" type questions.
 
-EXAMPLE TARGETS:
-Contact Page: "Contains store contact information including email, phone, and business hours for customer inquiries and support requests."
-Privacy Page: "Outlines data collection practices, cookie usage, and customer privacy rights as required by applicable regulations."
-About Page: "Provides background information about the company, founding story, mission, and key personnel or values."
+---
 
-MINIMAL CONTENT FALLBACK:
-If page has minimal content, still provide structured, LLM-friendly descriptions based on page handle/title context.
+HALLUCINATION CHECK GUARDRAILS:
 
-Return ONLY this JSON with factual, universal content:
+Avoid phrases like:
+- "Comprehensive guide"
+- "Essential resource"
+- "We value your feedback"
+- "High-quality service"
+- "Great for everyone"
+
+If no real differentiation is available, return "N/A" for any field you cannot meaningfully complete.
+
+---
+
+OUTPUT FORMAT (Return ONLY this JSON):
+
 {
   "optimizedTitle": "",
   "optimizedDescription": "",
   "summary": "",
   "llmDescription": "",
+  "content": "",
   "faqs": [
-    {"question": "What information is provided on this page?", "answer": ""},
-    {"question": "When would someone need to reference this page?", "answer": ""},
-    {"question": "What type of content or policies does this cover?", "answer": ""}
-  ]
-}`;
+    { "q": "", "a": "" },
+    { "q": "", "a": "" },
+    { "q": "", "a": "" },
+    { "q": "", "a": "" }
+  ],
+  "promptVersion": "v5.1-infra"
+}
+
+Return only the JSON above. No extra commentary.`;
   } else {
     prompt = `Optimize this blog article for LLMs to understand, summarize, and recommend.
 
@@ -775,11 +786,15 @@ Return ONLY this JSON:
       
       // 🔧 PROPER CHAT MODE: System + User messages for structured output
       let messages;
-      if (type === 'collection') {
+      if (type === 'collection' || type === 'page') {
+        const systemContent = type === 'collection' 
+          ? 'You are an LLM content optimizer for Shopify collections. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants. You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, product-specific language only. Return ONLY valid JSON in the exact format specified.'
+          : 'You are an LLM content optimizer for Shopify pages. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants. You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, page-specific language only. Return ONLY valid JSON in the exact format specified.';
+        
         messages = [
           {
             role: 'system',
-            content: 'You are an LLM content optimizer for Shopify collections. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants. You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, product-specific language only. Return ONLY valid JSON in the exact format specified.'
+            content: systemContent
           },
           {
             role: 'user',
@@ -884,33 +899,33 @@ Return ONLY this JSON:
             });
           }
           
-          // 🔧 STRICT FIELD VALIDATION for collections
-          if (type === 'collection') {
+          // 🔧 STRICT FIELD VALIDATION for collections and pages
+          if (type === 'collection' || type === 'page') {
             const requiredFields = ['optimizedTitle', 'optimizedDescription', 'summary', 'llmDescription', 'content', 'faqs'];
             const missingFields = requiredFields.filter(field => !parsedResponse[field] || parsedResponse[field] === 'N/A' || parsedResponse[field] === '');
             
             if (missingFields.length > 0) {
-              console.error('[AI-OPTIMIZATION] Missing or empty required fields:', missingFields);
+              console.error(`[AI-OPTIMIZATION] Missing or empty required fields for ${type}:`, missingFields);
               console.error('[AI-OPTIMIZATION] Parsed response:', parsedResponse);
               throw new Error(`OpenAI response missing required fields: ${missingFields.join(', ')}`);
             }
             
             // Validate FAQs structure
-            if (!Array.isArray(parsedResponse.faqs) || parsedResponse.faqs.length < 4) {
-              console.error('[AI-OPTIMIZATION] Invalid FAQs structure:', parsedResponse.faqs);
-              throw new Error('OpenAI response must include exactly 4 FAQs');
+            if (!Array.isArray(parsedResponse.faqs) || parsedResponse.faqs.length !== 4) {
+              console.error(`[AI-OPTIMIZATION] Invalid FAQs structure for ${type}:`, parsedResponse.faqs);
+              throw new Error(`OpenAI response must include exactly 4 FAQs for ${type}`);
             }
             
             // Validate each FAQ has both question and answer
             const invalidFaqs = parsedResponse.faqs.filter(faq => !faq.q || !faq.a || faq.q.trim() === '' || faq.a.trim() === '');
             if (invalidFaqs.length > 0) {
-              console.error('[AI-OPTIMIZATION] Invalid FAQ entries:', invalidFaqs);
+              console.error(`[AI-OPTIMIZATION] Invalid FAQ entries for ${type}:`, invalidFaqs);
               throw new Error('All FAQs must have both question (q) and answer (a)');
             }
             
-            console.log('[AI-OPTIMIZATION] ✅ All required fields validated for collections');
+            console.log(`[AI-OPTIMIZATION] ✅ All required fields validated for ${type}`);
           } else {
-            // Legacy validation for other types
+            // Legacy validation for other types (products, blogs)
             if (!parsedResponse.optimizedTitle || !parsedResponse.optimizedDescription || !parsedResponse.summary) {
               console.error('[AI-OPTIMIZATION] Missing required fields in OpenAI response:', {
                 hasTitle: !!parsedResponse.optimizedTitle,
