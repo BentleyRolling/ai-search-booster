@@ -2244,7 +2244,7 @@ const Dashboard = () => {
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Products</h3>
-                  <p className="text-4xl font-bold text-text-primary mb-2">{status?.totalProducts || 0}</p>
+                  <p className="text-4xl font-bold text-text-primary mb-2">{products?.length || 0}</p>
                   <Package className="w-5 h-5 text-text-muted mx-auto" />
                 </div>
               </div>
@@ -2252,7 +2252,7 @@ const Dashboard = () => {
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-accent-primary/50 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Products</h3>
-                  <p className="text-4xl font-bold text-accent-primary mb-2">{status?.optimizedProducts || 0}</p>
+                  <p className="text-4xl font-bold text-accent-primary mb-2">{products?.filter(p => p.optimized)?.length || 0}</p>
                   <CheckCircle className="w-5 h-5 text-accent-primary mx-auto" />
                 </div>
               </div>
@@ -2264,7 +2264,7 @@ const Dashboard = () => {
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Articles</h3>
-                  <p className="text-4xl font-bold text-text-primary mb-2">{status?.totalBlogs || 0}</p>
+                  <p className="text-4xl font-bold text-text-primary mb-2">{articles?.length || 0}</p>
                   <FileText className="w-5 h-5 text-text-muted mx-auto" />
                 </div>
               </div>
@@ -2272,7 +2272,7 @@ const Dashboard = () => {
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-accent-primary/50 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Articles</h3>
-                  <p className="text-4xl font-bold text-accent-primary mb-2">{status?.optimizedBlogs || 0}</p>
+                  <p className="text-4xl font-bold text-accent-primary mb-2">{articles?.filter(a => a.optimized)?.length || 0}</p>
                   <CheckCircle className="w-5 h-5 text-accent-primary mx-auto" />
                 </div>
               </div>
@@ -2535,7 +2535,7 @@ const Dashboard = () => {
                                   </span>
                                 )}
                                 {product.hasDraft && !product.rollbackTriggered && (
-                                  <span className="inline-block px-3 py-1.5 bg-gradient-to-r from-amber-600 to-amber-700 text-white text-xs rounded-full font-medium border border-amber-500 hover:from-amber-700 hover:to-amber-800 transition-all duration-200">
+                                  <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
                                     📝 Draft Ready
                                   </span>
                                 )}
@@ -2549,7 +2549,7 @@ const Dashboard = () => {
                                       e.stopPropagation();
                                       handlePreviewDraft('product', product.id);
                                     }}
-                                    className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-xs font-medium flex items-center space-x-1 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200"
+                                    className="px-3 py-1.5 bg-transparent text-white border border-white/20 rounded-full text-xs font-medium flex items-center space-x-1 hover:border-blue-500 transition-all duration-200"
                                     title="Preview draft content"
                                   >
                                     <Eye className="w-3 h-3" />
@@ -3428,8 +3428,8 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* FAQ Tab - Temporarily disabled for deployment */}
-        {false && activeTab === 'support' && (
+        {/* FAQ Tab */}
+        {activeTab === 'support' && (
           <div className="prose prose-blue max-w-none">
             <div className="bg-dark-bg rounded-lg p-6 max-h-96 overflow-y-auto scrollbar-dark border border-dark-border">
               <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
