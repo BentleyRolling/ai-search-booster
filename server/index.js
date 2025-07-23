@@ -701,10 +701,10 @@ FIELD DEFINITIONS — ALL MUST BE DISTINCT
   "llmDescription": "Explain WHO this page serves and WHEN they'd need it. Help an LLM understand the real-world scenarios, people, and needs. 2–3 sentences.",
   "content": "Human-readable persuasive copy (2–3 sentences). Use clear, value propositions for a customer. Avoid generic claims.",
   "faqs": [
-    { "q": "What information does this page provide?", "a": "Page contains specific details about store policies and procedures." },
-    { "q": "When would someone need to reference this page?", "a": "Customers use this when they need specific information or support." },
-    { "q": "What type of content or policies does this cover?", "a": "Covers store-specific policies and operational information." },
-    { "q": "How can customers use the information on this page?", "a": "Information helps customers understand store procedures and contact methods." }
+    { "q": "What specific information is available on this page?", "a": "Based on page content - provide actual details, not generic descriptions." },
+    { "q": "When would a customer need to visit this page?", "a": "Real scenarios based on page function - not vague 'when they need info'." },
+    { "q": "How does this page help customers?", "a": "Specific benefits and use cases from actual page content." },
+    { "q": "What should customers expect to find here?", "a": "Concrete details about forms, contacts, policies, or information available." }
   ],
   "promptVersion": "v5.1-infra"
 }
@@ -713,10 +713,12 @@ FIELD DEFINITIONS — ALL MUST BE DISTINCT
 
 STRICT RULES:
 
+- ALL 6 FIELDS REQUIRED — Every field must have unique, page-specific content. NO empty fields, NO "N/A", NO generic text.
 - All fields must be different — NEVER repeat content or phrasing across summary, content, or llmDescription.
+- CONTENT FIELD MANDATORY — Must contain human-readable persuasive copy about this specific page's value.
+- PAGE-SPECIFIC FAQs — Base answers on actual page content, handle, and purpose. NO generic "store policies" language.
 - Only use info found in source — Never invent contact details, policies, or scenarios that are not grounded in the input.
-- If source is sparse, fill with helpful domain-general info (e.g. general store policies, common page purposes) — do not hallucinate specifics.
-- For FAQs, prefer useful questions — not SEO fluff or rhetorical "Why choose us?" type questions.
+- If source is sparse, use page handle/title context to infer purpose and create relevant content.
 
 ---
 
