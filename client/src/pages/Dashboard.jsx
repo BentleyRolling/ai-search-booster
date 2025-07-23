@@ -1973,11 +1973,11 @@ const Dashboard = () => {
           {notifications.map((notification) => (
             <div
               key={notification.id}
-              className={`p-4 rounded-lg shadow-lg backdrop-blur-sm border-l-4 animate-fade-in ${
-                notification.type === 'success' ? 'bg-gray-900/80 border-green-400' :
-                notification.type === 'error' ? 'bg-gray-900/80 border-red-400' :
-                notification.type === 'warning' ? 'bg-gray-900/80 border-yellow-400' :
-                'bg-gray-900/80 border-blue-400'
+              className={`p-4 rounded-lg shadow-lg border-l-4 animate-fade-in ${
+                notification.type === 'success' ? 'bg-dark-card border-green-400' :
+                notification.type === 'error' ? 'bg-dark-card border-red-400' :
+                notification.type === 'warning' ? 'bg-dark-card border-yellow-400' :
+                'bg-dark-card border-blue-400'
               }`}
             >
               <div className="flex items-start">
@@ -2475,7 +2475,7 @@ const Dashboard = () => {
                         className={`border rounded-xl p-6 cursor-pointer transition-all duration-200 ease-out ${
                           selectedProducts.includes(product.id.toString())
                             ? 'border-blue-500 bg-blue-900/20 ring-1 ring-blue-500/50'
-                            : 'border-dark-border bg-[#2a2a2a] hover:border-dark-border-hover hover:bg-[#363636]'
+                            : 'border-dark-border bg-dark-card hover:border-dark-border-hover hover:ring-1 hover:ring-gray-500/30'
                         }`}
                       >
                         <div className="flex items-start space-x-3">
