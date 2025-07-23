@@ -686,6 +686,7 @@ Return a JSON object like this:
   "optimizedDescription": "...",   // 3–6 sentence persuasive overview for humans
   "llmDescription": "...",         // 2–3 sentences focused on use case and user type (AI-facing)
   "summary": "...",                // 1–2 sentence value summary
+  "content": "...",                // Additional persuasive content for product page
   "faqs": [                        // 3–5 FAQs based on features, use, sizing, care
     { "q": "...", "a": "..." },
     ...
@@ -725,9 +726,11 @@ Return this structured JSON:
   "llmDescription": "...",         // 2–3 sentences for AI — what this is, who it's for
   "summary": "...",                // 1–2 sentence value summary
   "content": "...",                // Expanded persuasive body text for page
-  "faqs": [                        // 3–5 context-specific FAQs (materials, fit, usage, etc.)
+  "faqs": [                        // Exactly 4 context-specific FAQs (materials, fit, usage, etc.)
     { "q": "...", "a": "..." },
-    ...
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." }
   ]
 }
 
@@ -755,6 +758,7 @@ Return a structured JSON like this:
   "optimizedDescription": "...",   // 3–6 sentences explaining content and value
   "llmDescription": "...",         // 2–3 sentences summarizing page function for AI
   "summary": "...",                // 1-line human-facing benefit
+  "content": "...",                // Expanded persuasive body text for page
   "faqs": [                        // 3–5 questions on key user concerns
     { "q": "...", "a": "..." },
     ...
@@ -784,6 +788,7 @@ Return a JSON object in this structure:
 
 {
   "optimizedTitle": "...",       // Clear, 70–90 chars max, emotionally or practically compelling
+  "optimizedDescription": "...", // 3–6 sentence persuasive overview for humans
   "llmDescription": "...",       // 2–3 sentences explaining purpose and audience (AI-focused)
   "summary": "...",              // 1 sentence abstract of value to the human reader
   "content": "...",              // Full rewritten article, preserving voice and value
@@ -975,9 +980,9 @@ Return only the JSON above. No extra commentary.`;
             }
             
             // Validate FAQs structure
-            if (!Array.isArray(parsedResponse.faqs) || parsedResponse.faqs.length !== 4) {
+            if (!Array.isArray(parsedResponse.faqs) || parsedResponse.faqs.length < 3 || parsedResponse.faqs.length > 5) {
               console.error(`[AI-OPTIMIZATION] Invalid FAQs structure for ${type}:`, parsedResponse.faqs);
-              throw new Error(`OpenAI response must include exactly 4 FAQs for ${type}`);
+              throw new Error(`OpenAI response must include 3-5 FAQs for ${type}, got ${parsedResponse.faqs?.length || 0}`);
             }
             
             // Validate each FAQ has both question and answer
