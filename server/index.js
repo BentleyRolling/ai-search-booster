@@ -60,8 +60,12 @@ app.use(express.json({ limit: '10mb' }));
 const shopData = new Map();
 
 // === PERSISTENT USAGE STORAGE ===
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const USAGE_DATA_DIR = path.join(__dirname, 'usage_data');
 
