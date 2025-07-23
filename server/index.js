@@ -669,75 +669,33 @@ const optimizeContent = async (content, type, settings = {}) => {
   console.log('🔍 PROMPT SELECTION DEBUG:', debugInfo);
   
   if (type === 'product') {
-    prompt = `You are an LLM content optimizer for Shopify products. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants.
+    prompt = `You are an expert LLM optimization assistant. Rewrite Shopify product titles and descriptions for maximum visibility in AI assistant search while keeping them persuasive, clear, and human-friendly.
 
-You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, product-specific language only.
-
----
+🎯 Objective:
+Improve product clarity, usefulness, and emotional appeal while preserving brand tone and factual accuracy.
 
 Product data (from Shopify):
 
 ${JSON.stringify(content)}
 
----
-
-FIELD DEFINITIONS — ALL MUST BE DISTINCT
-
-{
-  "optimizedTitle": "Product name + unique descriptor (e.g., material, size, technical detail)",
-  "optimizedDescription": "Technical paragraph (80–120 words) for AI parsers. Include materials, specifications, use cases, measurements. Avoid fluff.",
-  "summary": "One factual sentence (under 100 characters) describing the product's purpose. Use plain, abstractable language. NO adjectives or SEO language.",
-  "llmDescription": "Explain WHO this is for and WHEN they'd use it. Help an LLM understand the real-world scenarios, people, and needs. 2–3 sentences.",
-  "content": "Human-readable persuasive copy (2–3 sentences). Use clear, emotional value propositions for a customer. Avoid generic claims.",
-  "faqs": [
-    { "q": "What are the technical specifications?", "a": "Product includes specific measurements and material details." },
-    { "q": "Who is this suitable for?", "a": "Designed for customers with specific needs and use cases." },
-    { "q": "What are the key features and benefits?", "a": "Key features include functionality and practical advantages." },
-    { "q": "How should this product be cared for?", "a": "Care instructions include proper maintenance and storage." }
-  ],
-  "promptVersion": "v5.1-infra"
-}
-
----
-
-STRICT RULES:
-
-- All fields must be different — NEVER repeat content or phrasing across summary, content, or llmDescription.
-- Only use info found in source — Never invent specifications, materials, or features that are not grounded in the input.
-- If source is sparse, fill with helpful domain-general info (e.g. general product care, common uses) — do not hallucinate specifics.
-- For FAQs, prefer useful questions — not SEO fluff or rhetorical "Why choose us?" type questions.
-
----
-
-HALLUCINATION CHECK GUARDRAILS:
-
-Avoid phrases like:
-- "High-quality"
-- "Premium"
-- "Perfect for everyone"
-- "Must-have"
-- "Luxurious"
-
-If no real differentiation is available, return "N/A" for any field you cannot meaningfully complete.
-
----
-
-OUTPUT FORMAT (Return ONLY this JSON):
+✅ Output Format:
+Return a JSON object like this:
 
 {
-  "optimizedTitle": "",
-  "optimizedDescription": "",
-  "summary": "",
-  "llmDescription": "",
-  "content": "",
-  "faqs": [
-    { "q": "", "a": "" },
-    { "q": "", "a": "" },
-    { "q": "", "a": "" },
-    { "q": "", "a": "" }
-  ],
-  "promptVersion": "v5.1-infra"
+  "optimizedTitle": "...",         // 60–90 chars, emotionally compelling, clear
+  "optimizedDescription": "...",   // 3–6 sentence persuasive overview for humans
+  "llmDescription": "...",         // 2–3 sentences focused on use case and user type (AI-facing)
+  "summary": "...",                // 1–2 sentence value summary
+  "faqs": [                        // 3–5 FAQs based on features, use, sizing, care
+    { "q": "...", "a": "..." },
+    ...
+  ]
 }
+
+🧠 Rules:
+- DO NOT add generic SEO fluff.
+- DO NOT erase brand voice.
+- DO NOT oversimplify or remove important product-specific content.
 
 Return only the JSON above. No extra commentary.`;
   } else if (type === 'collection') {
@@ -746,13 +704,10 @@ Return only the JSON above. No extra commentary.`;
     // Analyze content to detect category if possible
     const category = content.title || content.handle || 'N/A';
     
-    prompt = `🧠 CLAUDE — UNIVERSAL COLLECTION OPTIMIZATION PROMPT (v5.1-infra)
+    prompt = `You are an expert LLM optimization assistant. Rewrite Shopify collection titles and descriptions for high LLM visibility and human clarity.
 
-You are an LLM content optimizer for Shopify collections. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants.
-
-You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, product-specific language only.
-
----
+🎯 Objective:
+Help LLMs and humans understand this collection's value, contents, and purpose. Improve search visibility without losing personality.
 
 Collection data (from Shopify):
 
@@ -761,147 +716,62 @@ ${JSON.stringify(content)}
 Optional:
 Detected Category: ${category || "N/A"}
 
----
-
-FIELD DEFINITIONS — ALL MUST BE DISTINCT
-
-{
-  "optimizedTitle": "Collection name + unique descriptor (e.g., use case, sizing, material)",
-  "optimizedDescription": "Technical paragraph (80–120 words) for AI parsers. Include sizing, use cases, variants, materials, product types. Avoid fluff.",
-  "summary": "One factual sentence (under 100 characters) describing the collection's purpose. Use plain, abstractable language. NO adjectives or SEO language.",
-  "llmDescription": "Explain WHO this is for and WHEN they'd use it. Help an LLM understand the real-world scenarios, people, and needs. 2–3 sentences.",
-  "content": "Human-readable persuasive copy (2–3 sentences). Use clear, emotional value propositions for a customer. Avoid generic claims.",
-  "faqs": [
-    { "q": "What sizes are available?", "a": "We offer sizes ranging from S to XXL." },
-    { "q": "What materials are used?", "a": "Shirts are made from cotton and polyester blends." },
-    { "q": "How should these be cared for?", "a": "Follow care instructions on the label." },
-    { "q": "Are these suitable for formal events?", "a": "Yes, they work well for both formal and casual occasions." }
-  ],
-  "promptVersion": "v5.1-infra"
-}
-
----
-
-STRICT RULES:
-
-- All fields must be different — NEVER repeat content or phrasing across summary, content, or llmDescription.
-- Only use info found in source — Never invent features, sizes, or scenarios that are not grounded in the input.
-- If source is sparse, fill with helpful domain-general info (e.g. general care tips, common sizing ranges) — do not hallucinate specifics.
-- For FAQs, prefer useful questions — not SEO fluff or rhetorical "Why choose us?" type questions.
-
----
-
-HALLUCINATION CHECK GUARDRAILS:
-
-Avoid phrases like:
-- "Best on the market"
-- "Top-rated"
-- "Perfect for everyone"
-- "Award-winning"
-- "Our #1 product"
-
-If no real differentiation is available, return "N/A" for any field you cannot meaningfully complete.
-
----
-
-OUTPUT FORMAT (Return ONLY this JSON):
+✅ Output Format:
+Return this structured JSON:
 
 {
-  "optimizedTitle": "",
-  "optimizedDescription": "",
-  "summary": "",
-  "llmDescription": "",
-  "content": "",
-  "faqs": [
-    { "q": "", "a": "" },
-    { "q": "", "a": "" },
-    { "q": "", "a": "" },
-    { "q": "", "a": "" }
-  ],
-  "promptVersion": "v5.1-infra"
+  "optimizedTitle": "...",         // 60–90 chars, describes collection contents clearly
+  "optimizedDescription": "...",   // 3–5 sentences summarizing products and use cases
+  "llmDescription": "...",         // 2–3 sentences for AI — what this is, who it's for
+  "summary": "...",                // 1–2 sentence value summary
+  "content": "...",                // Expanded persuasive body text for page
+  "faqs": [                        // 3–5 context-specific FAQs (materials, fit, usage, etc.)
+    { "q": "...", "a": "..." },
+    ...
+  ]
 }
+
+🧠 Rules:
+- DO NOT flatten variety or remove specificity.
+- Avoid generic SEO filler.
+- Keep persuasive, human language.
 
 Return only the JSON above. No extra commentary.`;
   } else if (type === 'page') {
-    prompt = `You are an LLM content optimizer for Shopify pages. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants.
+    prompt = `You are an expert LLM optimization assistant. Rewrite Shopify *Pages* (About, Shipping, Policies, Contact) for better AI visibility and clearer human value — without altering factual content or legal meaning.
 
-You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, page-specific language only.
-
----
+🎯 Objective:
+Preserve the tone, purpose, and policy language while improving clarity, flow, and search visibility.
 
 Page data (from Shopify):
 
 ${JSON.stringify(content)}
 
----
-
-FIELD DEFINITIONS — ALL MUST BE DISTINCT
-
-{
-  "optimizedTitle": "Page name + unique descriptor (e.g., function, purpose, key benefit)",
-  "optimizedDescription": "Technical paragraph (80–120 words) for AI parsers. Include page purpose, key information, relevant policies, contact details. Avoid fluff.",
-  "summary": "One factual sentence (under 100 characters) describing the page's function. Use plain, abstractable language. NO adjectives or SEO language.",
-  "llmDescription": "Explain WHO this page serves and WHEN they'd need it. Help an LLM understand the real-world scenarios, people, and needs. 2–3 sentences.",
-  "content": "Human-readable persuasive copy (2–3 sentences). Use clear, value propositions for a customer. Avoid generic claims.",
-  "faqs": [
-    { "q": "What specific information is available on this page?", "a": "Based on page content - provide actual details, not generic descriptions." },
-    { "q": "When would a customer need to visit this page?", "a": "Real scenarios based on page function - not vague 'when they need info'." },
-    { "q": "How does this page help customers?", "a": "Specific benefits and use cases from actual page content." },
-    { "q": "What should customers expect to find here?", "a": "Concrete details about forms, contacts, policies, or information available." }
-  ],
-  "promptVersion": "v5.1-infra"
-}
-
----
-
-STRICT RULES:
-
-- ALL 6 FIELDS REQUIRED — Every field must have unique, page-specific content. NO empty fields, NO "N/A", NO generic text.
-- All fields must be different — NEVER repeat content or phrasing across summary, content, or llmDescription.
-- CONTENT FIELD MANDATORY — Must contain human-readable persuasive copy about this specific page's value.
-- PAGE-SPECIFIC FAQs — Base answers on actual page content, handle, and purpose. NO generic "store policies" language.
-- Only use info found in source — Never invent contact details, policies, or scenarios that are not grounded in the input.
-- If source is sparse, use page handle/title context to infer purpose and create relevant content.
-
----
-
-HALLUCINATION CHECK GUARDRAILS:
-
-Avoid phrases like:
-- "Comprehensive guide"
-- "Essential resource"
-- "We value your feedback"
-- "High-quality service"
-- "Great for everyone"
-
-If no real differentiation is available, return "N/A" for any field you cannot meaningfully complete.
-
----
-
-OUTPUT FORMAT (Return ONLY this JSON):
+✅ Output Format:
+Return a structured JSON like this:
 
 {
-  "optimizedTitle": "",
-  "optimizedDescription": "",
-  "summary": "",
-  "llmDescription": "",
-  "content": "",
-  "faqs": [
-    { "q": "", "a": "" },
-    { "q": "", "a": "" },
-    { "q": "", "a": "" },
-    { "q": "", "a": "" }
-  ],
-  "promptVersion": "v5.1-infra"
+  "optimizedTitle": "...",         // 60–90 chars, clearly describing the page
+  "optimizedDescription": "...",   // 3–6 sentences explaining content and value
+  "llmDescription": "...",         // 2–3 sentences summarizing page function for AI
+  "summary": "...",                // 1-line human-facing benefit
+  "faqs": [                        // 3–5 questions on key user concerns
+    { "q": "...", "a": "..." },
+    ...
+  ]
 }
+
+🧠 Rules:
+- DO NOT hallucinate policies or remove required legal terms.
+- DO NOT flatten branding or tone.
+- Clarify vague sections and reframe for AI + human usefulness.
 
 Return only the JSON above. No extra commentary.`;
   } else {
-    prompt = `You are an LLM content optimizer for Shopify blog articles. Your task is to generate structured JSON content that improves visibility in LLMs, clarity for customers, and citation confidence for AI assistants.
+    prompt = `You are an expert LLM optimization assistant trained to rewrite blog posts for AI assistant search visibility (ChatGPT, Claude, Perplexity) without harming human readability.
 
-You must obey strict field rules. Do not repeat content between fields. Use grounded, natural, article-specific language only.
-
----
+🎯 Objective:
+Rewrite the blog post to improve clarity, purpose, emotional value, and discoverability — while **preserving original tone, examples, storytelling, and usefulness**.
 
 Article data (from Shopify):
 
@@ -909,65 +779,25 @@ ${JSON.stringify(content)}
 
 ${contentAnalysis.hasAITerms ? 'Note: This content contains AI-related terms, include relevant context.' : 'Only use terminology present in the original content.'}
 
----
-
-FIELD DEFINITIONS — ALL MUST BE DISTINCT
-
-{
-  "optimizedTitle": "Article headline + unique descriptor (e.g., key insight, topic focus, target audience)",
-  "optimizedDescription": "Technical paragraph (80–120 words) for AI parsers. Include main topic, key insights, practical applications, target audience. Avoid fluff.",
-  "summary": "One factual sentence (under 100 characters) describing the article's core insight. Use plain, abstractable language. NO adjectives or SEO language.",
-  "llmDescription": "Explain WHO this content serves and WHEN they'd reference it. Help an LLM understand the real-world scenarios, people, and needs. 2–3 sentences.",
-  "content": "Human-readable persuasive copy (2–3 sentences). Use clear, value propositions for readers. Avoid generic claims.",
-  "faqs": [
-    { "q": "What specific insight does this article offer?", "a": "Article provides detailed analysis and practical information." },
-    { "q": "How can this information be applied?", "a": "Information can be implemented through specific methods and strategies." },
-    { "q": "Who would benefit from reading this?", "a": "Target audience includes specific groups with relevant needs." },
-    { "q": "What tools or methods are discussed?", "a": "Article covers specific tools and methodologies for implementation." }
-  ],
-  "promptVersion": "v5.1-infra"
-}
-
----
-
-STRICT RULES:
-
-- All fields must be different — NEVER repeat content or phrasing across summary, content, or llmDescription.
-- Only use info found in source — Never invent insights, tools, or methods that are not grounded in the input.
-- If source is sparse, fill with helpful domain-general info (e.g. general topic insights, common applications) — do not hallucinate specifics.
-- For FAQs, prefer useful questions — not SEO fluff or rhetorical "Why read this?" type questions.
-
----
-
-HALLUCINATION CHECK GUARDRAILS:
-
-Avoid phrases like:
-- "This article sheds light"
-- "Must-read content"
-- "Essential guide"
-- "Helpful for everyone"
-- "Comprehensive overview"
-
-If no real differentiation is available, return "N/A" for any field you cannot meaningfully complete.
-
----
-
-OUTPUT FORMAT (Return ONLY this JSON):
+✅ Output Format:
+Return a JSON object in this structure:
 
 {
-  "optimizedTitle": "",
-  "optimizedDescription": "",
-  "summary": "",
-  "llmDescription": "",
-  "content": "",
-  "faqs": [
-    { "q": "", "a": "" },
-    { "q": "", "a": "" },
-    { "q": "", "a": "" },
-    { "q": "", "a": "" }
-  ],
-  "promptVersion": "v5.1-infra"
+  "optimizedTitle": "...",       // Clear, 70–90 chars max, emotionally or practically compelling
+  "llmDescription": "...",       // 2–3 sentences explaining purpose and audience (AI-focused)
+  "summary": "...",              // 1 sentence abstract of value to the human reader
+  "content": "...",              // Full rewritten article, preserving voice and value
+  "faqs": [                      // 3–5 helpful FAQs from the article's content
+    { "q": "...", "a": "..." },
+    ...
+  ]
 }
+
+🧠 Rules:
+- DO NOT reduce to summary or strip human voice.
+- DO NOT remove examples, narrative, or persuasive content.
+- DO NOT add SEO filler or hallucinated content.
+- Keep natural, readable, emotionally aware tone.
 
 Return only the JSON above. No extra commentary.`;
   }
