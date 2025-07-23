@@ -127,7 +127,10 @@ function getNextMonthDate() {
 }
 
 function incrementOptimizationUsage(shop, contentType, contentId) {
+  console.log(`[USAGE-INCREMENT] Before increment - Shop: ${shop}, Type: ${contentType}, ID: ${contentId}`);
   const usage = initializeShopUsage(shop);
+  console.log(`[USAGE-INCREMENT] Current usage before increment: ${usage.optimizationsThisMonth}`);
+  
   usage.optimizationsThisMonth += 1;
   usage.optimizationLog.push({
     timestamp: new Date().toISOString(),
@@ -136,7 +139,8 @@ function incrementOptimizationUsage(shop, contentType, contentId) {
     usageCount: usage.optimizationsThisMonth
   });
   
-  console.log(`[USAGE] Shop ${shop} - Optimization count: ${usage.optimizationsThisMonth}/${tierConfig[usage.tier]}`);
+  console.log(`[USAGE-INCREMENT] After increment - Shop ${shop} - Optimization count: ${usage.optimizationsThisMonth}/${tierConfig[usage.tier]}`);
+  console.log(`[USAGE-INCREMENT] Shop data now:`, shopData.get(shop)?.usage);
   return usage;
 }
 
@@ -3801,14 +3805,20 @@ app.get('/api/usage', simpleVerifyShop, async (req, res) => {
     const usage = initializeShopUsage(shop);
     const monthlyLimit = tierConfig[usage.tier] || tierConfig.Free;
     
-    res.json({
+    console.log(`[USAGE-DEBUG] Shop: ${shop}, Usage: ${usage.optimizationsThisMonth}, Limit: ${monthlyLimit}, Tier: ${usage.tier}`);
+    console.log(`[USAGE-DEBUG] Recent optimizations:`, usage.optimizationLog.slice(-5));
+    
+    const response = {
       usageThisMonth: usage.optimizationsThisMonth,
       monthlyLimit: monthlyLimit,
       currentTier: usage.tier,
       hasQuota: usage.optimizationsThisMonth < monthlyLimit,
       resetDate: usage.monthlyResetDate,
       recentOptimizations: usage.optimizationLog.slice(-10) // Last 10 optimizations
-    });
+    };
+    
+    console.log(`[USAGE-DEBUG] Sending response:`, response);
+    res.json(response);
   } catch (error) {
     console.error('[USAGE] Error fetching usage:', error);
     res.status(500).json({ error: 'Failed to fetch usage information' });

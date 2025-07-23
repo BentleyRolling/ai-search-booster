@@ -486,7 +486,7 @@ const Dashboard = () => {
       console.error('Failed to fetch usage:', error);
       setTierUsage({
         usageThisMonth: 0,
-        monthlyLimit: 10,
+        monthlyLimit: 25,
         currentTier: 'Free',
         hasQuota: true
       });
@@ -494,7 +494,7 @@ const Dashboard = () => {
         shop: shopName,
         optimizations: { products: 0, blogs: 0, total: 0 },
         aiCalls: { today: 0, thisMonth: 0, total: 0 },
-        limits: { monthlyOptimizations: 10, dailyAICalls: 100 }
+        limits: { monthlyOptimizations: 25, dailyAICalls: 100 }
       });
     }
   };
@@ -2097,7 +2097,7 @@ const Dashboard = () => {
               <p className={`text-lg font-bold ${
                 tierUsage && !tierUsage.hasQuota ? 'text-red-600' : 'text-blue-600'
               }`}>
-                {tierUsage?.usageThisMonth || 0} / {tierUsage?.monthlyLimit || 10}
+                {tierUsage?.usageThisMonth || 0} / {tierUsage?.monthlyLimit || 25}
               </p>
               <div className="flex items-center justify-between">
                 <p className="text-xs text-gray-500">
@@ -2113,6 +2113,19 @@ const Dashboard = () => {
                   {tierUsage?.currentTier || 'Free'}
                 </span>
               </div>
+              
+              {/* Persistent Upgrade Button */}
+              <button
+                onClick={() => window.location.href = '/billing'}
+                className={`w-full mt-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  tierUsage && !tierUsage.hasQuota 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                }`}
+              >
+                {tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}
+              </button>
+              
               {tierUsage && !tierUsage.hasQuota && (
                 <p className="text-xs text-red-500 mt-1">
                   ⚠️ You've reached your optimization limit for this month
@@ -2297,21 +2310,6 @@ const Dashboard = () => {
                     </button>
                   </div>
                 </div>
-                
-                {/* Upgrade Plan CTA for Products */}
-                {tierUsage && !tierUsage.hasQuota && (
-                  <div className="mt-3 text-center">
-                    <p className="text-xs text-red-500 mb-2">
-                      ⚠️ You've reached your optimization limit for this month
-                    </p>
-                    <a
-                      href="/billing"
-                      className="inline-block text-sm text-blue-600 hover:text-blue-800 underline font-medium"
-                    >
-                      Upgrade Plan to Unlock More Optimizations →
-                    </a>
-                  </div>
-                )}
                 
                 {products.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No products found</p>
@@ -2528,21 +2526,6 @@ const Dashboard = () => {
                     </div>
                 </div>
                 
-                {/* Upgrade Plan CTA for Blogs */}
-                {tierUsage && !tierUsage.hasQuota && (
-                  <div className="mt-3 text-center">
-                    <p className="text-xs text-red-500 mb-2">
-                      ⚠️ You've reached your optimization limit for this month
-                    </p>
-                    <a
-                      href="/billing"
-                      className="inline-block text-sm text-blue-600 hover:text-blue-800 underline font-medium"
-                    >
-                      Upgrade Plan to Unlock More Optimizations →
-                    </a>
-                  </div>
-                )}
-                
                 {articles.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No blog articles found</p>
                   ) : (
@@ -2753,21 +2736,6 @@ const Dashboard = () => {
                       </button>
                     </div>
                 </div>
-                
-                {/* Upgrade Plan CTA for Pages */}
-                {tierUsage && !tierUsage.hasQuota && (
-                  <div className="mt-3 text-center">
-                    <p className="text-xs text-red-500 mb-2">
-                      ⚠️ You've reached your optimization limit for this month
-                    </p>
-                    <a
-                      href="/billing"
-                      className="inline-block text-sm text-blue-600 hover:text-blue-800 underline font-medium"
-                    >
-                      Upgrade Plan to Unlock More Optimizations →
-                    </a>
-                  </div>
-                )}
                 
                 {pages.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No pages found</p>
@@ -2986,21 +2954,6 @@ const Dashboard = () => {
                       </button>
                     </div>
                 </div>
-                
-                {/* Upgrade Plan CTA for Collections */}
-                {tierUsage && !tierUsage.hasQuota && (
-                  <div className="mt-3 text-center">
-                    <p className="text-xs text-red-500 mb-2">
-                      ⚠️ You've reached your optimization limit for this month
-                    </p>
-                    <a
-                      href="/billing"
-                      className="inline-block text-sm text-blue-600 hover:text-blue-800 underline font-medium"
-                    >
-                      Upgrade Plan to Unlock More Optimizations →
-                    </a>
-                  </div>
-                )}
                 
                 {(() => {
                   console.log('RENDER DEBUG: collections.length =', collections.length);
