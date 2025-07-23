@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QuotaToast from '../components/QuotaToast';
-import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { useCitations } from '../hooks/useCitations';
@@ -38,6 +38,7 @@ const Dashboard = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
   const [helpTab, setHelpTab] = useState('instructions');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [consentCheckbox, setConsentCheckbox] = useState(false);
@@ -1690,80 +1691,211 @@ const Dashboard = () => {
   const optimizationPercentage = status ? (status.optimizedProducts / status.totalProducts * 100).toFixed(1) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-dark-bg flex">
       {/* Quota Toast Notification */}
       <QuotaToast 
         isVisible={tierUsage && !tierUsage.hasQuota}
         usageCount={tierUsage?.usageThisMonth || 0}
         monthlyLimit={tierUsage?.monthlyLimit || 25}
       />
-      {/* Header */}
-      <header className="shadow-sm border-b relative">
-        {/* Black section for logo and icons */}
-        <div className="bg-black">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-center relative">
+
+      {/* ChatGPT-style Sidebar Navigation */}
+      <aside className="w-64 bg-dark-card border-r border-dark-border flex-shrink-0 hidden lg:flex flex-col">
+        {/* Logo Section */}
+        <div className="p-6 border-b border-dark-border">
+          <div className="flex items-center space-x-3">
+            <img 
+              src={`/logo.png?v=${Date.now()}`} 
+              alt="AI Search Booster" 
+              className="w-10 h-10 object-contain"
+            />
+            <div>
+              <h1 className="text-text-primary font-semibold text-lg">AI Search Booster</h1>
+              <p className="text-text-muted text-xs">Make your store AI‑discoverable</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Menu */}
+        <nav className="flex-1 p-4 space-y-2">
+          {[
+            { id: 'products', label: 'Products', icon: Package, count: products?.length || 0 },
+            { id: 'blogs', label: 'Blog Articles', icon: BookOpen, count: articles?.length || 0 },
+            { id: 'pages', label: 'Pages', icon: FileText, count: pages?.length || 0 },
+            { id: 'collections', label: 'Collections', icon: Globe, count: collections?.length || 0 },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 ${
+                activeTab === tab.id
+                  ? 'bg-accent-primary-light text-accent-primary font-medium'
+                  : 'text-text-secondary hover:bg-dark-border hover:text-text-primary'
+              }`}
+            >
+              <div className="flex items-center space-x-3">
+                <tab.icon className="w-5 h-5" />
+                <span className="text-sm">{tab.label}</span>
+              </div>
+              <span className={`text-xs px-2 py-1 rounded-full ${
+                activeTab === tab.id 
+                  ? 'bg-accent-primary text-white' 
+                  : 'bg-dark-border text-text-muted'
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </nav>
+
+        {/* Settings Button */}
+        <div className="p-4 border-t border-dark-border">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="w-full flex items-center space-x-3 p-3 rounded-xl text-text-secondary hover:bg-dark-border hover:text-text-primary transition-all duration-200"
+          >
+            <Settings className="w-5 h-5" />
+            <span className="text-sm">Settings</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col min-h-screen bg-dark-bg-secondary scrollbar-dark">
+        {/* Mobile Header */}
+        <header className="lg:hidden bg-dark-card border-b border-dark-border p-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg hover:bg-dark-border text-text-secondary transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center space-x-3">
               <img 
                 src={`/logo.png?v=${Date.now()}`} 
-                alt="AI Search Booster Logo" 
-                className="w-32 h-32 object-contain"
+                alt="AI Search Booster" 
+                className="w-8 h-8 object-contain"
               />
-              <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
-                <div className="flex items-center space-x-2">
-                  {/* Citation Badge */}
-                  {stats && stats.total > 0 && (
-                    <div className="flex items-center space-x-2 bg-green-600 text-white px-3 py-1 rounded-full">
-                      <img src="/icons/citation-badge.svg" alt="Citations" className="w-4 h-4" />
-                      <span className="text-sm font-medium">{stats.total} citations</span>
-                    </div>
-                  )}
-                  
-                  {/* Removed confusing UI elements: tokens and percentage badges */}
-                  
-                  {/* Monitoring Status */}
-                  <div className="flex items-center space-x-2">
-                    <Monitor className={`w-5 h-5 ${isMonitoring ? 'text-green-400' : 'text-gray-400'}`} />
-                    <span className={`text-sm ${isMonitoring ? 'text-green-400' : 'text-gray-400'}`}>
-                      {isMonitoring ? 'Monitoring' : 'Not Monitoring'}
-                    </span>
+              <h1 className="text-text-primary font-semibold">AI Search Booster</h1>
+            </div>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2 rounded-lg hover:bg-dark-border text-text-secondary transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
+        </header>
+
+        {/* Mobile Sidebar Overlay */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 backdrop-blur-sm bg-black/40 animate-fade-in" onClick={() => setMobileMenuOpen(false)}>
+            <aside className="w-64 bg-dark-card h-full border-r border-dark-border animate-slide-in-left" onClick={e => e.stopPropagation()}>
+              {/* Logo Section */}
+              <div className="p-6 border-b border-dark-border">
+                <div className="flex items-center space-x-3">
+                  <img 
+                    src={`/logo.png?v=${Date.now()}`} 
+                    alt="AI Search Booster" 
+                    className="w-10 h-10 object-contain"
+                  />
+                  <div>
+                    <h1 className="text-text-primary font-semibold text-lg">AI Search Booster</h1>
+                    <p className="text-text-muted text-xs">Make your store AI‑discoverable</p>
                   </div>
-                  
-                  {/* Hidden test button - only visible in dev */}
-                  {window.location.hostname === 'localhost' || window.location.search.includes('debug=true') ? (
-                    <button
-                      onClick={runEndToEndTest}
-                      className="px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                      title="Run end-to-end test"
-                    >
-                      Test E2E
-                    </button>
-                  ) : null}
-                  <button
-                    onClick={() => setShowSettings(!showSettings)}
-                    className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
-                  >
-                    <Settings className="w-6 h-6 text-white" />
-                  </button>
                 </div>
               </div>
+
+              {/* Mobile Navigation Menu */}
+              <nav className="flex-1 p-4 space-y-2">
+                {[
+                  { id: 'products', label: 'Products', icon: Package, count: products?.length || 0 },
+                  { id: 'blogs', label: 'Blog Articles', icon: BookOpen, count: articles?.length || 0 },
+                  { id: 'pages', label: 'Pages', icon: FileText, count: pages?.length || 0 },
+                  { id: 'collections', label: 'Collections', icon: Globe, count: collections?.length || 0 },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 ${
+                      activeTab === tab.id
+                        ? 'bg-accent-primary-light text-accent-primary font-medium'
+                        : 'text-text-secondary hover:bg-dark-border hover:text-text-primary'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <tab.icon className="w-5 h-5" />
+                      <span className="text-sm">{tab.label}</span>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      activeTab === tab.id 
+                        ? 'bg-accent-primary text-white' 
+                        : 'bg-dark-border text-text-muted'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </nav>
+
+              {/* Mobile Settings Button */}
+              <div className="p-4 border-t border-dark-border">
+                <button
+                  onClick={() => {
+                    setShowSettings(!showSettings);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center space-x-3 p-3 rounded-xl text-text-secondary hover:bg-dark-border hover:text-text-primary transition-all duration-200"
+                >
+                  <Settings className="w-5 h-5" />
+                  <span className="text-sm">Settings</span>
+                </button>
+              </div>
+            </aside>
+          </div>
+        )}
+
+        {/* Top Status Bar - Desktop */}
+        <div className="hidden lg:block bg-dark-card border-b border-dark-border p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              {/* Citation Badge */}
+              {stats && stats.total > 0 && (
+                <div className="flex items-center space-x-2 bg-accent-primary text-white px-3 py-1 rounded-full">
+                  <span className="text-sm font-medium">{stats.total} citations</span>
+                </div>
+              )}
+              
+              {/* Monitoring Status */}
+              <div className="flex items-center space-x-2">
+                <Monitor className={`w-4 h-4 ${isMonitoring ? 'text-accent-primary' : 'text-text-muted'}`} />
+                <span className={`text-sm ${isMonitoring ? 'text-accent-primary' : 'text-text-muted'}`}>
+                  {isMonitoring ? 'Monitoring Active' : 'Monitoring Inactive'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              {/* Test Button - Dev Only */}
+              {(window.location.hostname === 'localhost' || window.location.search.includes('debug=true')) && (
+                <button
+                  onClick={runEndToEndTest}
+                  className="px-3 py-1 text-xs bg-accent-primary text-white rounded-md hover:bg-accent-primary-hover transition-colors"
+                  title="Run end-to-end test"
+                >
+                  Test E2E
+                </button>
+              )}
             </div>
           </div>
         </div>
-        
-        {/* White section for headline */}
-        <div className="bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="text-center">
-              <h1 className="text-xl font-semibold text-gray-800 mb-1">
-                Make your Shopify store AI‑discoverable - ChatGPT, Gemini, Claude & more.
-              </h1>
-              <p className="text-sm text-gray-600">
-                Automatic JSON‑LD, FAQ, RSS & embeddings. Boost your chances of showing up in AI answers!
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+
+        {/* Content Area */}
+        <div className="flex-1 p-6 overflow-y-auto">
 
       {/* Notifications */}
       {notifications.length > 0 && (
@@ -2039,19 +2171,19 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {activeTab === 'products' && (
             <>
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-dark-border-hover transition-all duration-200">
                 <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-500 mb-4">Total Products</h3>
-                  <p className="text-4xl font-bold text-gray-900 mb-2">{status?.totalProducts || 0}</p>
-                  <Package className="w-5 h-5 text-gray-400 mx-auto" />
+                  <h3 className="text-sm font-medium text-text-muted mb-4">Total Products</h3>
+                  <p className="text-4xl font-bold text-text-primary mb-2">{status?.totalProducts || 0}</p>
+                  <Package className="w-5 h-5 text-text-muted mx-auto" />
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-accent-primary transition-all duration-200">
                 <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-500 mb-4">Optimized Products</h3>
-                  <p className="text-4xl font-bold text-green-600 mb-2">{status?.optimizedProducts || 0}</p>
-                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
+                  <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Products</h3>
+                  <p className="text-4xl font-bold text-accent-primary mb-2">{status?.optimizedProducts || 0}</p>
+                  <CheckCircle className="w-5 h-5 text-accent-primary mx-auto" />
                 </div>
               </div>
             </>
@@ -2059,19 +2191,19 @@ const Dashboard = () => {
           
           {activeTab === 'blogs' && (
             <>
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-dark-border-hover transition-all duration-200">
                 <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-500 mb-4">Total Articles</h3>
-                  <p className="text-4xl font-bold text-gray-900 mb-2">{status?.totalBlogs || 0}</p>
-                  <FileText className="w-5 h-5 text-gray-400 mx-auto" />
+                  <h3 className="text-sm font-medium text-text-muted mb-4">Total Articles</h3>
+                  <p className="text-4xl font-bold text-text-primary mb-2">{status?.totalBlogs || 0}</p>
+                  <FileText className="w-5 h-5 text-text-muted mx-auto" />
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-accent-primary transition-all duration-200">
                 <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-500 mb-4">Optimized Articles</h3>
-                  <p className="text-4xl font-bold text-green-600 mb-2">{status?.optimizedBlogs || 0}</p>
-                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
+                  <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Articles</h3>
+                  <p className="text-4xl font-bold text-accent-primary mb-2">{status?.optimizedBlogs || 0}</p>
+                  <CheckCircle className="w-5 h-5 text-accent-primary mx-auto" />
                 </div>
               </div>
             </>
@@ -2079,19 +2211,19 @@ const Dashboard = () => {
           
           {activeTab === 'pages' && (
             <>
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-dark-border-hover transition-all duration-200">
                 <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-500 mb-4">Total Pages</h3>
-                  <p className="text-4xl font-bold text-gray-900 mb-2">{status?.totalPages || 0}</p>
-                  <Globe className="w-5 h-5 text-gray-400 mx-auto" />
+                  <h3 className="text-sm font-medium text-text-muted mb-4">Total Pages</h3>
+                  <p className="text-4xl font-bold text-text-primary mb-2">{status?.totalPages || 0}</p>
+                  <Globe className="w-5 h-5 text-text-muted mx-auto" />
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-accent-primary transition-all duration-200">
                 <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-500 mb-4">Optimized Pages</h3>
-                  <p className="text-4xl font-bold text-green-600 mb-2">{status?.optimizedPages || 0}</p>
-                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
+                  <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Pages</h3>
+                  <p className="text-4xl font-bold text-accent-primary mb-2">{status?.optimizedPages || 0}</p>
+                  <CheckCircle className="w-5 h-5 text-accent-primary mx-auto" />
                 </div>
               </div>
             </>
@@ -2099,48 +2231,48 @@ const Dashboard = () => {
           
           {activeTab === 'collections' && (
             <>
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-dark-border-hover transition-all duration-200">
                 <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-500 mb-4">Total Collections</h3>
-                  <p className="text-4xl font-bold text-gray-900 mb-2">{collections?.length || 0}</p>
-                  <Package className="w-5 h-5 text-gray-400 mx-auto" />
+                  <h3 className="text-sm font-medium text-text-muted mb-4">Total Collections</h3>
+                  <p className="text-4xl font-bold text-text-primary mb-2">{collections?.length || 0}</p>
+                  <Package className="w-5 h-5 text-text-muted mx-auto" />
                 </div>
               </div>
               
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-accent-primary transition-all duration-200">
                 <div className="text-center">
-                  <h3 className="text-sm font-medium text-gray-500 mb-4">Optimized Collections</h3>
-                  <p className="text-4xl font-bold text-green-600 mb-2">{collections?.filter(c => c.optimized)?.length || 0}</p>
-                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
+                  <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Collections</h3>
+                  <p className="text-4xl font-bold text-accent-primary mb-2">{collections?.filter(c => c.optimized)?.length || 0}</p>
+                  <CheckCircle className="w-5 h-5 text-accent-primary mx-auto" />
                 </div>
               </div>
             </>
           )}
           
           {/* AI Optimizations This Month - Clean Design */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-dark-border-hover transition-all duration-200">
             <div className="text-center">
-              <h3 className="text-sm font-medium text-gray-500 mb-4">AI Optimizations This Month</h3>
+              <h3 className="text-sm font-medium text-text-muted mb-4">AI Optimizations This Month</h3>
               
               {/* Large Usage Counter */}
               <p className={`text-4xl font-bold mb-2 ${
-                tierUsage && !tierUsage.hasQuota ? 'text-red-600' : 'text-blue-600'
+                tierUsage && !tierUsage.hasQuota ? 'text-red-400' : 'text-accent-secondary'
               }`}>
                 {tierUsage?.usageThisMonth || 0} / {tierUsage?.monthlyLimit || 25}
               </p>
               
               {/* Usage Description */}
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-xs text-text-muted mb-3">
                 Each content optimization = 1 usage
               </p>
               
               {/* Tier Badge */}
               <span className={`inline-block text-xs px-2 py-1 rounded-full ${
-                tierUsage?.currentTier === 'Enterprise' ? 'bg-purple-100 text-purple-700' :
-                tierUsage?.currentTier === 'Scale' ? 'bg-green-100 text-green-700' :
-                tierUsage?.currentTier === 'Pro' ? 'bg-blue-100 text-blue-700' :
-                tierUsage?.currentTier === 'Starter' ? 'bg-yellow-100 text-yellow-700' :
-                'bg-gray-100 text-gray-700'
+                tierUsage?.currentTier === 'Enterprise' ? 'bg-purple-900/30 text-purple-300' :
+                tierUsage?.currentTier === 'Scale' ? 'bg-green-900/30 text-green-300' :
+                tierUsage?.currentTier === 'Pro' ? 'bg-blue-900/30 text-blue-300' :
+                tierUsage?.currentTier === 'Starter' ? 'bg-yellow-900/30 text-yellow-300' :
+                'bg-gray-700 text-gray-300'
               }`}>
                 {tierUsage?.currentTier || 'Free'}
               </span>
@@ -2148,97 +2280,27 @@ const Dashboard = () => {
           </div>
           
           {/* Enterprise Performance - Always shown on all tabs */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-purple-500/50 transition-all duration-200">
             <div className="text-center">
-              <h3 className="text-sm font-medium text-gray-500 mb-4">Enterprise Status</h3>
-              <p className="text-4xl font-bold text-purple-600 mb-2">
+              <h3 className="text-sm font-medium text-text-muted mb-4">Enterprise Status</h3>
+              <p className="text-4xl font-bold text-purple-400 mb-2">
                 {optimizationPercentage}%
               </p>
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-xs text-text-muted mb-3">
                 Production-Grade • Auto-Rollback
               </p>
               <div className="flex items-center justify-center space-x-1 mb-2">
-                <TrendingUp className="w-4 h-4 text-purple-500" />
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                <TrendingUp className="w-4 h-4 text-purple-400" />
+                <div className="w-2 h-2 bg-accent-primary rounded-full animate-pulse" />
               </div>
               <div className="flex items-center justify-center space-x-1">
-                <div className="w-1.5 h-1.5 bg-green-400 rounded-full" />
-                <span className="text-xs text-green-600">JSON-LD Active</span>
+                <div className="w-1.5 h-1.5 bg-accent-primary rounded-full" />
+                <span className="text-xs text-accent-primary">JSON-LD Active</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="border-b">
-            <nav className="flex -mb-px">
-              <button
-                onClick={() => setActiveTab('products')}
-                className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'products' 
-                    ? 'border-blue-500 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <Package className="w-4 h-4" />
-                  <span>Products</span>
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
-                    {selectedProducts.length} selected
-                  </span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('blogs')}
-                className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'blogs' 
-                    ? 'border-blue-500 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <BookOpen className="w-4 h-4" />
-                  <span>Blogs</span>
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
-                    {selectedBlogs.length} selected
-                  </span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('pages')}
-                className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'pages' 
-                    ? 'border-blue-500 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <Globe className="w-4 h-4" />
-                  <span>Pages</span>
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
-                    {selectedPages.length} selected
-                  </span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('collections')}
-                className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'collections' 
-                    ? 'border-blue-500 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <Package className="w-4 h-4" />
-                  <span>Collections</span>
-                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
-                    {selectedCollections.length} selected
-                  </span>
-                </div>
-              </button>
-            </nav>
-          </div>
 
           <div className="p-6">
             {/* Products Tab */}
@@ -3156,34 +3218,34 @@ const Dashboard = () => {
 
         {/* Preview Section */}
         {preview && (
-          <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h2 className="text-lg font-semibold mb-4">Optimization Preview</h2>
+          <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 mb-8">
+            <h2 className="text-lg font-semibold text-text-primary mb-4">Optimization Preview</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 className="font-medium text-gray-700 mb-2">Original Content</h3>
-                <div className="bg-gray-50 p-4 rounded border">
-                  <p className="font-semibold">{preview.original.title || preview.original.name}</p>
-                  <p className="text-sm text-gray-600 mt-2">{preview.original.description}</p>
+                <h3 className="font-medium text-text-secondary mb-2">Original Content</h3>
+                <div className="bg-dark-bg p-4 rounded border border-dark-border">
+                  <p className="font-semibold text-text-primary">{preview.original.title || preview.original.name}</p>
+                  <p className="text-sm text-text-muted mt-2">{preview.original.description}</p>
                 </div>
               </div>
               
               <div>
-                <h3 className="font-medium text-gray-700 mb-2">AI-Optimized Content</h3>
-                <div className="bg-blue-50 p-4 rounded border border-blue-200">
-                  <p className="font-semibold text-blue-900 mb-2">Summary:</p>
-                  <p className="text-sm text-blue-800 mb-3">{preview.optimized.summary}</p>
+                <h3 className="font-medium text-text-secondary mb-2">AI-Optimized Content</h3>
+                <div className="bg-accent-secondary/10 p-4 rounded border border-accent-secondary/30">
+                  <p className="font-semibold text-accent-secondary mb-2">Summary:</p>
+                  <p className="text-sm text-text-secondary mb-3">{preview.optimized.summary}</p>
                   
-                  <p className="font-semibold text-blue-900 mb-2">FAQs:</p>
+                  <p className="font-semibold text-accent-secondary mb-2">FAQs:</p>
                   {preview.optimized.faqs.map((faq, i) => (
                     <div key={i} className="mb-2">
-                      <p className="text-sm font-medium text-blue-700">Q: {faq.question}</p>
-                      <p className="text-sm text-blue-600">A: {faq.answer}</p>
+                      <p className="text-sm font-medium text-accent-secondary">Q: {faq.question}</p>
+                      <p className="text-sm text-text-secondary">A: {faq.answer}</p>
                     </div>
                   ))}
                   
                   <details className="mt-3">
-                    <summary className="cursor-pointer text-sm font-medium text-blue-700">View Technical Implementation</summary>
-                    <pre className="mt-2 text-xs bg-white p-2 rounded overflow-x-auto">{preview.preview.jsonLd}</pre>
+                    <summary className="cursor-pointer text-sm font-medium text-accent-secondary hover:text-accent-primary transition-colors">View Technical Implementation</summary>
+                    <pre className="mt-2 text-xs bg-dark-bg p-2 rounded overflow-x-auto text-text-muted border border-dark-border">{preview.preview.jsonLd}</pre>
                   </details>
                 </div>
               </div>
@@ -3193,8 +3255,8 @@ const Dashboard = () => {
 
         {/* History Section */}
         {history.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Optimization History</h2>
+          <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6">
+            <h2 className="text-lg font-semibold text-text-primary mb-4">Optimization History</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead>
@@ -3237,15 +3299,15 @@ const Dashboard = () => {
         )}
 
         {/* Help Section */}
-      <div className="bg-white rounded-lg shadow mb-8">
-        <div className="border-b">
-          <nav className="flex -mb-px">
+      <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border mb-8">
+        <div className="border-b border-dark-border">
+          <nav className="flex -mb-px p-2">
             <button
               onClick={() => setHelpTab('instructions')}
-              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
                 helpTab === 'instructions'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-accent-primary-light text-accent-primary'
+                  : 'text-text-secondary hover:bg-dark-border hover:text-text-primary'
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -3255,10 +3317,10 @@ const Dashboard = () => {
             </button>
             <button
               onClick={() => setHelpTab('support')}
-              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
                 helpTab === 'support'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-accent-primary-light text-accent-primary'
+                  : 'text-text-secondary hover:bg-dark-border hover:text-text-primary'
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -3268,10 +3330,10 @@ const Dashboard = () => {
             </button>
             <button
               onClick={() => setHelpTab('terms')}
-              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
                 helpTab === 'terms'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-accent-primary-light text-accent-primary'
+                  : 'text-text-secondary hover:bg-dark-border hover:text-text-primary'
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -3287,27 +3349,27 @@ const Dashboard = () => {
         {/* Instructions Tab */}
         {helpTab === 'instructions' && (
           <div className="prose prose-blue max-w-none">
-            <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <div className="bg-dark-bg rounded-lg p-6 max-h-96 overflow-y-auto scrollbar-dark border border-dark-border">
+              <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
                 🧭 How to Use AI Search Booster
               </h3>
               
               <div className="space-y-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                  <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 1: Connect Your Shopify Store
                   </h4>
-                  <p className="text-gray-700 text-sm">
+                  <p className="text-text-secondary text-sm">
                     Once installed, AI Search Booster automatically connects through OAuth. No setup required.
                   </p>
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                  <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 2: Select What You Want to Optimize
                   </h4>
-                  <p className="text-gray-700 text-sm mb-2">Use the tabs above to view:</p>
-                  <ul className="text-sm text-gray-700 ml-4 list-disc">
+                  <p className="text-text-secondary text-sm mb-2">Use the sidebar to navigate between:</p>
+                  <ul className="text-sm text-text-secondary ml-4 list-disc">
                     <li>Products</li>
                     <li>Blog Posts</li>
                     <li>Pages</li>
@@ -3939,6 +4001,7 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+      </main>
     </div>
   );
 };
