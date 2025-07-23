@@ -1652,7 +1652,7 @@ const Dashboard = () => {
         <div className="text-center max-w-md mx-auto p-6 bg-dark-card rounded-lg shadow border border-dark-border">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-text-primary mb-2">Dashboard Error</h2>
-          <p className="text-gray-600 mb-4">{error.message}</p>
+          <p className="text-text-secondary mb-4">{error.message}</p>
           <details className="text-left text-sm text-gray-300 mb-4">
             <summary className="cursor-pointer">Technical Details</summary>
             <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
@@ -1675,7 +1675,7 @@ const Dashboard = () => {
       <div className="min-h-screen bg-gray-800/20 flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-gray-600">
+          <p className="text-gray-300">
             {!isReady ? 'Initializing authentication...' : 'Loading AI Search Booster...'}
           </p>
           <div className="mt-2 text-xs text-gray-400">
@@ -2201,7 +2201,7 @@ const Dashboard = () => {
                 )}
                 
                 {stats && stats.total > 0 && (
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-300">
                     Total citations: {stats.total}
                   </div>
                 )}
@@ -2387,7 +2387,7 @@ const Dashboard = () => {
                       onClick={optimizeProducts}
                       disabled={optimizing || selectedProducts.length === 0 || (tierUsage && !tierUsage.hasQuota)}
                       title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected products'}
-                      className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
+                      className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-500 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-blue-700"
                     >
                       {optimizing ? (
                         <>
@@ -2500,7 +2500,7 @@ const Dashboard = () => {
                             </div>
                             <p className="text-sm text-gray-300 mt-1">{product.vendor}</p>
                             {product.product_type && (
-                              <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                              <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-300 text-xs rounded">
                                 {product.product_type}
                               </span>
                             )}
@@ -2518,7 +2518,7 @@ const Dashboard = () => {
                                   </span>
                                 )}
                                 {product.hasDraft && !product.rollbackTriggered && (
-                                  <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
+                                  <span className="inline-block px-3 py-1.5 bg-gradient-to-r from-amber-600 to-amber-700 text-white text-xs rounded-full font-medium border border-amber-500 hover:from-amber-700 hover:to-amber-800 transition-all duration-200">
                                     📝 Draft Ready
                                   </span>
                                 )}
@@ -2532,7 +2532,7 @@ const Dashboard = () => {
                                       e.stopPropagation();
                                       handlePreviewDraft('product', product.id);
                                     }}
-                                    className="px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                    className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-xs font-medium flex items-center space-x-1 hover:from-blue-600 hover:to-blue-700 hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-200"
                                     title="Preview draft content"
                                   >
                                     <Eye className="w-3 h-3" />
@@ -2609,7 +2609,7 @@ const Dashboard = () => {
                         onClick={() => optimizeArticles()}
                         disabled={optimizing || selectedArticles.length === 0 || (tierUsage && !tierUsage.hasQuota)}
                         title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected articles'}
-                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-500 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-blue-700"
                       >
                         {optimizing ? (
                           <>
@@ -2648,7 +2648,7 @@ const Dashboard = () => {
                           );
                         }}
                         disabled={optimizing || !articles.some(a => a.hasDraft)}
-                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-gradient-to-r from-green-600 to-green-700 text-white border border-green-500 hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-green-600 disabled:hover:to-green-700"
                         title="Publish all article drafts"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -2828,7 +2828,7 @@ const Dashboard = () => {
                         onClick={optimizePages}
                         disabled={optimizing || selectedPages.length === 0 || (tierUsage && !tierUsage.hasQuota)}
                         title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected pages'}
-                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-500 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-blue-700"
                       >
                         {optimizing ? (
                           <>
@@ -2866,7 +2866,7 @@ const Dashboard = () => {
                           );
                         }}
                         disabled={optimizing || !pages.some(p => p.hasDraft)}
-                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-gradient-to-r from-green-600 to-green-700 text-white border border-green-500 hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-green-600 disabled:hover:to-green-700"
                         title="Publish all draft optimizations"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -3053,7 +3053,7 @@ const Dashboard = () => {
                         onClick={optimizeCollections}
                         disabled={optimizing || selectedCollections.length === 0 || (tierUsage && !tierUsage.hasQuota)}
                         title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected collections'}
-                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-500 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-blue-700"
                       >
                         {optimizing ? (
                           <>
@@ -3091,7 +3091,7 @@ const Dashboard = () => {
                           );
                         }}
                         disabled={optimizing || !collections.some(c => c.hasDraft)}
-                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-gradient-to-r from-green-600 to-green-700 text-white border border-green-500 hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-green-600 disabled:hover:to-green-700"
                         title="Publish all draft optimizations"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -3315,7 +3315,7 @@ const Dashboard = () => {
                           v{item.version || 1}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         {new Date(item.timestamp).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -3370,26 +3370,26 @@ const Dashboard = () => {
                   <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 3: Click "Optimize"
                   </h4>
-                  <ul className="text-sm text-gray-700 ml-4 list-disc space-y-1">
+                  <ul className="text-sm text-gray-300 ml-4 list-disc space-y-1">
                     <li>🟦 Click <strong>"Optimize All"</strong> to process everything</li>
                     <li>✅ Or select specific items and click <strong>"Optimize Selected"</strong></li>
                   </ul>
-                  <p className="text-gray-700 text-sm mt-2">A draft is created for each item.</p>
+                  <p className="text-gray-300 text-sm mt-2">A draft is created for each item.</p>
                 </div>
 
                 <div>
                   <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 4: Preview & Approve
                   </h4>
-                  <p className="text-gray-700 text-sm mb-2">Each draft includes:</p>
-                  <ul className="text-sm text-gray-700 ml-4 list-disc space-y-1">
+                  <p className="text-gray-300 text-sm mb-2">Each draft includes:</p>
+                  <ul className="text-sm text-gray-300 ml-4 list-disc space-y-1">
                     <li>LLM-optimized summary and description</li>
                     <li>Embedded JSON-LD</li>
                     <li>&lt;div data-llm&gt; blocks</li>
                     <li>FAQ schema</li>
                   </ul>
-                  <p className="text-gray-700 text-sm mt-2">You can:</p>
-                  <ul className="text-sm text-gray-700 ml-4 list-disc space-y-1">
+                  <p className="text-gray-300 text-sm mt-2">You can:</p>
+                  <ul className="text-sm text-gray-300 ml-4 list-disc space-y-1">
                     <li>✅ <strong>Publish</strong></li>
                     <li>🔄 <strong>Rollback</strong></li>
                     <li>♻️ <strong>Re-optimize</strong></li>
@@ -3400,8 +3400,8 @@ const Dashboard = () => {
                   <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 5: Track Progress
                   </h4>
-                  <p className="text-gray-700 text-sm mb-2">Use the dashboard stats:</p>
-                  <ul className="text-sm text-gray-700 ml-4 list-disc space-y-1">
+                  <p className="text-gray-300 text-sm mb-2">Use the dashboard stats:</p>
+                  <ul className="text-sm text-gray-300 ml-4 list-disc space-y-1">
                     <li>Optimized items</li>
                     <li>Usage count</li>
                   </ul>
@@ -3475,7 +3475,7 @@ const Dashboard = () => {
               📜 Legal Disclaimer
             </h3>
             
-            <div className="prose prose-sm text-gray-700 space-y-4">
+            <div className="prose prose-sm text-gray-300 space-y-4">
               <p>
                 AI Search Booster provides content optimization suggestions using advanced automation. While we aim to improve your store's visibility across modern search platforms, results may vary depending on your existing content, store setup, and third-party platform behavior.
               </p>
@@ -3493,7 +3493,7 @@ const Dashboard = () => {
                 <li>This tool is provided "as-is" without warranties of any kind. Use at your own discretion.</li>
               </ul>
               
-              <p className="text-xs text-gray-600 mt-6 p-3 bg-gray-100 rounded">
+              <p className="text-xs text-gray-300 mt-6 p-3 bg-gray-100 rounded">
                 Consent to these terms is recorded with a timestamp and securely stored. This record may be referenced in the event of legal inquiries or disputes regarding usage.
               </p>
             </div>
@@ -3540,7 +3540,7 @@ const Dashboard = () => {
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             {selectedDraft.data.draft.content?.riskScore !== undefined && (
                               <div className="text-center">
-                                <span className="text-gray-600 text-xs font-medium block mb-2">Risk Score</span>
+                                <span className="text-gray-300 text-xs font-medium block mb-2">Risk Score</span>
                                 <div className={`text-2xl font-bold mb-1 ${
                                   selectedDraft.data.draft.content.riskScore > 0.7 ? 'text-red-600' :
                                   selectedDraft.data.draft.content.riskScore > 0.4 ? 'text-yellow-600' : 'text-green-600'
@@ -3558,7 +3558,7 @@ const Dashboard = () => {
                             )}
                             {selectedDraft.data.draft.content?.visibilityScore !== undefined && (
                               <div className="text-center">
-                                <span className="text-gray-600 text-xs font-medium block mb-2">Visibility Score</span>
+                                <span className="text-gray-300 text-xs font-medium block mb-2">Visibility Score</span>
                                 <div className={`text-2xl font-bold mb-1 ${
                                   selectedDraft.data.draft.content.visibilityScore >= 80 ? 'text-green-600' :
                                   selectedDraft.data.draft.content.visibilityScore >= 60 ? 'text-yellow-600' : 'text-red-600'
@@ -3576,7 +3576,7 @@ const Dashboard = () => {
                             )}
                             {selectedDraft.data.draft.content?.rolledBack && (
                               <div className="text-center">
-                                <span className="text-gray-600 text-xs font-medium block mb-2">Safety Status</span>
+                                <span className="text-gray-300 text-xs font-medium block mb-2">Safety Status</span>
                                 <div className="text-2xl font-bold text-orange-600 mb-1 flex items-center justify-center">
                                   <RotateCcw className="w-5 h-5 mr-1" />
                                   Auto
@@ -3599,38 +3599,38 @@ const Dashboard = () => {
                       
                       {/* Optimized Content Section */}
                       <div className="bg-[#2a2a2a] rounded-lg shadow p-6 border border-gray-700">
-                        <h4 className="text-md font-medium text-gray-600 mb-4 flex items-center">
+                        <h4 className="text-md font-medium text-white mb-4 flex items-center">
                           <FileText className="w-5 h-5 mr-2 text-gray-300" />
                           Optimized Content
                         </h4>
                         <div className="space-y-4">
                           {selectedDraft.data.draft.content?.title && (
                             <div>
-                              <h5 className="text-md font-medium text-gray-600 mb-1">Title</h5>
+                              <h5 className="text-md font-medium text-gray-300 mb-1">Title</h5>
                               <div className="text-base text-gray-300 font-medium">{selectedDraft.data.draft.content.title}</div>
                             </div>
                           )}
                           {selectedDraft.data.draft.content?.optimizedDescription && (
                             <div>
-                              <h5 className="text-md font-medium text-gray-600 mb-1">Description</h5>
+                              <h5 className="text-md font-medium text-gray-300 mb-1">Description</h5>
                               <div className="text-base text-gray-300 leading-relaxed whitespace-pre-wrap break-words">{selectedDraft.data.draft.content.optimizedDescription}</div>
                             </div>
                           )}
                           {selectedDraft.data.draft.content?.llmDescription && (
                             <div className="bg-yellow-900/20 rounded-lg p-4 border border-yellow-200">
-                              <h5 className="text-md font-medium text-gray-600 mb-1">LLM Description</h5>
+                              <h5 className="text-md font-medium text-gray-300 mb-1">LLM Description</h5>
                               <div className="text-base text-gray-300 leading-relaxed whitespace-pre-wrap break-words">{selectedDraft.data.draft.content.llmDescription}</div>
                             </div>
                           )}
                           {selectedDraft.data.draft.content?.summary && (
                             <div>
-                              <h5 className="text-md font-medium text-gray-600 mb-1">Summary</h5>
+                              <h5 className="text-md font-medium text-gray-300 mb-1">Summary</h5>
                               <div className="text-base text-gray-300">{selectedDraft.data.draft.content.summary}</div>
                             </div>
                           )}
                           {selectedDraft.data.draft.content?.description && !selectedDraft.data.draft.content?.title && (
                             <div>
-                              <h5 className="text-md font-medium text-gray-600 mb-1">Content</h5>
+                              <h5 className="text-md font-medium text-gray-300 mb-1">Content</h5>
                               <div className="text-base text-gray-300 leading-relaxed whitespace-pre-wrap break-words">{selectedDraft.data.draft.content.description}</div>
                             </div>
                           )}
@@ -3675,7 +3675,7 @@ const Dashboard = () => {
                   {selectedDraft.data.hasLive ? (
                     <div className="space-y-6">
                       <div className="bg-[#2a2a2a] rounded-lg shadow p-6 border border-gray-700">
-                        <h4 className="text-md font-medium text-gray-600 mb-4 flex items-center">
+                        <h4 className="text-md font-medium text-white mb-4 flex items-center">
                           <Monitor className="w-5 h-5 mr-2 text-gray-300" />
                           Published Content
                         </h4>
@@ -3846,7 +3846,7 @@ const Dashboard = () => {
                 </button>
               </div>
               
-              <div className="overflow-y-auto max-h-[60vh] prose prose-sm text-gray-700 space-y-4">
+              <div className="overflow-y-auto max-h-[60vh] prose prose-sm text-gray-300 space-y-4">
                 <p>
                   AI Search Booster provides content optimization suggestions using advanced automation. While we aim to improve your store's visibility across modern search platforms, results may vary depending on your existing content, store setup, and third-party platform behavior.
                 </p>
@@ -3864,7 +3864,7 @@ const Dashboard = () => {
                   <li>This tool is provided "as-is" without warranties of any kind. Use at your own discretion.</li>
                 </ul>
                 
-                <p className="text-xs text-gray-600 mt-6 p-3 bg-gray-100 rounded">
+                <p className="text-xs text-gray-300 mt-6 p-3 bg-gray-100 rounded">
                   Consent to these terms is recorded with a timestamp and securely stored. This record may be referenced in the event of legal inquiries or disputes regarding usage.
                 </p>
               </div>
@@ -3940,7 +3940,7 @@ const Dashboard = () => {
                     <div className="bg-gray-100 p-2 rounded font-mono text-xs">
                       {legalRecordsData.serverLogs}
                     </div>
-                    <p className="text-gray-600">
+                    <p className="text-gray-300">
                       Server logs contain IP address, user agent, and exact timestamps for legal protection.
                     </p>
                   </div>
