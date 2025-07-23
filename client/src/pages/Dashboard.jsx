@@ -1719,7 +1719,7 @@ const Dashboard = () => {
         <nav className="flex-1 p-4 space-y-2">
           {/* Optimization Section Header */}
           <div className="px-3 pb-2">
-            <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Optimization</h3>
+            <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Optimize</h3>
           </div>
           
           {/* Main Content Sections */}
@@ -1844,7 +1844,7 @@ const Dashboard = () => {
               <nav className="flex-1 p-4 space-y-2">
                 {/* Optimization Section Header */}
                 <div className="px-3 pb-2">
-                  <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Optimization</h3>
+                  <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Optimize</h3>
                 </div>
                 
                 {/* Main Content Sections */}
@@ -2236,9 +2236,6 @@ const Dashboard = () => {
         {(activeTab === 'products' || activeTab === 'blogs' || activeTab === 'pages' || activeTab === 'collections') && (
           <h2 className="text-white text-xl font-semibold mb-6">Optimize</h2>
         )}
-        {activeTab === 'support' && (
-          <h2 className="text-white text-xl font-semibold mb-6">Support</h2>
-        )}
         
         {/* Tab-Specific Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -2287,7 +2284,7 @@ const Dashboard = () => {
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Pages</h3>
-                  <p className="text-4xl font-bold text-text-primary mb-2">{status?.totalPages || 0}</p>
+                  <p className="text-4xl font-bold text-text-primary mb-2">{pages?.length || 0}</p>
                   <Globe className="w-5 h-5 text-text-muted mx-auto" />
                 </div>
               </div>
@@ -2295,7 +2292,7 @@ const Dashboard = () => {
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-accent-primary/50 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Pages</h3>
-                  <p className="text-4xl font-bold text-accent-primary mb-2">{status?.optimizedPages || 0}</p>
+                  <p className="text-4xl font-bold text-accent-primary mb-2">{pages?.filter(p => p.optimized)?.length || 0}</p>
                   <CheckCircle className="w-5 h-5 text-accent-primary mx-auto" />
                 </div>
               </div>
@@ -2668,7 +2665,7 @@ const Dashboard = () => {
                           );
                         }}
                         disabled={optimizing || !articles.some(a => a.hasDraft)}
-                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-gradient-to-r from-green-600 to-green-700 text-white border border-green-500 hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-green-600 disabled:hover:to-green-700"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                         title="Publish all article drafts"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -2752,7 +2749,7 @@ const Dashboard = () => {
                                     </span>
                                   )}
                                   {article.optimized && !article.rollbackTriggered && (
-                                    <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                    <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
                                       ✓ Optimized
                                     </span>
                                   )}
@@ -2886,7 +2883,7 @@ const Dashboard = () => {
                           );
                         }}
                         disabled={optimizing || !pages.some(p => p.hasDraft)}
-                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-gradient-to-r from-green-600 to-green-700 text-white border border-green-500 hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-green-600 disabled:hover:to-green-700"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                         title="Publish all draft optimizations"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -2977,7 +2974,7 @@ const Dashboard = () => {
                                     </span>
                                   )}
                                   {page.optimized && !page.rollbackTriggered && (
-                                    <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                    <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
                                       ✓ Optimized
                                     </span>
                                   )}
@@ -3111,7 +3108,7 @@ const Dashboard = () => {
                           );
                         }}
                         disabled={optimizing || !collections.some(c => c.hasDraft)}
-                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-gradient-to-r from-green-600 to-green-700 text-white border border-green-500 hover:from-green-700 hover:to-green-800 hover:shadow-lg hover:shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-green-600 disabled:hover:to-green-700"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                         title="Publish all draft optimizations"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -3206,7 +3203,7 @@ const Dashboard = () => {
                                     </span>
                                   )}
                                   {category.optimized && !category.rollbackTriggered && (
-                                    <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-medium">
+                                    <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
                                       ✓ Optimized
                                     </span>
                                   )}
@@ -3431,12 +3428,12 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Support & FAQ Tab */}
-        {activeTab === 'support' && (
+        {/* FAQ Tab - Temporarily disabled for deployment */}
+        {false && activeTab === 'support' && (
           <div className="prose prose-blue max-w-none">
             <div className="bg-dark-bg rounded-lg p-6 max-h-96 overflow-y-auto scrollbar-dark border border-dark-border">
               <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
-                🧰 Support & FAQ
+                🧰 FAQ
               </h3>
             
               <div className="space-y-3">
