@@ -37,7 +37,6 @@ const Dashboard = () => {
   });
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
-  const [helpTab, setHelpTab] = useState('instructions');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [showConsentModal, setShowConsentModal] = useState(false);
@@ -1718,6 +1717,7 @@ const Dashboard = () => {
 
         {/* Navigation Menu */}
         <nav className="flex-1 p-4 space-y-2">
+          {/* Main Content Sections */}
           {[
             { id: 'products', label: 'Products', icon: Package, count: products?.length || 0 },
             { id: 'blogs', label: 'Blog Articles', icon: BookOpen, count: articles?.length || 0 },
@@ -1727,23 +1727,46 @@ const Dashboard = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 ${
+              className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === tab.id
-                  ? 'bg-accent-primary-light text-accent-primary font-medium'
-                  : 'text-text-secondary hover:bg-dark-border hover:text-text-primary'
+                  ? 'bg-[#2d2d2d] text-white font-medium'
+                  : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
               }`}
             >
               <div className="flex items-center space-x-3">
-                <tab.icon className="w-5 h-5" />
+                <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-white' : ''}`} />
                 <span className="text-sm">{tab.label}</span>
               </div>
               <span className={`text-xs px-2 py-1 rounded-full ${
                 activeTab === tab.id 
-                  ? 'bg-accent-primary text-white' 
+                  ? 'bg-[#3a3a3a] text-white' 
                   : 'bg-dark-border text-text-muted'
               }`}>
                 {tab.count}
               </span>
+            </button>
+          ))}
+          
+          {/* Divider */}
+          <div className="border-t border-dark-border my-3"></div>
+          
+          {/* Help & Support Sections */}
+          {[
+            { id: 'instructions', label: 'Instructions', icon: BookOpen },
+            { id: 'support', label: 'Support & FAQ', icon: MessageSquare },
+            { id: 'terms', label: 'Terms & Disclaimer', icon: FileText },
+          ].map((helpTab) => (
+            <button
+              key={helpTab.id}
+              onClick={() => setActiveTab(helpTab.id)}
+              className={`w-full flex items-center space-x-3 p-3 rounded-xl text-left transition-all duration-200 ease-out ${
+                activeTab === helpTab.id
+                  ? 'bg-[#2d2d2d] text-white font-medium'
+                  : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
+              }`}
+            >
+              <helpTab.icon className={`w-5 h-5 ${activeTab === helpTab.id ? 'text-white' : ''}`} />
+              <span className="text-sm">{helpTab.label}</span>
             </button>
           ))}
         </nav>
@@ -1809,6 +1832,7 @@ const Dashboard = () => {
 
               {/* Mobile Navigation Menu */}
               <nav className="flex-1 p-4 space-y-2">
+                {/* Main Content Sections */}
                 {[
                   { id: 'products', label: 'Products', icon: Package, count: products?.length || 0 },
                   { id: 'blogs', label: 'Blog Articles', icon: BookOpen, count: articles?.length || 0 },
@@ -1821,23 +1845,49 @@ const Dashboard = () => {
                       setActiveTab(tab.id);
                       setMobileMenuOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 ${
+                    className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 ease-out ${
                       activeTab === tab.id
-                        ? 'bg-accent-primary-light text-accent-primary font-medium'
-                        : 'text-text-secondary hover:bg-dark-border hover:text-text-primary'
+                        ? 'bg-[#2d2d2d] text-white font-medium'
+                        : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <tab.icon className="w-5 h-5" />
+                      <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-white' : ''}`} />
                       <span className="text-sm">{tab.label}</span>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       activeTab === tab.id 
-                        ? 'bg-accent-primary text-white' 
+                        ? 'bg-[#3a3a3a] text-white' 
                         : 'bg-dark-border text-text-muted'
                     }`}>
                       {tab.count}
                     </span>
+                  </button>
+                ))}
+                
+                {/* Divider */}
+                <div className="border-t border-dark-border my-3"></div>
+                
+                {/* Help & Support Sections */}
+                {[
+                  { id: 'instructions', label: 'Instructions', icon: BookOpen },
+                  { id: 'support', label: 'Support & FAQ', icon: MessageSquare },
+                  { id: 'terms', label: 'Terms & Disclaimer', icon: FileText },
+                ].map((helpTab) => (
+                  <button
+                    key={helpTab.id}
+                    onClick={() => {
+                      setActiveTab(helpTab.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center space-x-3 p-3 rounded-xl text-left transition-all duration-200 ease-out ${
+                      activeTab === helpTab.id
+                        ? 'bg-[#2d2d2d] text-white font-medium'
+                        : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
+                    }`}
+                  >
+                    <helpTab.icon className={`w-5 h-5 ${activeTab === helpTab.id ? 'text-white' : ''}`} />
+                    <span className="text-sm">{helpTab.label}</span>
                   </button>
                 ))}
               </nav>
@@ -2133,7 +2183,7 @@ const Dashboard = () => {
                       }
                     }}
                     disabled={citationLoading || !shop || !authFetch}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                     title={citationLoading ? 'Loading...' : !shop ? 'Shop not loaded' : !authFetch ? 'Auth not ready' : 'Start citation monitoring'}
                   >
                     {citationLoading ? 'Loading...' : 'Start Monitoring'}
@@ -2171,7 +2221,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {activeTab === 'products' && (
             <>
-              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-dark-border-hover transition-all duration-200">
+              <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Products</h3>
                   <p className="text-4xl font-bold text-text-primary mb-2">{status?.totalProducts || 0}</p>
@@ -2179,7 +2229,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-accent-primary transition-all duration-200">
+              <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-accent-primary/50 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Products</h3>
                   <p className="text-4xl font-bold text-accent-primary mb-2">{status?.optimizedProducts || 0}</p>
@@ -2191,7 +2241,7 @@ const Dashboard = () => {
           
           {activeTab === 'blogs' && (
             <>
-              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-dark-border-hover transition-all duration-200">
+              <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Articles</h3>
                   <p className="text-4xl font-bold text-text-primary mb-2">{status?.totalBlogs || 0}</p>
@@ -2199,7 +2249,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-accent-primary transition-all duration-200">
+              <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-accent-primary/50 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Articles</h3>
                   <p className="text-4xl font-bold text-accent-primary mb-2">{status?.optimizedBlogs || 0}</p>
@@ -2211,7 +2261,7 @@ const Dashboard = () => {
           
           {activeTab === 'pages' && (
             <>
-              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-dark-border-hover transition-all duration-200">
+              <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Pages</h3>
                   <p className="text-4xl font-bold text-text-primary mb-2">{status?.totalPages || 0}</p>
@@ -2219,7 +2269,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-accent-primary transition-all duration-200">
+              <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-accent-primary/50 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Pages</h3>
                   <p className="text-4xl font-bold text-accent-primary mb-2">{status?.optimizedPages || 0}</p>
@@ -2231,7 +2281,7 @@ const Dashboard = () => {
           
           {activeTab === 'collections' && (
             <>
-              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-dark-border-hover transition-all duration-200">
+              <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Collections</h3>
                   <p className="text-4xl font-bold text-text-primary mb-2">{collections?.length || 0}</p>
@@ -2239,7 +2289,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-accent-primary transition-all duration-200">
+              <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-accent-primary/50 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Collections</h3>
                   <p className="text-4xl font-bold text-accent-primary mb-2">{collections?.filter(c => c.optimized)?.length || 0}</p>
@@ -2250,7 +2300,7 @@ const Dashboard = () => {
           )}
           
           {/* AI Optimizations This Month - Clean Design */}
-          <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-dark-border-hover transition-all duration-200">
+          <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
             <div className="text-center">
               <h3 className="text-sm font-medium text-text-muted mb-4">AI Optimizations This Month</h3>
               
@@ -2280,7 +2330,7 @@ const Dashboard = () => {
           </div>
           
           {/* Enterprise Performance - Always shown on all tabs */}
-          <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 hover:border-purple-500/50 transition-all duration-200">
+          <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-purple-400/50 transition-all duration-200 ease-out">
             <div className="text-center">
               <h3 className="text-sm font-medium text-text-muted mb-4">Enterprise Status</h3>
               <p className="text-4xl font-bold text-purple-400 mb-2">
@@ -2312,11 +2362,7 @@ const Dashboard = () => {
                     {/* Upgrade Plan Button */}
                     <button
                       onClick={() => window.location.href = '/billing'}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1 ${
-                        tierUsage && !tierUsage.hasQuota 
-                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
-                      }`}
+                      className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
                     >
                       <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
                     </button>
@@ -2328,7 +2374,7 @@ const Dashboard = () => {
                           setSelectedProducts(products.map(p => p.id.toString()));
                         }
                       }}
-                      className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-1 text-sm"
+                      className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-gray-400"
                       title={selectedProducts.length === products.length ? "Deselect all products" : "Select all products"}
                     >
                       <CheckCircle className="w-3 h-3" />
@@ -2338,7 +2384,7 @@ const Dashboard = () => {
                       onClick={optimizeProducts}
                       disabled={optimizing || selectedProducts.length === 0 || (tierUsage && !tierUsage.hasQuota)}
                       title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected products'}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                     >
                       {optimizing ? (
                         <>
@@ -2377,7 +2423,7 @@ const Dashboard = () => {
                         );
                       }}
                       disabled={optimizing || !products.some(p => p.hasDraft)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                       title="Publish all draft optimizations"
                     >
                       <CheckCircle className="w-4 h-4" />
@@ -2386,7 +2432,7 @@ const Dashboard = () => {
                     <button
                       onClick={() => rollbackAllOptimizations('product')}
                       disabled={optimizing || !products.some(p => p.optimized)}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                       title="Rollback all product optimizations"
                     >
                       <RotateCcw className="w-4 h-4" />
@@ -2538,11 +2584,7 @@ const Dashboard = () => {
                     {/* Upgrade Plan Button */}
                     <button
                       onClick={() => window.location.href = '/billing'}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1 ${
-                        tierUsage && !tierUsage.hasQuota 
-                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
-                      }`}
+                      className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
                     >
                       <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
                     </button>
@@ -2554,7 +2596,7 @@ const Dashboard = () => {
                             setSelectedArticles(articles.map(a => a.id.toString()));
                           }
                         }}
-                        className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-1 text-sm"
+                        className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-gray-400"
                         title={selectedArticles.length === articles.length ? "Deselect all articles" : "Select all articles"}
                       >
                         <CheckCircle className="w-3 h-3" />
@@ -2564,7 +2606,7 @@ const Dashboard = () => {
                         onClick={() => optimizeArticles()}
                         disabled={optimizing || selectedArticles.length === 0 || (tierUsage && !tierUsage.hasQuota)}
                         title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected articles'}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                       >
                         {optimizing ? (
                           <>
@@ -2603,7 +2645,7 @@ const Dashboard = () => {
                           );
                         }}
                         disabled={optimizing || !articles.some(a => a.hasDraft)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                         title="Publish all article drafts"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -2612,7 +2654,7 @@ const Dashboard = () => {
                       <button
                         onClick={() => rollbackAllOptimizations('article')}
                         disabled={optimizing || !articles.some(a => a.optimized)}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                         title="Rollback all article optimizations"
                       >
                         <RotateCcw className="w-4 h-4" />
@@ -2761,11 +2803,7 @@ const Dashboard = () => {
                     {/* Upgrade Plan Button */}
                     <button
                       onClick={() => window.location.href = '/billing'}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1 ${
-                        tierUsage && !tierUsage.hasQuota 
-                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
-                      }`}
+                      className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
                     >
                       <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
                     </button>
@@ -2777,7 +2815,7 @@ const Dashboard = () => {
                             setSelectedPages(pages.map(p => p.id.toString()));
                           }
                         }}
-                        className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-1 text-sm"
+                        className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-gray-400"
                         title={selectedPages.length === pages.length ? "Deselect all pages" : "Select all pages"}
                       >
                         <CheckCircle className="w-3 h-3" />
@@ -2787,7 +2825,7 @@ const Dashboard = () => {
                         onClick={optimizePages}
                         disabled={optimizing || selectedPages.length === 0 || (tierUsage && !tierUsage.hasQuota)}
                         title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected pages'}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                       >
                         {optimizing ? (
                           <>
@@ -2825,7 +2863,7 @@ const Dashboard = () => {
                           );
                         }}
                         disabled={optimizing || !pages.some(p => p.hasDraft)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                         title="Publish all draft optimizations"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -2834,7 +2872,7 @@ const Dashboard = () => {
                       <button
                         onClick={() => rollbackAllOptimizations('page')}
                         disabled={optimizing || !pages.some(p => p.optimized)}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                         title="Rollback all page optimizations"
                       >
                         <RotateCcw className="w-4 h-4" />
@@ -2990,11 +3028,7 @@ const Dashboard = () => {
                     {/* Upgrade Plan Button */}
                     <button
                       onClick={() => window.location.href = '/billing'}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-1 ${
-                        tierUsage && !tierUsage.hasQuota 
-                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
-                      }`}
+                      className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
                     >
                       <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
                     </button>
@@ -3006,7 +3040,7 @@ const Dashboard = () => {
                             setSelectedCollections(collections.map(c => c.id.toString()));
                           }
                         }}
-                        className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-1 text-sm"
+                        className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-gray-400"
                         title={selectedCollections.length === collections.length ? "Deselect all collections" : "Select all collections"}
                       >
                         <CheckCircle className="w-3 h-3" />
@@ -3016,7 +3050,7 @@ const Dashboard = () => {
                         onClick={optimizeCollections}
                         disabled={optimizing || selectedCollections.length === 0 || (tierUsage && !tierUsage.hasQuota)}
                         title={tierUsage && !tierUsage.hasQuota ? `Quota exceeded: ${tierUsage.usageThisMonth}/${tierUsage.monthlyLimit} optimizations used this month` : 'Optimize selected collections'}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                       >
                         {optimizing ? (
                           <>
@@ -3054,7 +3088,7 @@ const Dashboard = () => {
                           );
                         }}
                         disabled={optimizing || !collections.some(c => c.hasDraft)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                         title="Publish all draft optimizations"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -3063,7 +3097,7 @@ const Dashboard = () => {
                       <button
                         onClick={() => rollbackAllOptimizations('collection')}
                         disabled={optimizing || !collections.some(c => c.optimized)}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 bg-transparent text-white border border-white/20 hover:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
                         title="Rollback all collection optimizations"
                       >
                         <RotateCcw className="w-4 h-4" />
@@ -3218,7 +3252,7 @@ const Dashboard = () => {
 
         {/* Preview Section */}
         {preview && (
-          <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border p-6 mb-8">
+          <div className="bg-dark-card rounded-xl border border-dark-border p-6 mb-8 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
             <h2 className="text-lg font-semibold text-text-primary mb-4">Optimization Preview</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -3298,56 +3332,8 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Help Section */}
-      <div className="bg-dark-card rounded-2xl shadow-md border border-dark-border mb-8">
-        <div className="border-b border-dark-border">
-          <nav className="flex -mb-px p-2">
-            <button
-              onClick={() => setHelpTab('instructions')}
-              className={`py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
-                helpTab === 'instructions'
-                  ? 'bg-accent-primary-light text-accent-primary'
-                  : 'text-text-secondary hover:bg-dark-border hover:text-text-primary'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <BookOpen className="w-4 h-4" />
-                <span>Instructions</span>
-              </div>
-            </button>
-            <button
-              onClick={() => setHelpTab('support')}
-              className={`py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
-                helpTab === 'support'
-                  ? 'bg-accent-primary-light text-accent-primary'
-                  : 'text-text-secondary hover:bg-dark-border hover:text-text-primary'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4" />
-                <span>Support & FAQ</span>
-              </div>
-            </button>
-            <button
-              onClick={() => setHelpTab('terms')}
-              className={`py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
-                helpTab === 'terms'
-                  ? 'bg-accent-primary-light text-accent-primary'
-                  : 'text-text-secondary hover:bg-dark-border hover:text-text-primary'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <FileText className="w-4 h-4" />
-                <span>Terms & Disclaimer</span>
-              </div>
-            </button>
-          </nav>
-        </div>
-
-        <div className="p-6">
-
         {/* Instructions Tab */}
-        {helpTab === 'instructions' && (
+        {activeTab === 'instructions' && (
           <div className="prose prose-blue max-w-none">
             <div className="bg-dark-bg rounded-lg p-6 max-h-96 overflow-y-auto scrollbar-dark border border-dark-border">
               <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
@@ -3423,7 +3409,7 @@ const Dashboard = () => {
         )}
 
         {/* Support & FAQ Tab */}
-        {helpTab === 'support' && (
+        {activeTab === 'support' && (
           <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               🧰 Support & FAQ
@@ -3480,7 +3466,7 @@ const Dashboard = () => {
         )}
 
         {/* Terms & Disclaimer Tab */}
-        {helpTab === 'terms' && (
+        {activeTab === 'terms' && (
           <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               📜 Legal Disclaimer
@@ -3510,11 +3496,6 @@ const Dashboard = () => {
             </div>
           </div>
         )}
-        </div>
-      </div>
-
-      {/* Close main container */}
-      </div>
 
       {/* Draft Preview Modal - Production-grade UI */}
       {showDraftModal && selectedDraft && (
@@ -3743,7 +3724,7 @@ const Dashboard = () => {
                       publishDraft(selectedDraft.type, selectedDraft.id);
                       setShowDraftModal(false);
                     }}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+                    className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out bg-transparent text-white border border-white/20 hover:border-green-500"
                   >
                     Publish Draft
                   </button>
@@ -3775,7 +3756,7 @@ const Dashboard = () => {
                 </button>
                 <button
                   onClick={handleConfirmAction}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                  className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out bg-transparent text-white border border-white/20 hover:border-blue-600"
                 >
                   Confirm
                 </button>
