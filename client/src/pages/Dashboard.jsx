@@ -1648,10 +1648,10 @@ const Dashboard = () => {
   // Show error state if there's an error
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-800/20 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6 bg-white rounded-lg shadow">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Dashboard Error</h2>
+          <h2 className="text-xl font-semibold text-text-primary mb-2">Dashboard Error</h2>
           <p className="text-gray-600 mb-4">{error.message}</p>
           <details className="text-left text-sm text-gray-500 mb-4">
             <summary className="cursor-pointer">Technical Details</summary>
@@ -1672,7 +1672,7 @@ const Dashboard = () => {
 
   if (loading || !isReady) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-800/20 flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
           <p className="text-gray-600">
@@ -1729,7 +1729,7 @@ const Dashboard = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === tab.id
-                  ? 'bg-[#2d2d2d] text-white font-medium'
+                  ? 'bg-[#363636] text-white font-medium'
                   : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
               }`}
             >
@@ -1761,7 +1761,7 @@ const Dashboard = () => {
               onClick={() => setActiveTab(helpTab.id)}
               className={`w-full flex items-center space-x-3 p-3 rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === helpTab.id
-                  ? 'bg-[#2d2d2d] text-white font-medium'
+                  ? 'bg-[#363636] text-white font-medium'
                   : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
               }`}
             >
@@ -1847,7 +1847,7 @@ const Dashboard = () => {
                     }}
                     className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 ease-out ${
                       activeTab === tab.id
-                        ? 'bg-[#2d2d2d] text-white font-medium'
+                        ? 'bg-[#363636] text-white font-medium'
                         : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
                     }`}
                   >
@@ -1882,7 +1882,7 @@ const Dashboard = () => {
                     }}
                     className={`w-full flex items-center space-x-3 p-3 rounded-xl text-left transition-all duration-200 ease-out ${
                       activeTab === helpTab.id
-                        ? 'bg-[#2d2d2d] text-white font-medium'
+                        ? 'bg-[#363636] text-white font-medium'
                         : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
                     }`}
                   >
@@ -1954,10 +1954,10 @@ const Dashboard = () => {
             <div
               key={notification.id}
               className={`p-4 rounded-lg shadow-lg border-l-4 ${
-                notification.type === 'success' ? 'bg-green-50 border-green-400' :
+                notification.type === 'success' ? 'bg-green-900/20 border-green-400' :
                 notification.type === 'error' ? 'bg-red-50 border-red-400' :
-                notification.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
-                'bg-blue-50 border-blue-400'
+                notification.type === 'warning' ? 'bg-yellow-900/20 border-yellow-400' :
+                'bg-blue-900/20 border-blue-400'
               }`}
             >
               <div className="flex items-start">
@@ -1999,7 +1999,7 @@ const Dashboard = () => {
       {/* Citation Notifications */}
       {citations.length > 0 && (
         <div className="fixed top-20 left-4 z-40 max-w-sm">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-lg">
+          <div className="bg-blue-900/20 border border-blue-200 rounded-lg p-4 shadow-lg">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <Bell className="w-5 h-5 text-blue-600" />
@@ -2034,7 +2034,7 @@ const Dashboard = () => {
             <div className="flex items-center space-x-4">
               <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-text-primary">
                   Optimizing {optimizationProgress.type}... ({optimizationProgress.current}/{optimizationProgress.total})
                 </p>
                 <div className="mt-2 bg-gray-200 rounded-full h-2">
@@ -2058,7 +2058,7 @@ const Dashboard = () => {
             <div className="flex items-center space-x-4">
               <Eye className="w-5 h-5 text-black animate-pulse" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-text-primary">
                   Preview Incoming!
                 </p>
                 <div className="mt-2 bg-gray-200 rounded-full h-2">
@@ -2072,18 +2072,18 @@ const Dashboard = () => {
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="bg-white border-b shadow-sm">
+        <div className="bg-dark-card border-b border-dark-border shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <h2 className="text-lg font-semibold mb-4">Optimization Settings</h2>
+            <h2 className="text-lg font-semibold text-text-primary mb-4">Optimization Settings</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-secondary mb-2">
                   Target AI Platform
                 </label>
                 <select
                   value={settings.targetLLM}
                   onChange={(e) => setSettings({...settings, targetLLM: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-border bg-dark-bg-secondary text-text-primary rounded-lg focus:ring-2 focus:ring-accent-primary"
                 >
                   <option value="general">All Platforms</option>
                   <option value="chatgpt">ChatGPT</option>
@@ -2092,7 +2092,7 @@ const Dashboard = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-secondary mb-2">
                   Keywords (comma-separated)
                 </label>
                 <input
@@ -2100,17 +2100,17 @@ const Dashboard = () => {
                   value={settings.keywords}
                   onChange={(e) => setSettings({...settings, keywords: e.target.value})}
                   placeholder="organic, sustainable, premium"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-border bg-dark-bg-secondary text-text-primary rounded-lg focus:ring-2 focus:ring-accent-primary placeholder-text-muted"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-secondary mb-2">
                   Tone
                 </label>
                 <select
                   value={settings.tone}
                   onChange={(e) => setSettings({...settings, tone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-border bg-dark-bg-secondary text-text-primary rounded-lg focus:ring-2 focus:ring-accent-primary"
                 >
                   <option value="professional">Professional</option>
                   <option value="casual">Casual</option>
@@ -2357,7 +2357,7 @@ const Dashboard = () => {
             {activeTab === 'products' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Select Products to Optimize</h3>
+                  <h3 className="text-lg font-semibold text-text-primary">Select Products to Optimize</h3>
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
@@ -2449,10 +2449,10 @@ const Dashboard = () => {
                       <div
                         key={product.id}
                         onClick={() => toggleProductSelection(product.id.toString())}
-                        className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        className={`border rounded-xl p-6 cursor-pointer transition-all duration-200 ease-out ${
                           selectedProducts.includes(product.id.toString())
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-blue-500 bg-blue-900/20 ring-1 ring-blue-500/50'
+                            : 'border-dark-border bg-[#2a2a2a] hover:border-dark-border-hover hover:bg-[#363636]'
                         }`}
                       >
                         <div className="flex items-start space-x-3">
@@ -2464,7 +2464,7 @@ const Dashboard = () => {
                           />
                           <div className="flex-1">
                             <div className="flex items-start space-x-2">
-                              <h4 className="font-medium text-gray-900 flex-1">{product.title}</h4>
+                              <h4 className="font-medium text-text-primary flex-1">{product.title}</h4>
                               {/* Quality Indicators */}
                               <div className="flex items-center space-x-1 flex-shrink-0">
                                 {/* Risk Score Indicator */}
@@ -2472,7 +2472,7 @@ const Dashboard = () => {
                                   <div 
                                     className={`w-2 h-2 rounded-full ${
                                       product.riskScore > 0.7 ? 'bg-red-500' :
-                                      product.riskScore > 0.4 ? 'bg-yellow-500' : 'bg-green-500'
+                                      product.riskScore > 0.4 ? 'bg-yellow-900/200' : 'bg-green-900/200'
                                     }`}
                                     title={`Risk Score: ${(product.riskScore * 100).toFixed(0)}% (${
                                       product.riskScore > 0.7 ? 'High Risk' :
@@ -2579,7 +2579,7 @@ const Dashboard = () => {
             {activeTab === 'blogs' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Select Blog Articles to Optimize</h3>
+                  <h3 className="text-lg font-semibold text-text-primary">Select Blog Articles to Optimize</h3>
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
@@ -2673,7 +2673,7 @@ const Dashboard = () => {
                           onClick={() => toggleArticleSelection(article.id.toString())}
                           className={`border rounded-lg p-4 cursor-pointer transition-all ${
                             selectedArticles.includes(article.id.toString())
-                              ? 'border-blue-500 bg-blue-50'
+                              ? 'border-blue-500 bg-blue-900/20'
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
@@ -2686,7 +2686,7 @@ const Dashboard = () => {
                             />
                             <div className="flex-1">
                               <div className="flex items-start space-x-2">
-                                <h4 className="font-medium text-gray-900 flex-1">{article.title}</h4>
+                                <h4 className="font-medium text-text-primary flex-1">{article.title}</h4>
                                 {/* Quality Indicators */}
                                 <div className="flex items-center space-x-1 flex-shrink-0">
                                   {/* Risk Score Indicator */}
@@ -2694,7 +2694,7 @@ const Dashboard = () => {
                                     <div 
                                       className={`w-2 h-2 rounded-full ${
                                         article.riskScore > 0.7 ? 'bg-red-500' :
-                                        article.riskScore > 0.4 ? 'bg-yellow-500' : 'bg-green-500'
+                                        article.riskScore > 0.4 ? 'bg-yellow-900/200' : 'bg-green-900/200'
                                       }`}
                                       title={`Risk Score: ${(article.riskScore * 100).toFixed(0)}% (${
                                         article.riskScore > 0.7 ? 'High Risk' :
@@ -2734,7 +2734,7 @@ const Dashboard = () => {
                                     </span>
                                   )}
                                   {article.hasDraft && !article.rollbackTriggered && (
-                                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
+                                    <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
                                       📝 Draft Ready
                                     </span>
                                   )}
@@ -2748,7 +2748,7 @@ const Dashboard = () => {
                                         e.stopPropagation();
                                         handlePreviewDraft('article', article.id);
                                       }}
-                                      className="px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      className="px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-blue-700/50 hover:border-blue-500/50"
                                       title="Preview draft content"
                                     >
                                       <Eye className="w-3 h-3" />
@@ -2762,7 +2762,7 @@ const Dashboard = () => {
                                         e.stopPropagation();
                                         publishDraft('article', article.id);
                                       }}
-                                      className="px-1.5 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      className="px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-green-700/50 hover:border-green-500/50"
                                       title="Publish draft optimization"
                                     >
                                       <CheckCircle className="w-3 h-3" />
@@ -2798,7 +2798,7 @@ const Dashboard = () => {
             {activeTab === 'pages' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Select Pages to Optimize</h3>
+                  <h3 className="text-lg font-semibold text-text-primary">Select Pages to Optimize</h3>
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
@@ -2898,7 +2898,7 @@ const Dashboard = () => {
                           }}
                           className={`border rounded-lg p-4 cursor-pointer transition-all ${
                             selectedPages.includes(page.id.toString())
-                              ? 'border-blue-500 bg-blue-50'
+                              ? 'border-blue-500 bg-blue-900/20'
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
@@ -2911,7 +2911,7 @@ const Dashboard = () => {
                             />
                             <div className="flex-1">
                               <div className="flex items-start space-x-2">
-                                <h4 className="font-medium text-gray-900 flex-1">{page.title}</h4>
+                                <h4 className="font-medium text-text-primary flex-1">{page.title}</h4>
                                 {/* Quality Indicators */}
                                 <div className="flex items-center space-x-1 flex-shrink-0">
                                   {/* Risk Score Indicator */}
@@ -2919,7 +2919,7 @@ const Dashboard = () => {
                                     <div 
                                       className={`w-2 h-2 rounded-full ${
                                         page.riskScore > 0.7 ? 'bg-red-500' :
-                                        page.riskScore > 0.4 ? 'bg-yellow-500' : 'bg-green-500'
+                                        page.riskScore > 0.4 ? 'bg-yellow-900/200' : 'bg-green-900/200'
                                       }`}
                                       title={`Risk Score: ${(page.riskScore * 100).toFixed(0)}% (${
                                         page.riskScore > 0.7 ? 'High Risk' :
@@ -2959,7 +2959,7 @@ const Dashboard = () => {
                                     </span>
                                   )}
                                   {page.hasDraft && !page.rollbackTriggered && (
-                                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
+                                    <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
                                       📝 Draft Ready
                                     </span>
                                   )}
@@ -2973,7 +2973,7 @@ const Dashboard = () => {
                                         e.stopPropagation();
                                         handlePreviewDraft('page', page.id);
                                       }}
-                                      className="px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      className="px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-blue-700/50 hover:border-blue-500/50"
                                       title="Preview draft content"
                                     >
                                       <Eye className="w-3 h-3" />
@@ -2987,7 +2987,7 @@ const Dashboard = () => {
                                         e.stopPropagation();
                                         publishDraft('page', page.id);
                                       }}
-                                      className="px-1.5 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      className="px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-green-700/50 hover:border-green-500/50"
                                       title="Publish draft optimization"
                                     >
                                       <CheckCircle className="w-3 h-3" />
@@ -3023,7 +3023,7 @@ const Dashboard = () => {
             {activeTab === 'collections' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Select Collections to Optimize</h3>
+                  <h3 className="text-lg font-semibold text-text-primary">Select Collections to Optimize</h3>
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
@@ -3127,7 +3127,7 @@ const Dashboard = () => {
                           }}
                           className={`border rounded-lg p-4 cursor-pointer transition-all ${
                             selectedCollections.includes(category.id.toString())
-                              ? 'border-blue-500 bg-blue-50'
+                              ? 'border-blue-500 bg-blue-900/20'
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
@@ -3140,7 +3140,7 @@ const Dashboard = () => {
                             />
                             <div className="flex-1">
                               <div className="flex items-start space-x-2">
-                                <h4 className="font-medium text-gray-900 flex-1">{category.title}</h4>
+                                <h4 className="font-medium text-text-primary flex-1">{category.title}</h4>
                                 {/* Quality Indicators */}
                                 <div className="flex items-center space-x-1 flex-shrink-0">
                                   {/* Risk Score Indicator */}
@@ -3148,7 +3148,7 @@ const Dashboard = () => {
                                     <div 
                                       className={`w-2 h-2 rounded-full ${
                                         category.riskScore > 0.7 ? 'bg-red-500' :
-                                        category.riskScore > 0.4 ? 'bg-yellow-500' : 'bg-green-500'
+                                        category.riskScore > 0.4 ? 'bg-yellow-900/200' : 'bg-green-900/200'
                                       }`}
                                       title={`Risk Score: ${(category.riskScore * 100).toFixed(0)}% (${
                                         category.riskScore > 0.7 ? 'High Risk' :
@@ -3188,7 +3188,7 @@ const Dashboard = () => {
                                     </span>
                                   )}
                                   {category.hasDraft && !category.rollbackTriggered && (
-                                    <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded font-medium">
+                                    <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
                                       📝 Draft Ready
                                     </span>
                                   )}
@@ -3202,7 +3202,7 @@ const Dashboard = () => {
                                         e.stopPropagation();
                                         handlePreviewDraft('collection', category.id);
                                       }}
-                                      className="px-1.5 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      className="px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-blue-700/50 hover:border-blue-500/50"
                                       title="Preview draft content"
                                     >
                                       <Eye className="w-3 h-3" />
@@ -3216,7 +3216,7 @@ const Dashboard = () => {
                                         e.stopPropagation();
                                         publishDraft('collection', category.id);
                                       }}
-                                      className="px-1.5 py-0.5 bg-green-100 text-green-700 hover:bg-green-200 text-xs rounded font-medium flex items-center space-x-1 transition-colors"
+                                      className="px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-green-700/50 hover:border-green-500/50"
                                       title="Publish draft optimization"
                                     >
                                       <CheckCircle className="w-3 h-3" />
@@ -3305,7 +3305,7 @@ const Dashboard = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {history.map((item) => (
                     <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">{item.type}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary capitalize">{item.type}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{item.itemId}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
@@ -3364,7 +3364,7 @@ const Dashboard = () => {
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                  <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 3: Click "Optimize"
                   </h4>
                   <ul className="text-sm text-gray-700 ml-4 list-disc space-y-1">
@@ -3375,7 +3375,7 @@ const Dashboard = () => {
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                  <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 4: Preview & Approve
                   </h4>
                   <p className="text-gray-700 text-sm mb-2">Each draft includes:</p>
@@ -3394,7 +3394,7 @@ const Dashboard = () => {
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                  <h4 className="font-medium text-text-primary mb-2 flex items-center">
                     ✅ Step 5: Track Progress
                   </h4>
                   <p className="text-gray-700 text-sm mb-2">Use the dashboard stats:</p>
@@ -3410,8 +3410,8 @@ const Dashboard = () => {
 
         {/* Support & FAQ Tab */}
         {activeTab === 'support' && (
-          <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="bg-gray-800/20 rounded-lg p-6 max-h-96 overflow-y-auto">
+            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
               🧰 Support & FAQ
             </h3>
             
@@ -3442,21 +3442,21 @@ const Dashboard = () => {
                   answer: "Email: AskMaxEvo@gmail.com"
                 }
               ].map((faq, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg">
+                <div key={index} className="border border-dark-border rounded-lg bg-dark-card">
                   <button
-                    className="w-full px-4 py-3 text-left flex justify-between items-center hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                    className="w-full px-4 py-3 text-left flex justify-between items-center hover:bg-[#363636] focus:outline-none focus:bg-[#363636]"
                     onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                   >
-                    <span className="font-medium text-gray-900">❓ {faq.question}</span>
+                    <span className="font-medium text-text-primary">❓ {faq.question}</span>
                     <ChevronDown
-                      className={`w-4 h-4 text-gray-500 transform transition-transform ${
+                      className={`w-4 h-4 text-text-muted transform transition-transform ${
                         expandedFaq === index ? 'rotate-180' : ''
                       }`}
                     />
                   </button>
                   {expandedFaq === index && (
                     <div className="px-4 pb-3">
-                      <p className="text-gray-700 text-sm">{faq.answer}</p>
+                      <p className="text-text-secondary text-sm">{faq.answer}</p>
                     </div>
                   )}
                 </div>
@@ -3467,8 +3467,8 @@ const Dashboard = () => {
 
         {/* Terms & Disclaimer Tab */}
         {activeTab === 'terms' && (
-          <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <div className="bg-gray-800/20 rounded-lg p-6 max-h-96 overflow-y-auto">
+            <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
               📜 Legal Disclaimer
             </h3>
             
@@ -3500,16 +3500,16 @@ const Dashboard = () => {
       {/* Draft Preview Modal - Production-grade UI */}
       {showDraftModal && selectedDraft && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl mx-auto">
+          <div className="bg-dark-card rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl mx-auto border border-dark-border">
             <div className="p-6">
               {/* Header with Human-Readable Title */}
-              <div className="text-center border-b border-gray-200 pb-4 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <div className="text-center border-b border-dark-border pb-4 mb-6">
+                <h2 className="text-xl font-semibold text-text-primary mb-2">
                   {selectedDraft.type.charAt(0).toUpperCase() + selectedDraft.type.slice(1)}: Draft Preview – {getContentTitle(selectedDraft.type, selectedDraft.id, selectedDraft.data)}
                 </h2>
                 <button
                   onClick={() => setShowDraftModal(false)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute top-4 right-4 text-text-muted hover:text-text-primary transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -3519,7 +3519,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                 {/* Left Column: Optimized Content */}
                 <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
                     <Sparkles className="w-5 h-5 mr-2 text-blue-500" />
                     Optimized Content
                   </h3>
@@ -3614,7 +3614,7 @@ const Dashboard = () => {
                             </div>
                           )}
                           {selectedDraft.data.draft.content?.llmDescription && (
-                            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                            <div className="bg-yellow-900/20 rounded-lg p-4 border border-yellow-200">
                               <h5 className="text-md font-medium text-gray-600 mb-1">LLM Description</h5>
                               <div className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap break-words">{selectedDraft.data.draft.content.llmDescription}</div>
                             </div>
@@ -3643,7 +3643,7 @@ const Dashboard = () => {
                           </h4>
                           <div className="space-y-3">
                             {(selectedDraft.data.draft.content?.faqs || selectedDraft.data.draft.faq?.questions || selectedDraft.data.draft.faq || []).map((faq, index) => (
-                              <div key={index} className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                              <div key={index} className="bg-blue-900/20 rounded-lg p-4 border border-blue-100">
                                 <div className="text-blue-600 font-medium mb-2 break-words">Q: {faq.q || faq.question}</div>
                                 <div className="text-gray-800 leading-relaxed break-words">A: {faq.a || faq.answer}</div>
                               </div>
@@ -3657,7 +3657,7 @@ const Dashboard = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div className="bg-gray-800/20 border border-gray-200 rounded-lg p-4">
                       <p className="text-gray-600">No draft content available</p>
                     </div>
                   )}
@@ -3665,7 +3665,7 @@ const Dashboard = () => {
                 
                 {/* Right Column: Live Content */}
                 <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
                     <Globe className="w-5 h-5 mr-2 text-green-500" />
                     Live Content
                   </h3>
@@ -3689,7 +3689,7 @@ const Dashboard = () => {
                           </h4>
                           <div className="space-y-3">
                             {selectedDraft.data.live.faq?.map((faq, index) => (
-                              <div key={index} className="bg-green-50 rounded-lg p-4 border border-green-100">
+                              <div key={index} className="bg-green-900/20 rounded-lg p-4 border border-green-100">
                                 <div className="text-green-600 font-medium mb-2 break-words">Q: {faq.question}</div>
                                 <div className="text-gray-800 leading-relaxed break-words">A: {faq.answer}</div>
                               </div>
@@ -3703,7 +3703,7 @@ const Dashboard = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div className="bg-gray-800/20 border border-gray-200 rounded-lg p-4">
                       <p className="text-gray-600">No live content available</p>
                     </div>
                   )}
@@ -3714,7 +3714,7 @@ const Dashboard = () => {
               <div className="mt-6 flex justify-end space-x-3">
                 <button
                   onClick={() => setShowDraftModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="px-4 py-2 border border-dark-border rounded-md text-sm font-medium text-text-secondary bg-dark-bg-secondary hover:bg-[#363636]"
                 >
                   Close
                 </button>
@@ -3739,18 +3739,18 @@ const Dashboard = () => {
       {/* Confirmation Modal */}
       {showConfirmModal && confirmConfig && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+          <div className="bg-dark-card rounded-lg shadow-xl max-w-md w-full mx-4 border border-dark-border">
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-text-primary mb-4">
                 {confirmConfig.title}
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-text-secondary mb-6">
                 {confirmConfig.message}
               </p>
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={handleConfirmClose}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="px-4 py-2 border border-dark-border rounded-md text-sm font-medium text-text-secondary bg-dark-bg-secondary hover:bg-[#363636]"
                 >
                   Cancel
                 </button>
@@ -3769,13 +3769,13 @@ const Dashboard = () => {
       {/* Consent Modal */}
       {showConsentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+          <div className="bg-dark-card rounded-lg shadow-xl max-w-lg w-full mx-4 border border-dark-border">
             <div className="p-6">
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                <h2 className="text-2xl font-bold text-text-primary mb-4">
                   🚀 Welcome to AI Search Booster!
                 </h2>
-                <div className="space-y-4 text-gray-700 text-left">
+                <div className="space-y-4 text-text-secondary text-left">
                   <p>
                     This app enhances your store's visibility in modern search environments using advanced automation.
                   </p>
@@ -3786,7 +3786,7 @@ const Dashboard = () => {
                     By continuing, you agree to our{' '}
                     <button 
                       onClick={() => setShowTermsPopup(true)} 
-                      className="text-blue-600 hover:text-blue-800 underline"
+                      className="text-accent-primary hover:text-accent-primary-hover underline"
                     >
                       Terms of Use and Legal Disclaimer
                     </button>.
@@ -3800,9 +3800,9 @@ const Dashboard = () => {
                     type="checkbox" 
                     checked={consentCheckbox}
                     onChange={(e) => setConsentCheckbox(e.target.checked)}
-                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="mt-1 h-4 w-4 text-accent-primary focus:ring-accent-primary border-dark-border rounded bg-dark-bg-secondary"
                   />
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-text-secondary">
                     I understand this tool generates optimization suggestions that may require review before publishing.
                   </span>
                 </label>
@@ -3814,8 +3814,8 @@ const Dashboard = () => {
                   disabled={!consentCheckbox}
                   className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                     consentCheckbox 
-                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      ? 'bg-accent-primary text-white hover:bg-accent-primary-hover' 
+                      : 'bg-dark-border text-text-disabled cursor-not-allowed'
                   }`}
                 >
                   Continue
@@ -3829,15 +3829,15 @@ const Dashboard = () => {
       {/* Terms Popup Modal */}
       {showTermsPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+          <div className="bg-dark-card rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden border border-dark-border">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold text-text-primary">
                   📜 Terms of Use & Legal Disclaimer
                 </h2>
                 <button
                   onClick={() => setShowTermsPopup(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  className="text-text-muted hover:text-text-primary text-2xl font-bold"
                 >
                   ×
                 </button>
@@ -3882,15 +3882,15 @@ const Dashboard = () => {
       {/* Legal Records Popup Modal */}
       {showLegalRecords && legalRecordsData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
+          <div className="bg-dark-card rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden border border-dark-border">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold text-text-primary">
                   📋 Legal Consent Records Verification
                 </h2>
                 <button
                   onClick={() => setShowLegalRecords(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  className="text-text-muted hover:text-text-primary text-2xl font-bold"
                 >
                   ×
                 </button>
@@ -3898,8 +3898,8 @@ const Dashboard = () => {
               
               <div className="overflow-y-auto max-h-[60vh] space-y-6">
                 {/* Shop Info */}
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-blue-900 mb-2">Store Information</h3>
+                <div className="bg-blue-900/20 p-4 rounded-lg">
+                  <h3 className="font-semibold text-blue-200 mb-2">Store Information</h3>
                   <div className="text-sm space-y-1">
                     <p><strong>Shop Domain:</strong> {legalRecordsData.shop}</p>
                     <p><strong>Records Retrieved:</strong> {new Date(legalRecordsData.retrievedAt).toLocaleString()}</p>
@@ -3907,8 +3907,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* Consent Status */}
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-green-900 mb-2">Consent Verification</h3>
+                <div className="bg-green-900/20 p-4 rounded-lg">
+                  <h3 className="font-semibold text-green-200 mb-2">Consent Verification</h3>
                   {legalRecordsData.shopifyMetafields.length > 0 ? (
                     <div className="space-y-3">
                       {legalRecordsData.shopifyMetafields.map((field, index) => (
@@ -3930,8 +3930,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* Server Logs */}
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-yellow-900 mb-2">Server Audit Trail</h3>
+                <div className="bg-yellow-900/20 p-4 rounded-lg">
+                  <h3 className="font-semibold text-yellow-200 mb-2">Server Audit Trail</h3>
                   <div className="text-sm space-y-2">
                     <p><strong>Log Reference:</strong></p>
                     <div className="bg-gray-100 p-2 rounded font-mono text-xs">
@@ -3944,8 +3944,8 @@ const Dashboard = () => {
                 </div>
 
                 {/* Legal Notes */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 mb-2">Legal Information</h3>
+                <div className="bg-gray-800/20 p-4 rounded-lg">
+                  <h3 className="font-semibold text-text-primary mb-2">Legal Information</h3>
                   <div className="text-sm space-y-2">
                     <p>{legalRecordsData.legalNote}</p>
                     <div className="mt-3 p-3 bg-white border-l-4 border-blue-500">

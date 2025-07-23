@@ -11,7 +11,7 @@ export default {
         dark: {
           bg: '#1e1e1e',
           'bg-secondary': '#2a2a2a',
-          card: '#2d2d2d',
+          card: '#363636',
           border: '#3a3a3a',
           'border-hover': '#4a4a4a',
         },
