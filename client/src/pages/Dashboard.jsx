@@ -2100,7 +2100,7 @@ const Dashboard = () => {
 
 
         {/* Content Area */}
-        <div className="flex-1 px-6 pt-20 pb-6 overflow-y-auto">
+        <div className="flex-1 px-6 pt-8 pb-6 overflow-y-auto">
 
       {/* Notifications */}
       {notifications.length > 0 && (
@@ -2221,7 +2221,7 @@ const Dashboard = () => {
       )}
 
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8">
         {/* Section Headers */}
         
         {/* Tab-Specific Status Cards */}
