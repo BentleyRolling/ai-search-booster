@@ -328,7 +328,7 @@ const Dashboard = () => {
     }
   };
 
-  // Uniform ContentCard component with consistent dark styling
+  // ContentCard component matching exact reference design
   const ContentCard = ({ 
     item, 
     type, 
@@ -338,15 +338,13 @@ const Dashboard = () => {
     onPublish, 
     onRollback,
     title,
-    subtitle,
-    showRiskIndicator = false,
-    showVisibilityIndicator = false
+    subtitle
   }) => (
     <div 
-      className={`bg-gray-800 border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+      className={`border rounded-lg p-4 cursor-pointer transition-all ${
         isSelected 
-          ? 'border-blue-500 bg-blue-900/20 ring-1 ring-blue-500/50' 
-          : 'border-gray-700 hover:border-gray-600'
+          ? 'border-blue-500 bg-blue-900/20' 
+          : 'border-gray-300 hover:border-gray-300'
       }`}
       onClick={() => onToggleSelect(item.id)}
     >
@@ -356,81 +354,44 @@ const Dashboard = () => {
           checked={isSelected}
           onChange={() => onToggleSelect(item.id)}
           onClick={(e) => e.stopPropagation()}
-          className="mt-1 h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+          className="mt-1"
         />
-        <div className="flex-1 min-w-0">
-          {/* Title and Quality Indicators */}
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-white truncate">{title}</h4>
-              {subtitle && <p className="text-sm text-gray-400 mt-1">{subtitle}</p>}
-            </div>
-            {/* Quality Indicators */}
-            {(showRiskIndicator || showVisibilityIndicator) && (
-              <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-                {/* Risk Score Indicator */}
-                {showRiskIndicator && item.riskScore !== undefined && (
-                  <div 
-                    className={`w-2 h-2 rounded-full ${
-                      item.riskScore > 0.7 ? 'bg-red-500' :
-                      item.riskScore > 0.4 ? 'bg-yellow-500' : 'bg-green-500'
-                    }`}
-                    title={`Risk Score: ${(item.riskScore * 100).toFixed(0)}% (${
-                      item.riskScore > 0.7 ? 'High Risk' :
-                      item.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'
-                    })`}
-                  />
-                )}
-                {/* Visibility Score Indicator */}
-                {showVisibilityIndicator && item.visibilityScore !== undefined && (
-                  <Eye 
-                    className={`w-3 h-3 ${
-                      item.visibilityScore >= 80 ? 'text-green-500' :
-                      item.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
-                    }`}
-                    title={`Visibility Score: ${item.visibilityScore}/100 (${
-                      item.visibilityScore >= 80 ? 'Excellent' :
-                      item.visibilityScore >= 60 ? 'Good' : 'Needs Work'
-                    })`}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Status Badges Row */}
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <div className="flex-1">
+          <h4 className="font-medium text-white">{title}</h4>
+          {subtitle && <p className="text-sm text-gray-300 mt-1">{subtitle}</p>}
+          
+          {/* Single row with all badges and buttons */}
+          <div className="mt-3 flex items-center space-x-2">
+            {/* Status Badges */}
             {item.rollbackTriggered && (
-              <span className="inline-flex items-center px-2 py-1 bg-orange-900/30 text-orange-300 text-xs rounded font-medium border border-orange-700/50">
-                <AlertCircle className="w-3 h-3 mr-1" />
-                Rolled Back
+              <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium flex items-center space-x-1">
+                <AlertCircle className="w-3 h-3" />
+                <span>⚠️ Rolled Back</span>
               </span>
             )}
             {item.optimized && !item.rollbackTriggered && (
-              <span className="inline-flex items-center px-2 py-1 bg-green-900/30 text-green-300 text-xs rounded font-medium border border-green-700/50">
+              <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
                 ✓ Optimized
               </span>
             )}
             {item.hasDraft && !item.rollbackTriggered && (
-              <span className="inline-flex items-center px-2 py-1 bg-amber-900/50 text-amber-200 text-xs rounded font-medium border border-amber-600">
+              <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
                 📝 Draft Ready
               </span>
             )}
-          </div>
-
-          {/* Action Buttons Row */}
-          <div className="flex items-center gap-2 flex-wrap">
+            
+            {/* Action Buttons */}
             {item.hasDraft && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onPreview(type, item.id);
                 }}
-                className="inline-flex items-center px-3 py-1.5 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 text-xs rounded font-medium border border-blue-500/30 hover:border-blue-400 transition-all duration-200"
+                className="px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-blue-700/50 hover:border-blue-500/50"
                 title="Preview draft content"
               >
-                <Eye className="w-3 h-3 mr-1" />
-                Preview
+                <Eye className="w-3 h-3" />
+                <span>Preview</span>
               </button>
             )}
             {item.hasDraft && (
@@ -439,11 +400,11 @@ const Dashboard = () => {
                   e.stopPropagation();
                   onPublish(type, item.id);
                 }}
-                className="inline-flex items-center px-3 py-1.5 bg-green-600/20 text-green-300 hover:bg-green-600/30 text-xs rounded font-medium border border-green-500/30 hover:border-green-400 transition-all duration-200"
+                className="px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-green-700/50 hover:border-green-500/50"
                 title="Publish draft content"
               >
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Publish
+                <CheckCircle className="w-3 h-3" />
+                <span>Publish</span>
               </button>
             )}
             {item.optimized && (
@@ -452,11 +413,11 @@ const Dashboard = () => {
                   e.stopPropagation();
                   onRollback(type, item.id);
                 }}
-                className="inline-flex items-center px-3 py-1.5 bg-red-600/20 text-red-300 hover:bg-red-600/30 text-xs rounded font-medium border border-red-500/30 hover:border-red-400 transition-all duration-200"
+                className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
                 title="Rollback to original content"
               >
-                <RotateCcw className="w-3 h-3 mr-1" />
-                Rollback
+                <RotateCcw className="w-3 h-3" />
+                <span>Rollback</span>
               </button>
             )}
           </div>
@@ -2670,8 +2631,6 @@ const Dashboard = () => {
                         onRollback={rollback}
                         title={product.title}
                         subtitle={product.vendor || product.product_type ? `${product.vendor || ''}${product.vendor && product.product_type ? ' • ' : ''}${product.product_type || ''}` : ''}
-                        showRiskIndicator={true}
-                        showVisibilityIndicator={true}
                       />
                     ))}
                   </div>
@@ -2783,8 +2742,6 @@ const Dashboard = () => {
                           onRollback={rollback}
                           title={article.title}
                           subtitle={`${article.blogTitle} • ${new Date(article.created_at).toLocaleDateString()}`}
-                          showRiskIndicator={true}
-                          showVisibilityIndicator={true}
                         />
                       ))}
                     </div>
@@ -2902,8 +2859,6 @@ const Dashboard = () => {
                           onRollback={rollback}
                           title={page.title}
                           subtitle={`${page.handle} • ${new Date(page.updated_at).toLocaleDateString()}`}
-                          showRiskIndicator={true}
-                          showVisibilityIndicator={true}
                         />
                       ))}
                     </div>
@@ -3025,8 +2980,6 @@ const Dashboard = () => {
                           onRollback={rollback}
                           title={category.title}
                           subtitle={`${category.handle}${category.description ? ` • ${category.description.substring(0, 40)}...` : ''}`}
-                          showRiskIndicator={true}
-                          showVisibilityIndicator={true}
                         />
                       ))}
                     </div>
