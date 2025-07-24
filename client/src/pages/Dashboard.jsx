@@ -374,14 +374,14 @@ const Dashboard = () => {
                 ✓ Optimized
               </span>
             )}
-            {item.hasDraft && !item.rollbackTriggered && (
+            {item.hasDraft && !item.rollbackTriggered && !item.optimized && (
               <span className="inline-flex items-center px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
                 📝 Draft Ready
               </span>
             )}
             
             {/* Action Buttons */}
-            {item.hasDraft && (
+            {item.hasDraft && !item.optimized && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -394,7 +394,7 @@ const Dashboard = () => {
                 Preview
               </button>
             )}
-            {item.hasDraft && (
+            {item.hasDraft && !item.optimized && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
