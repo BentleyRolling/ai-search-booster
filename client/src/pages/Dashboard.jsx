@@ -328,67 +328,140 @@ const Dashboard = () => {
     }
   };
 
-  // Reusable component for item status badges and action buttons
-  const ItemActions = ({ item, type, onPreview, onPublish, onRollback }) => (
-    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-      {/* Status Badges */}
-      {item.rollbackTriggered && (
-        <span className="inline-block px-2 py-1 bg-orange-900/30 text-orange-300 text-xs rounded-full font-medium border border-orange-700/50 flex items-center space-x-1">
-          <AlertCircle className="w-3 h-3" />
-          <span>⚠️ Rolled Back</span>
-        </span>
-      )}
-      {item.optimized && !item.rollbackTriggered && (
-        <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
-          ✓ Optimized
-        </span>
-      )}
-      {item.hasDraft && !item.rollbackTriggered && (
-        <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
-          📝 Draft Ready
-        </span>
-      )}
-      
-      {/* Action Buttons */}
-      {item.hasDraft && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onPreview(type, item.id);
-          }}
-          className="px-3 py-1.5 bg-transparent text-white border border-white/20 rounded-full text-xs font-medium flex items-center space-x-1 hover:border-blue-500 transition-all duration-200"
-          title="Preview draft content"
-        >
-          <Eye className="w-3 h-3" />
-          <span>Preview</span>
-        </button>
-      )}
-      {item.hasDraft && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onPublish(type, item.id);
-          }}
-          className="px-3 py-1.5 bg-transparent text-white border border-white/20 rounded-full text-xs font-medium flex items-center space-x-1 hover:border-green-500 transition-all duration-200"
-          title="Publish draft content"
-        >
-          <CheckCircle className="w-3 h-3" />
-          <span>Publish</span>
-        </button>
-      )}
-      {item.optimized && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRollback(type, item.id);
-          }}
-          className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
-          title="Rollback to original content"
-        >
-          <RotateCcw className="w-3 h-3" />
-          <span>Rollback</span>
-        </button>
-      )}
+  // Uniform ContentCard component with consistent dark styling
+  const ContentCard = ({ 
+    item, 
+    type, 
+    isSelected, 
+    onToggleSelect, 
+    onPreview, 
+    onPublish, 
+    onRollback,
+    title,
+    subtitle,
+    showRiskIndicator = false,
+    showVisibilityIndicator = false
+  }) => (
+    <div 
+      className={`bg-gray-800 border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
+        isSelected 
+          ? 'border-blue-500 bg-blue-900/20 ring-1 ring-blue-500/50' 
+          : 'border-gray-700 hover:border-gray-600'
+      }`}
+      onClick={() => onToggleSelect(item.id)}
+    >
+      <div className="flex items-start space-x-3">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onToggleSelect(item.id)}
+          onClick={(e) => e.stopPropagation()}
+          className="mt-1 h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+        />
+        <div className="flex-1 min-w-0">
+          {/* Title and Quality Indicators */}
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-white truncate">{title}</h4>
+              {subtitle && <p className="text-sm text-gray-300 mt-1">{subtitle}</p>}
+            </div>
+            {/* Quality Indicators */}
+            {(showRiskIndicator || showVisibilityIndicator) && (
+              <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
+                {/* Risk Score Indicator */}
+                {showRiskIndicator && item.riskScore !== undefined && (
+                  <div 
+                    className={`w-2 h-2 rounded-full ${
+                      item.riskScore > 0.7 ? 'bg-red-500' :
+                      item.riskScore > 0.4 ? 'bg-yellow-500' : 'bg-green-500'
+                    }`}
+                    title={`Risk Score: ${(item.riskScore * 100).toFixed(0)}% (${
+                      item.riskScore > 0.7 ? 'High Risk' :
+                      item.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'
+                    })`}
+                  />
+                )}
+                {/* Visibility Score Indicator */}
+                {showVisibilityIndicator && item.visibilityScore !== undefined && (
+                  <Eye 
+                    className={`w-3 h-3 ${
+                      item.visibilityScore >= 80 ? 'text-green-500' :
+                      item.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                    }`}
+                    title={`Visibility Score: ${item.visibilityScore}/100 (${
+                      item.visibilityScore >= 80 ? 'Excellent' :
+                      item.visibilityScore >= 60 ? 'Good' : 'Needs Work'
+                    })`}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Status Badges Row */}
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            {item.rollbackTriggered && (
+              <span className="inline-flex items-center px-2 py-1 bg-orange-900/30 text-orange-300 text-xs rounded-full font-medium border border-orange-700/50">
+                <AlertCircle className="w-3 h-3 mr-1" />
+                Rolled Back
+              </span>
+            )}
+            {item.optimized && !item.rollbackTriggered && (
+              <span className="inline-flex items-center px-3 py-1 bg-green-900/30 text-green-300 text-xs rounded-full font-medium border border-green-700/50">
+                ✓ Optimized
+              </span>
+            )}
+            {item.hasDraft && !item.rollbackTriggered && (
+              <span className="inline-flex items-center px-3 py-1 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50">
+                📝 Draft Ready
+              </span>
+            )}
+          </div>
+
+          {/* Action Buttons Row */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {item.hasDraft && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPreview(type, item.id);
+                }}
+                className="inline-flex items-center px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium border border-blue-700/50 hover:border-blue-500/50 transition-all duration-200"
+                title="Preview draft content"
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                Preview
+              </button>
+            )}
+            {item.hasDraft && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPublish(type, item.id);
+                }}
+                className="inline-flex items-center px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium border border-green-700/50 hover:border-green-500/50 transition-all duration-200"
+                title="Publish draft content"
+              >
+                <CheckCircle className="w-3 h-3 mr-1" />
+                Publish
+              </button>
+            )}
+            {item.optimized && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRollback(type, item.id);
+                }}
+                className="inline-flex items-center px-3 py-1.5 bg-red-900/30 text-red-300 hover:bg-red-800/50 text-xs rounded-full font-medium border border-red-700/50 hover:border-red-500/50 transition-all duration-200"
+                title="Rollback to original content"
+              >
+                <RotateCcw className="w-3 h-3 mr-1" />
+                Rollback
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -2584,73 +2657,22 @@ const Dashboard = () => {
                 {products.length === 0 ? (
                   <p className="text-gray-300 text-center py-8">No products found</p>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {products.map((product) => (
-                      <div
+                      <ContentCard
                         key={product.id}
-                        onClick={() => toggleProductSelection(product.id.toString())}
-                        className={`border rounded-xl p-6 cursor-pointer transition-all duration-200 ease-out ${
-                          selectedProducts.includes(product.id.toString())
-                            ? 'border-blue-500 bg-blue-900/20 ring-1 ring-blue-500/50'
-                            : 'border-dark-border bg-dark-card hover:border-dark-border-hover hover:ring-1 hover:ring-gray-500/30'
-                        }`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedProducts.includes(product.id.toString())}
-                            onChange={() => {}}
-                            className="mt-1"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-start space-x-2">
-                              <h4 className="font-medium text-text-primary flex-1">{product.title}</h4>
-                              {/* Quality Indicators */}
-                              <div className="flex items-center space-x-1 flex-shrink-0">
-                                {/* Risk Score Indicator */}
-                                {product.riskScore !== undefined && (
-                                  <div 
-                                    className={`w-2 h-2 rounded-full ${
-                                      product.riskScore > 0.7 ? 'bg-red-500' :
-                                      product.riskScore > 0.4 ? 'bg-yellow-900/200' : 'bg-green-900/200'
-                                    }`}
-                                    title={`Risk Score: ${(product.riskScore * 100).toFixed(0)}% (${
-                                      product.riskScore > 0.7 ? 'High Risk' :
-                                      product.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'
-                                    })`}
-                                  />
-                                )}
-                                {/* Visibility Score Indicator */}
-                                {product.visibilityScore !== undefined && (
-                                  <Eye 
-                                    className={`w-3 h-3 ${
-                                      product.visibilityScore >= 80 ? 'text-green-500' :
-                                      product.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
-                                    }`}
-                                    title={`Visibility Score: ${product.visibilityScore}/100 (${
-                                      product.visibilityScore >= 80 ? 'Excellent' :
-                                      product.visibilityScore >= 60 ? 'Good' : 'Needs Work'
-                                    })`}
-                                  />
-                                )}
-                              </div>
-                            </div>
-                            <p className="text-sm text-gray-300 mt-1">{product.vendor}</p>
-                            {product.product_type && (
-                              <span className="inline-block mt-2 px-2 py-1 bg-gray-100 text-gray-300 text-xs rounded">
-                                {product.product_type}
-                              </span>
-                            )}
-                            <ItemActions 
-                              item={product}
-                              type="product"
-                              onPreview={handlePreviewDraft}
-                              onPublish={publishDraft}
-                              onRollback={rollback}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                        item={product}
+                        type="product"
+                        isSelected={selectedProducts.includes(product.id.toString())}
+                        onToggleSelect={(id) => toggleProductSelection(id.toString())}
+                        onPreview={handlePreviewDraft}
+                        onPublish={publishDraft}
+                        onRollback={rollback}
+                        title={product.title}
+                        subtitle={`${product.vendor}${product.product_type ? ` • ${product.product_type}` : ''}`}
+                        showRiskIndicator={true}
+                        showVisibilityIndicator={true}
+                      />
                     ))}
                   </div>
                 )}
@@ -2748,70 +2770,22 @@ const Dashboard = () => {
                 {articles.length === 0 ? (
                     <p className="text-gray-300 text-center py-8">No blog articles found</p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {articles.map((article) => (
-                        <div
+                        <ContentCard
                           key={article.id}
-                          onClick={() => toggleArticleSelection(article.id.toString())}
-                          className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                            selectedArticles.includes(article.id.toString())
-                              ? 'border-blue-500 bg-blue-900/20'
-                              : 'border-dark-border hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-start space-x-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedArticles.includes(article.id.toString())}
-                              onChange={() => {}}
-                              className="mt-1"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-start space-x-2">
-                                <h4 className="font-medium text-text-primary flex-1">{article.title}</h4>
-                                {/* Quality Indicators */}
-                                <div className="flex items-center space-x-1 flex-shrink-0">
-                                  {/* Risk Score Indicator */}
-                                  {article.riskScore !== undefined && (
-                                    <div 
-                                      className={`w-2 h-2 rounded-full ${
-                                        article.riskScore > 0.7 ? 'bg-red-500' :
-                                        article.riskScore > 0.4 ? 'bg-yellow-900/200' : 'bg-green-900/200'
-                                      }`}
-                                      title={`Risk Score: ${(article.riskScore * 100).toFixed(0)}% (${
-                                        article.riskScore > 0.7 ? 'High Risk' :
-                                        article.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'
-                                      })`}
-                                    />
-                                  )}
-                                  {/* Visibility Score Indicator */}
-                                  {article.visibilityScore !== undefined && (
-                                    <Eye 
-                                      className={`w-3 h-3 ${
-                                        article.visibilityScore >= 80 ? 'text-green-500' :
-                                        article.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
-                                      }`}
-                                      title={`Visibility Score: ${article.visibilityScore}/100 (${
-                                        article.visibilityScore >= 80 ? 'Excellent' :
-                                        article.visibilityScore >= 60 ? 'Good' : 'Needs Work'
-                                      })`}
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-300 mt-1">Blog: {article.blogTitle}</p>
-                              <p className="text-sm text-gray-300">Created: {new Date(article.created_at).toLocaleDateString()}</p>
-                              
-                              <ItemActions 
-                                item={article}
-                                type="article"
-                                onPreview={handlePreviewDraft}
-                                onPublish={publishDraft}
-                                onRollback={rollback}
-                              />
-                            </div>
-                          </div>
-                        </div>
+                          item={article}
+                          type="article"
+                          isSelected={selectedArticles.includes(article.id.toString())}
+                          onToggleSelect={(id) => toggleArticleSelection(id.toString())}
+                          onPreview={handlePreviewDraft}
+                          onPublish={publishDraft}
+                          onRollback={rollback}
+                          title={article.title}
+                          subtitle={`${article.blogTitle} • ${new Date(article.created_at).toLocaleDateString()}`}
+                          showRiskIndicator={true}
+                          showVisibilityIndicator={true}
+                        />
                       ))}
                     </div>
                   )}
@@ -2908,77 +2882,29 @@ const Dashboard = () => {
                 {pages.length === 0 ? (
                     <p className="text-gray-300 text-center py-8">No pages found</p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {pages.map((page) => (
-                        <div
+                        <ContentCard
                           key={page.id}
-                          onClick={() => {
-                            const pageId = page.id.toString();
+                          item={page}
+                          type="page"
+                          isSelected={selectedPages.includes(page.id.toString())}
+                          onToggleSelect={(id) => {
+                            const pageId = id.toString();
                             setSelectedPages(prev => 
                               prev.includes(pageId) 
                                 ? prev.filter(id => id !== pageId)
                                 : [...prev, pageId]
                             );
                           }}
-                          className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                            selectedPages.includes(page.id.toString())
-                              ? 'border-blue-500 bg-blue-900/20'
-                              : 'border-dark-border hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-start space-x-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedPages.includes(page.id.toString())}
-                              onChange={() => {}}
-                              className="mt-1"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-start space-x-2">
-                                <h4 className="font-medium text-text-primary flex-1">{page.title}</h4>
-                                {/* Quality Indicators */}
-                                <div className="flex items-center space-x-1 flex-shrink-0">
-                                  {/* Risk Score Indicator */}
-                                  {page.riskScore !== undefined && (
-                                    <div 
-                                      className={`w-2 h-2 rounded-full ${
-                                        page.riskScore > 0.7 ? 'bg-red-500' :
-                                        page.riskScore > 0.4 ? 'bg-yellow-900/200' : 'bg-green-900/200'
-                                      }`}
-                                      title={`Risk Score: ${(page.riskScore * 100).toFixed(0)}% (${
-                                        page.riskScore > 0.7 ? 'High Risk' :
-                                        page.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'
-                                      })`}
-                                    />
-                                  )}
-                                  {/* Visibility Score Indicator */}
-                                  {page.visibilityScore !== undefined && (
-                                    <Eye 
-                                      className={`w-3 h-3 ${
-                                        page.visibilityScore >= 80 ? 'text-green-500' :
-                                        page.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
-                                      }`}
-                                      title={`Visibility Score: ${page.visibilityScore}/100 (${
-                                        page.visibilityScore >= 80 ? 'Excellent' :
-                                        page.visibilityScore >= 60 ? 'Good' : 'Needs Work'
-                                      })`}
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-300 mt-1">Handle: {page.handle}</p>
-                              <p className="text-sm text-gray-300">Updated: {new Date(page.updated_at).toLocaleDateString()}</p>
-                              
-                              <ItemActions 
-                                item={page}
-                                type="page"
-                                onPreview={handlePreviewDraft}
-                                onPublish={publishDraft}
-                                onRollback={rollback}
-                              />
-                            </div>
-                          </div>
-                        </div>
+                          onPreview={handlePreviewDraft}
+                          onPublish={publishDraft}
+                          onRollback={rollback}
+                          title={page.title}
+                          subtitle={`${page.handle} • ${new Date(page.updated_at).toLocaleDateString()}`}
+                          showRiskIndicator={true}
+                          showVisibilityIndicator={true}
+                        />
                       ))}
                     </div>
                   )}
@@ -3079,77 +3005,29 @@ const Dashboard = () => {
                 })() ? (
                     <p className="text-gray-300 text-center py-8">No collections found</p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {collections.map((category) => (
-                        <div
+                        <ContentCard
                           key={category.id}
-                          onClick={() => {
-                            const categoryId = category.id.toString();
+                          item={category}
+                          type="collection"
+                          isSelected={selectedCollections.includes(category.id.toString())}
+                          onToggleSelect={(id) => {
+                            const categoryId = id.toString();
                             setSelectedCollections(prev => 
                               prev.includes(categoryId) 
                                 ? prev.filter(id => id !== categoryId)
                                 : [...prev, categoryId]
                             );
                           }}
-                          className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                            selectedCollections.includes(category.id.toString())
-                              ? 'border-blue-500 bg-blue-900/20'
-                              : 'border-dark-border hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-start space-x-3">
-                            <input
-                              type="checkbox"
-                              checked={selectedCollections.includes(category.id.toString())}
-                              onChange={() => {}}
-                              className="mt-1"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-start space-x-2">
-                                <h4 className="font-medium text-text-primary flex-1">{category.title}</h4>
-                                {/* Quality Indicators */}
-                                <div className="flex items-center space-x-1 flex-shrink-0">
-                                  {/* Risk Score Indicator */}
-                                  {category.riskScore !== undefined && (
-                                    <div 
-                                      className={`w-2 h-2 rounded-full ${
-                                        category.riskScore > 0.7 ? 'bg-red-500' :
-                                        category.riskScore > 0.4 ? 'bg-yellow-900/200' : 'bg-green-900/200'
-                                      }`}
-                                      title={`Risk Score: ${(category.riskScore * 100).toFixed(0)}% (${
-                                        category.riskScore > 0.7 ? 'High Risk' :
-                                        category.riskScore > 0.4 ? 'Medium Risk' : 'Low Risk'
-                                      })`}
-                                    />
-                                  )}
-                                  {/* Visibility Score Indicator */}
-                                  {category.visibilityScore !== undefined && (
-                                    <Eye 
-                                      className={`w-3 h-3 ${
-                                        category.visibilityScore >= 80 ? 'text-green-500' :
-                                        category.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
-                                      }`}
-                                      title={`Visibility Score: ${category.visibilityScore}/100 (${
-                                        category.visibilityScore >= 80 ? 'Excellent' :
-                                        category.visibilityScore >= 60 ? 'Good' : 'Needs Work'
-                                      })`}
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-300 mt-1">Handle: {category.handle}</p>
-                              <p className="text-sm text-gray-300">Description: {category.description?.substring(0, 50)}...</p>
-                              
-                              <ItemActions 
-                                item={category}
-                                type="collection"
-                                onPreview={handlePreviewDraft}
-                                onPublish={publishDraft}
-                                onRollback={rollback}
-                              />
-                            </div>
-                          </div>
-                        </div>
+                          onPreview={handlePreviewDraft}
+                          onPublish={publishDraft}
+                          onRollback={rollback}
+                          title={category.title}
+                          subtitle={`${category.handle}${category.description ? ` • ${category.description.substring(0, 40)}...` : ''}`}
+                          showRiskIndicator={true}
+                          showVisibilityIndicator={true}
+                        />
                       ))}
                     </div>
                   )}
