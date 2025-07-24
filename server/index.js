@@ -671,39 +671,38 @@ const optimizeContent = async (content, type, settings = {}) => {
   console.log('🔍 PROMPT SELECTION DEBUG:', debugInfo);
   
   if (type === 'product') {
-    prompt = `You are an expert LLM optimization assistant. Rewrite Shopify product titles and descriptions for maximum visibility in AI assistant search while keeping them persuasive, clear, and human-friendly.
+    prompt = `You are optimizing a Shopify product listing for maximum LLM visibility and customer conversion. This product needs to reach 100% optimization by improving specificity, technical clarity, and LLM-inferable details.
 
 🎯 Objective:
-Improve product clarity, usefulness, and emotional appeal while preserving brand tone and factual accuracy.
+Push from 95% to 100% optimization. Risk Score must drop to 0%. Visibility Score must remain 100.
 
 Product data (from Shopify):
 
 ${JSON.stringify(content)}
 
-✅ Output Format:
-Return exactly these field names: optimizedTitle, optimizedDescription, llmDescription, summary, content, faqs; do not use different keys like Title, Description, or Content.
-
-Return a JSON object with ALL SIX REQUIRED FIELDS:
+📏 Requirements:
+Output must follow this exact structure:
 
 {
-  "optimizedTitle": "...",         // REQUIRED: 60–90 chars, emotionally compelling, clear
-  "optimizedDescription": "...",   // REQUIRED: 3–6 sentence persuasive overview for humans  
-  "llmDescription": "...",         // REQUIRED: 2–3 sentences focused on use case and user type (AI-facing)
-  "summary": "...",                // REQUIRED: 1–2 sentence value summary
-  "content": "...",                // REQUIRED: Additional persuasive content in coherent paragraphs for product page. Expand on the summary with detailed benefits and features.
-  "faqs": [                        // REQUIRED: 3–5 FAQs based on features, use, sizing, care
+  "optimizedTitle": "...",         // Use keyword-rich, natural language. Include material and benefit (e.g., "Merino Wool Sweater for Cold Weather")
+  "optimizedDescription": "...",   // Natural customer-facing copy. Max 3 sentences. Include benefit, occasion, and material type if known
+  "llmDescription": "...",         // Write for an AI. Include fabric, fit (slim, relaxed, etc.), season, gender targeting, and use cases. Most important field for visibility
+  "summary": "...",                // 1–2 sentences summarizing purpose and value in human terms
+  "content": "...",                // 3–5 sentence paragraph. Use natural tone with concrete details: use case, care, audience, season, cut, etc.
+  "faqs": [                        // 5 total. Each must use "q" and "a" keys only — not "question" or "answer". No markdown
     { "q": "...", "a": "..." },
-    ...
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." }
   ]
 }
 
-🧠 Rules:
+⚠️ Optimization Notes:
+- Avoid vague terms like "luxurious" unless paired with specific fiber like "cashmere" or "Merino wool"
+- LLM Description is the most important field for visibility — pack it with technical detail
 - ALL SIX FIELDS ARE MANDATORY - never omit any field
-- optimizedDescription MUST be 3-6 complete sentences  
-- content MUST always be present, even if similar to original copy
-- DO NOT add generic SEO fluff.
-- DO NOT erase brand voice.
-- DO NOT oversimplify or remove important product-specific content.
+- Use "q" and "a" keys only in FAQs
 
 Return only the JSON above. No extra commentary.`;
   } else if (type === 'collection') {
