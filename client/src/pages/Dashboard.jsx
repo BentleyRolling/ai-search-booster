@@ -1846,13 +1846,17 @@ const Dashboard = () => {
 
       {/* ChatGPT-style Collapsible Sidebar Navigation */}
       <aside className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-dark-card border-r border-dark-border flex-shrink-0 hidden lg:flex flex-col fixed left-0 top-0 h-screen z-50 transition-all duration-300 ease-in-out`}>
-        {/* Collapse Toggle Button - ChatGPT style */}
-        <div className="absolute top-4 left-3 z-10">
+        {/* Collapse Toggle Button */}
+        <div className="absolute -right-3 top-6 z-10">
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-8 h-8 bg-transparent hover:bg-[#2a2a2a] rounded-md flex items-center justify-center transition-all duration-200"
+            className="w-6 h-6 bg-dark-card border border-dark-border rounded-full flex items-center justify-center hover:bg-[#2a2a2a] transition-colors"
           >
-            <PanelLeft className={`w-5 h-5 text-text-muted hover:text-white transition-colors ${sidebarCollapsed ? 'rotate-180' : ''}`} />
+            {sidebarCollapsed ? (
+              <ChevronRight className="w-3 h-3 text-text-muted" />
+            ) : (
+              <ChevronLeft className="w-3 h-3 text-text-muted" />
+            )}
           </button>
         </div>
 
