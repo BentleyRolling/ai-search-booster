@@ -2346,14 +2346,14 @@ const Dashboard = () => {
                   <p className="text-2xl font-bold text-accent-primary mb-2">
                     LLM Optimized
                   </p>
-                  <div className="text-xs">
-                    <div className="flex justify-center space-x-8 mb-1">
-                      <span className="text-text-muted">JSON-LD:</span>
-                      <span className="text-text-muted">Auto-Rollback:</span>
+                  <div className="text-xs grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <div className="text-text-muted mb-1">JSON-LD:</div>
+                      <div className="text-accent-primary">Active</div>
                     </div>
-                    <div className="flex justify-center space-x-8">
-                      <span className="text-accent-primary">Active</span>
-                      <span className="text-accent-primary">On</span>
+                    <div className="text-center">
+                      <div className="text-text-muted mb-1">Auto-Rollback:</div>
+                      <div className="text-accent-primary">On</div>
                     </div>
                   </div>
                 </div>
