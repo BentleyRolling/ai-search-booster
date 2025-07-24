@@ -1845,12 +1845,12 @@ const Dashboard = () => {
       />
 
       {/* ChatGPT-style Collapsible Sidebar Navigation */}
-      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-dark-card border-r border-dark-border flex-shrink-0 hidden lg:flex flex-col fixed left-0 top-0 h-screen z-50 transition-all duration-300 ease-in-out`}>
+      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-[#1e1e1e] border-r border-dark-border flex-shrink-0 hidden lg:flex flex-col fixed left-0 top-0 h-screen z-50 transition-all duration-300 ease-in-out`}>
         {/* Collapse Toggle Button */}
         <div className="absolute -right-3 top-6 z-10">
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-6 h-6 bg-dark-card border border-dark-border rounded-full flex items-center justify-center hover:bg-[#2a2a2a] transition-colors"
+            className="w-6 h-6 bg-[#1e1e1e] border border-dark-border rounded-full flex items-center justify-center hover:bg-[#2a2a2a] transition-colors"
           >
             {sidebarCollapsed ? (
               <ChevronRight className="w-3 h-3 text-text-muted" />
@@ -1895,7 +1895,7 @@ const Dashboard = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-3'} rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === tab.id
-                  ? 'bg-black text-white font-medium shadow-lg'
+                  ? 'bg-[#2a2a2a] text-white font-medium shadow-lg'
                   : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
               }`}
               title={sidebarCollapsed ? tab.label : ''}
@@ -1937,7 +1937,7 @@ const Dashboard = () => {
               onClick={() => setActiveTab(helpTab.id)}
               className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 p-3'} rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === helpTab.id
-                  ? 'bg-black text-white font-medium shadow-lg'
+                  ? 'bg-[#2a2a2a] text-white font-medium shadow-lg'
                   : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
               }`}
               title={sidebarCollapsed ? helpTab.label : ''}
@@ -1992,7 +1992,7 @@ const Dashboard = () => {
         {/* Mobile Sidebar Overlay */}
         {mobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 backdrop-blur-sm bg-black/40 animate-fade-in" onClick={() => setMobileMenuOpen(false)}>
-            <aside className="w-64 bg-dark-card h-full border-r border-dark-border animate-slide-in-left" onClick={e => e.stopPropagation()}>
+            <aside className="w-64 bg-[#1e1e1e] h-full border-r border-dark-border animate-slide-in-left" onClick={e => e.stopPropagation()}>
               {/* Logo Section */}
               <div className="p-6 border-b border-dark-border">
                 <div className="flex flex-col items-center text-center space-y-2">
