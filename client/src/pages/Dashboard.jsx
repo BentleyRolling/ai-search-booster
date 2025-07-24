@@ -360,22 +360,22 @@ const Dashboard = () => {
           <h4 className="font-medium text-white">{title}</h4>
           {subtitle && <p className="text-sm text-gray-300 mt-1">{subtitle}</p>}
           
-          {/* Single row with all badges and buttons */}
-          <div className="mt-3 flex items-center space-x-2">
+          {/* Responsive badges and buttons */}
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
             {/* Status Badges */}
             {item.rollbackTriggered && (
-              <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium flex items-center space-x-1">
-                <AlertCircle className="w-3 h-3" />
-                <span>⚠️ Rolled Back</span>
+              <span className="inline-flex items-center px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium">
+                <AlertCircle className="w-3 h-3 mr-1" />
+                ⚠️ Rolled Back
               </span>
             )}
             {item.optimized && !item.rollbackTriggered && (
-              <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
+              <span className="inline-flex items-center px-3 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
                 ✓ Optimized
               </span>
             )}
             {item.hasDraft && !item.rollbackTriggered && (
-              <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
+              <span className="inline-flex items-center px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
                 📝 Draft Ready
               </span>
             )}
@@ -387,11 +387,11 @@ const Dashboard = () => {
                   e.stopPropagation();
                   onPreview(type, item.id);
                 }}
-                className="px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-blue-700/50 hover:border-blue-500/50"
+                className="inline-flex items-center px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium border border-blue-700/50 hover:border-blue-500/50 transition-all duration-200"
                 title="Preview draft content"
               >
-                <Eye className="w-3 h-3" />
-                <span>Preview</span>
+                <Eye className="w-3 h-3 mr-1" />
+                Preview
               </button>
             )}
             {item.hasDraft && (
@@ -400,11 +400,11 @@ const Dashboard = () => {
                   e.stopPropagation();
                   onPublish(type, item.id);
                 }}
-                className="px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-green-700/50 hover:border-green-500/50"
+                className="inline-flex items-center px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium border border-green-700/50 hover:border-green-500/50 transition-all duration-200"
                 title="Publish draft content"
               >
-                <CheckCircle className="w-3 h-3" />
-                <span>Publish</span>
+                <CheckCircle className="w-3 h-3 mr-1" />
+                Publish
               </button>
             )}
             {item.optimized && (
@@ -413,11 +413,11 @@ const Dashboard = () => {
                   e.stopPropagation();
                   onRollback(type, item.id);
                 }}
-                className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
+                className="inline-flex items-center px-3 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
                 title="Rollback to original content"
               >
-                <RotateCcw className="w-3 h-3" />
-                <span>Rollback</span>
+                <RotateCcw className="w-3 h-3 mr-1" />
+                Rollback
               </button>
             )}
           </div>
