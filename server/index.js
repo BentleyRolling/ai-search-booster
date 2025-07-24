@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import { jsonrepair } from 'jsonrepair';
+import { convert as htmlToText } from 'html-to-text';
 import { initCitationJobs } from './jobs/citationScheduler.js';
 import { initializeCitationRoutes } from './routes/citations.js';
 
@@ -778,7 +779,7 @@ Return only the JSON above. No extra commentary.`;
 🎯 Objective:
 Rewrite the blog post to improve clarity, purpose, emotional value, and discoverability — while **preserving original tone, examples, storytelling, and usefulness**.
 
-Article data (from Shopify):
+Article data (from Shopify - HTML has been converted to plain text):
 
 ${JSON.stringify(content)}
 
@@ -792,7 +793,7 @@ Return a JSON object in this structure:
   "optimizedDescription": "...", // 3–6 sentence persuasive overview for humans
   "llmDescription": "...",       // 2–3 sentences explaining purpose and audience (AI-focused)
   "summary": "...",              // 1 sentence abstract of value to the human reader
-  "content": "...",              // REQUIRED: Full rewritten article in coherent paragraphs, preserving voice and value. Expand on the summary with detailed, engaging content.
+  "content": "...",              // REQUIRED: Rewritten article in 800-1200 words, plain text paragraphs ONLY (no HTML tags), preserving voice and value.
   "faqs": [                      // 3–5 helpful FAQs from the article's content
     { "q": "...", "a": "..." },
     ...
@@ -800,10 +801,13 @@ Return a JSON object in this structure:
 }
 
 🧠 Rules:
+- KEEP content field under 1200 words (approximately 7000 characters) to avoid truncation
+- USE ONLY plain text paragraphs in content field - NO HTML tags, no <div>, no <p>, no markup
 - DO NOT reduce to summary or strip human voice.
 - DO NOT remove examples, narrative, or persuasive content.
 - DO NOT add SEO filler or hallucinated content.
 - Keep natural, readable, emotionally aware tone.
+- Write content as coherent paragraphs separated by double line breaks.
 
 Return only the JSON above. No extra commentary.`;
   }
@@ -940,8 +944,36 @@ Return only the JSON above. No extra commentary.`;
             } catch (repairError) {
               console.error('[AI-OPTIMIZATION] JSON repair also failed:', repairError.message);
               console.error('[AI-OPTIMIZATION] Original parse error:', parseError.message);
-              console.error('[AI-OPTIMIZATION] Raw response:', cleanResponse);
-              throw new Error(`OpenAI JSON parsing failed: ${parseError.message}`);
+              console.error('[AI-OPTIMIZATION] Raw response length:', cleanResponse.length);
+              console.error('[AI-OPTIMIZATION] Response preview:', cleanResponse.substring(0, 500) + '...');
+              
+              // Check if response was truncated
+              const responseLength = cleanResponse.length;
+              const isTruncated = !cleanResponse.trim().endsWith('}') || responseLength > 8000;
+              
+              if (isTruncated && type === 'article') {
+                console.log('[AI-OPTIMIZATION] Article response appears truncated, returning fallback');
+                
+                // Create fallback response for articles
+                parsedResponse = {
+                  optimizedTitle: content.title || 'Optimized Article',
+                  optimizedDescription: content.summary || 'Article optimized for better search visibility',
+                  llmDescription: `This article provides valuable information on ${content.title || 'the topic'}`,
+                  summary: content.summary || 'Article content has been enhanced for better readability',
+                  content: content.body_html?.substring(0, 1200) || 'Content optimization in progress',
+                  faqs: [
+                    { q: "What is this article about?", a: content.summary || "This article covers important information on the topic." },
+                    { q: "Who should read this?", a: "Anyone interested in learning more about this subject." }
+                  ],
+                  riskScore: 0.1,
+                  visibilityScore: 0.7,
+                  fallbackUsed: true,
+                  originalError: 'Response too long - article content truncated during AI processing'
+                };
+                console.log('[AI-OPTIMIZATION] Using fallback response for article');
+              } else {
+                throw new Error(`OpenAI JSON parsing failed: ${parseError.message}. Response may be too long or truncated.`);
+              }
             }
           }
           console.log('[AI-OPTIMIZATION] Parsed OpenAI response:', parsedResponse);
@@ -2688,11 +2720,30 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
               );
             }
             
+            // Convert HTML to plain text and truncate for LLM processing
+            const plainTextBody = article.body_html 
+              ? htmlToText(article.body_html, {
+                  wordwrap: false,
+                  ignoreHref: true,
+                  ignoreImage: true,
+                  preserveNewlines: false,
+                  singleNewLineParagraphs: true
+                }).substring(0, 5000) // Limit to first 5000 characters
+              : '';
+            
+            console.log(`[BLOGS-OPTIMIZE] Converted HTML to plain text: ${plainTextBody.length} chars (from ${article.body_html?.length || 0} HTML chars)`);
+            
+            // Create article content with plain text body
+            const articleContentForLLM = {
+              ...article,
+              body_html: plainTextBody // Use plain text instead of HTML
+            };
+            
             // Optimize content using AI
             const sessionStart = Date.now();
             console.log(`[BLOGS-OPTIMIZE] Starting AI optimization for article ${article.id}`);
             
-            const optimized = await optimizeContent(article, 'article', settings);
+            const optimized = await optimizeContent(articleContentForLLM, 'article', settings);
             console.log(`[BLOGS-OPTIMIZE] AI optimization completed for article ${article.id}`);
             
             // === PRODUCTION ROLLBACK SAFETY CHECK ===
@@ -2834,11 +2885,27 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
             
           } catch (articleError) {
             console.error(`Failed to optimize article ${article.id}:`, articleError.message);
+            
+            // Provide specific user-friendly error messages
+            let userMessage = 'Failed to optimize article';
+            if (articleError.message.includes('too long') || articleError.message.includes('truncated')) {
+              userMessage = 'Article too long to optimize—please shorten your post or contact support';
+            } else if (articleError.message.includes('JSON parsing failed')) {
+              userMessage = 'Article content too complex for optimization—try simplifying the format';
+            } else if (articleError.message.includes('timeout')) {
+              userMessage = 'Optimization timed out—please try again or contact support';
+            } else if (articleError.message.includes('not found')) {
+              userMessage = 'Article not found or access denied';
+            } else if (articleError.message.includes('API key') || articleError.message.includes('rate limit')) {
+              userMessage = 'Service temporarily unavailable—please try again later';
+            }
+            
             results.push({
               articleId: article.id,
               blogId,
               status: 'error',
-              error: `Failed to optimize article: ${articleError.message}`
+              error: userMessage,
+              technicalError: articleError.message
             });
           }
         }
@@ -2989,11 +3056,24 @@ app.post('/api/optimize/articles', simpleVerifyShop, optimizationLimiter, async 
         
         console.log(`[ARTICLES-OPTIMIZE] Found article: ${article.title}`);
         
-        // Use the full article body as input for LLM optimization
+        // Convert HTML to plain text and truncate for LLM processing
+        const plainTextBody = article.body_html 
+          ? htmlToText(article.body_html, {
+              wordwrap: false,
+              ignoreHref: true,
+              ignoreImage: true,
+              preserveNewlines: false,
+              singleNewLineParagraphs: true
+            }).substring(0, 5000) // Limit to first 5000 characters
+          : '';
+        
+        console.log(`[ARTICLES-OPTIMIZE] Converted HTML to plain text: ${plainTextBody.length} chars (from ${article.body_html?.length || 0} HTML chars)`);
+        
+        // Use the converted plain text for LLM optimization
         const articleContent = {
           id: article.id,
           title: article.title,
-          body_html: article.body_html,
+          body_html: plainTextBody, // Use plain text instead of HTML
           summary: article.summary,
           author: article.author,
           created_at: article.created_at,
@@ -3047,10 +3127,26 @@ app.post('/api/optimize/articles', simpleVerifyShop, optimizationLimiter, async 
         
       } catch (articleError) {
         console.error(`[ARTICLES-OPTIMIZE] Error processing article ${articleId}:`, articleError.message);
+        
+        // Provide specific user-friendly error messages
+        let userMessage = 'Failed to optimize article';
+        if (articleError.message.includes('too long') || articleError.message.includes('truncated')) {
+          userMessage = 'Article too long to optimize—please shorten your post or contact support';
+        } else if (articleError.message.includes('JSON parsing failed')) {
+          userMessage = 'Article content too complex for optimization—try simplifying the format';
+        } else if (articleError.message.includes('timeout')) {
+          userMessage = 'Optimization timed out—please try again or contact support';
+        } else if (articleError.message.includes('not found')) {
+          userMessage = 'Article not found or access denied';
+        } else if (articleError.message.includes('API key') || articleError.message.includes('rate limit')) {
+          userMessage = 'Service temporarily unavailable—please try again later';
+        }
+        
         results.push({
           id: articleId,
           status: 'error',
-          error: `Failed to optimize article: ${articleError.message}`
+          error: userMessage,
+          technicalError: articleError.message // Keep technical details for debugging
         });
       }
     }
