@@ -789,47 +789,23 @@ Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 Return only the JSON above. No extra commentary.`;
   } else {
-    prompt = `You are an expert LLM optimization assistant trained to rewrite blog posts for AI assistant search visibility (ChatGPT, Claude, Perplexity) without harming human readability.
+    prompt = `System Prompt (Articles only):
 
-🎯 Objective:
-Rewrite the blog post to improve clarity, purpose, emotional value, and discoverability — while **preserving original tone, examples, storytelling, and usefulness**.
+> Your task is to optimize this blog article for AI visibility without rewriting it entirely.
+> Return exactly these six JSON keys:
+> - optimizedTitle
+> - optimizedDescription  
+> - llmDescription
+> - summary
+> - content (plain text, 800-1200 words, no HTML)
+> - faqs (Array of 3-5 FAQs)
 
-Article data (from Shopify - HTML has been converted to plain text):
+> Do not use alternate keys such as 'Title', 'Description', or 'Content'.
+> The 'content' field must be a full rewritten version of the blog body in plain English, maintaining the same narrative style and tone.
 
-${JSON.stringify(content)}
+---
 
-${contentAnalysis.hasAITerms ? 'Note: This content contains AI-related terms, include relevant context.' : 'Only use terminology present in the original content.'}
-
-✅ Output Format:
-Return exactly these field names: optimizedTitle, optimizedDescription, llmDescription, summary, content, faqs; do not use different keys like Title, Description, or Content.
-
-Return a JSON object with ALL SIX REQUIRED FIELDS:
-
-{
-  "optimizedTitle": "...",       // REQUIRED: Clear, 70–90 chars max, emotionally or practically compelling
-  "optimizedDescription": "...", // REQUIRED: 3–6 sentence persuasive overview for humans
-  "llmDescription": "...",       // REQUIRED: 2–3 sentences explaining purpose and audience (AI-focused)
-  "summary": "...",              // REQUIRED: 1–2 sentence abstract of value to the human reader
-  "content": "...",              // REQUIRED: Rewritten article in 800-1200 words, plain text paragraphs ONLY (no HTML tags), preserving voice and value.
-  "faqs": [                      // REQUIRED: 3–5 helpful FAQs from the article's content
-    { "q": "...", "a": "..." },
-    ...
-  ]
-}
-
-🧠 Rules:
-- ALL SIX FIELDS ARE MANDATORY - never omit any field
-- optimizedDescription MUST be 3-6 complete sentences
-- content MUST always be present, even if similar to original copy
-- KEEP content field under 1200 words (approximately 7000 characters) to avoid truncation
-- USE ONLY plain text paragraphs in content field - NO HTML tags, no <div>, no <p>, no markup
-- DO NOT reduce to summary or strip human voice.
-- DO NOT remove examples, narrative, or persuasive content.
-- DO NOT add SEO filler or hallucinated content.
-- Keep natural, readable, emotionally aware tone.
-- Write content as coherent paragraphs separated by double line breaks.
-
-Return only the JSON above. No extra commentary.`;
+${JSON.stringify(content)}`;
   }
   
   try {
@@ -999,14 +975,35 @@ Return only the JSON above. No extra commentary.`;
           console.log('[AI-OPTIMIZATION] Parsed OpenAI response:', parsedResponse);
           
           // === KEY NORMALIZATION FOR INCORRECT FIELD NAMES ===
-          // Handle cases where LLM returns incorrect key names
-          if (!parsedResponse.optimizedTitle && parsedResponse.Title) parsedResponse.optimizedTitle = parsedResponse.Title;
-          if (!parsedResponse.optimizedDescription && parsedResponse.Description) parsedResponse.optimizedDescription = parsedResponse.Description;
-          if (!parsedResponse.content && parsedResponse.Content) parsedResponse.content = parsedResponse.Content;
-          if (!parsedResponse.llmDescription && parsedResponse.LLMDescription) parsedResponse.llmDescription = parsedResponse.LLMDescription;
-          if (!parsedResponse.summary && parsedResponse.Summary) parsedResponse.summary = parsedResponse.Summary;
-          if (!parsedResponse.faqs && parsedResponse.FAQs) parsedResponse.faqs = parsedResponse.FAQs;
-          if (!parsedResponse.faqs && parsedResponse.faq) parsedResponse.faqs = parsedResponse.faq;
+          // Handle cases where LLM returns incorrect key names (Title → optimizedTitle)
+          if (!parsedResponse.optimizedTitle && parsedResponse.Title) {
+            parsedResponse.optimizedTitle = parsedResponse.Title;
+            delete parsedResponse.Title;
+          }
+          if (!parsedResponse.optimizedDescription && parsedResponse.Description) {
+            parsedResponse.optimizedDescription = parsedResponse.Description;
+            delete parsedResponse.Description;
+          }
+          if (!parsedResponse.content && parsedResponse.Content) {
+            parsedResponse.content = parsedResponse.Content;
+            delete parsedResponse.Content;
+          }
+          if (!parsedResponse.llmDescription && parsedResponse.LLMDescription) {
+            parsedResponse.llmDescription = parsedResponse.LLMDescription;
+            delete parsedResponse.LLMDescription;
+          }
+          if (!parsedResponse.summary && parsedResponse.Summary) {
+            parsedResponse.summary = parsedResponse.Summary;
+            delete parsedResponse.Summary;
+          }
+          if (!parsedResponse.faqs && parsedResponse.FAQs) {
+            parsedResponse.faqs = parsedResponse.FAQs;
+            delete parsedResponse.FAQs;
+          }
+          if (!parsedResponse.faqs && parsedResponse.faq) {
+            parsedResponse.faqs = parsedResponse.faq;
+            delete parsedResponse.faq;
+          }
           
           // === VALIDATION FALLBACK FOR MISSING FIELDS ===
           const requiredFields = ['optimizedTitle', 'optimizedDescription', 'llmDescription', 'summary', 'content', 'faqs'];
@@ -1031,8 +1028,12 @@ Return only the JSON above. No extra commentary.`;
                   parsedResponse[field] = parsedResponse.llmDescription || parsedResponse.optimizedDescription || 'Optimized content for better discoverability.';
                   break;
                 case 'content':
-                  // Fallback to llmDescription if content is missing
-                  parsedResponse[field] = parsedResponse.llmDescription || parsedResponse.summary + ' ' + (parsedResponse.optimizedDescription || '') || content.body_html?.substring(0, 1200) || 'Content has been optimized for better search visibility.';
+                  // Ensure content field is present with full blog content (800-1200 words)
+                  if (type === 'article') {
+                    parsedResponse[field] = content.body_html?.replace(/<[^>]*>/g, '').substring(0, 8000) || content.summary || parsedResponse.llmDescription || parsedResponse.optimizedDescription || 'Blog content optimized for better search visibility and readability.';
+                  } else {
+                    parsedResponse[field] = parsedResponse.llmDescription || parsedResponse.summary + ' ' + (parsedResponse.optimizedDescription || '') || content.body_html?.substring(0, 1200) || 'Content has been optimized for better search visibility.';
+                  }
                   break;
                 case 'faqs':
                   // Default to empty array if faqs is missing
