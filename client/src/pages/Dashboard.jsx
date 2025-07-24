@@ -344,7 +344,7 @@ const Dashboard = () => {
       className={`border rounded-lg p-4 cursor-pointer transition-all ${
         isSelected 
           ? 'border-blue-500 bg-blue-900/20' 
-          : 'border-gray-300 hover:border-gray-300'
+          : 'border-gray-700 hover:border-gray-600'
       }`}
       onClick={() => onToggleSelect(item.id)}
     >
