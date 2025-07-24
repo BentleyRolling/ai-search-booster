@@ -2351,7 +2351,7 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
                 key: 'optimized_content_draft',
                 value: JSON.stringify({
                   title: optimized.optimizedTitle,
-                  body_html: optimized.optimizedDescription,
+                  body_html: optimized.content,
                   optimizedDescription: optimized.optimizedDescription,
                   llmDescription: optimized.llmDescription,
                   summary: optimized.summary,
@@ -2605,7 +2605,7 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
                 key: 'optimized_content_draft',
                 value: JSON.stringify({
                   title: optimized.optimizedTitle,
-                  body_html: optimized.optimizedDescription,
+                  body_html: optimized.content,
                   optimizedDescription: optimized.optimizedDescription,
                   llmDescription: optimized.llmDescription,
                   summary: optimized.summary,
@@ -2613,7 +2613,7 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
                   riskScore: optimized.riskScore,
                   visibilityScore: optimized.visibilityScore,
                   promptVersion: optimized.promptVersion,
-                  timestamp: new Date().toISOString()
+                  optimizedAt: new Date().toISOString()
                 }),
                 type: 'json'
               }
@@ -2630,7 +2630,7 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
             metafield: {
               namespace: 'asb',
               key: 'faq_data_draft',
-              value: JSON.stringify(optimized.faqs || []),
+              value: JSON.stringify({ questions: optimized.faqs || [] }),
               type: 'json'
             }
           },
@@ -2973,7 +2973,7 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
             });
             
             // Track successful optimization usage
-            incrementOptimizationUsage(shop, 'blog', article.id);
+            incrementOptimizationUsage(shop, 'article', article.id);
             
           } catch (articleError) {
             console.error(`Failed to optimize article ${article.id}:`, articleError.message);
@@ -3217,7 +3217,7 @@ app.post('/api/optimize/articles', simpleVerifyShop, optimizationLimiter, async 
         // Save all draft metafields to Shopify
         for (const metafield of draftMetafields) {
           await axios.post(
-            `https://${shop}/admin/api/2024-01/blogs/${blogId}/articles/${articleId}/metafields.json`,
+            `https://${shop}/admin/api/2024-01/articles/${articleId}/metafields.json`,
             { metafield },
             {
               headers: {
@@ -3432,7 +3432,7 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
                 key: 'optimized_content_draft',
                 value: JSON.stringify({
                   title: optimized.optimizedTitle,
-                  body_html: optimized.optimizedDescription,
+                  body_html: optimized.content,
                   optimizedDescription: optimized.optimizedDescription,
                   llmDescription: optimized.llmDescription,
                   summary: optimized.summary,
