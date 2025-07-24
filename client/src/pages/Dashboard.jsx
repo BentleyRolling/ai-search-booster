@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QuotaToast from '../components/QuotaToast';
-import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { useCitations } from '../hooks/useCitations';
@@ -38,6 +38,7 @@ const Dashboard = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [consentCheckbox, setConsentCheckbox] = useState(false);
@@ -1843,26 +1844,44 @@ const Dashboard = () => {
         monthlyLimit={tierUsage?.monthlyLimit || 25}
       />
 
-      {/* ChatGPT-style Sidebar Navigation */}
-      <aside className="w-64 bg-dark-card border-r border-dark-border flex-shrink-0 hidden lg:flex flex-col">
-        {/* Logo Section */}
-        <div className="p-6 border-b border-dark-border">
-          <div className="flex flex-col items-center text-center space-y-2">
+      {/* ChatGPT-style Collapsible Sidebar Navigation */}
+      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-dark-card border-r border-dark-border flex-shrink-0 hidden lg:flex flex-col fixed left-0 top-0 h-screen z-50 transition-all duration-300 ease-in-out`}>
+        {/* Collapse Toggle Button */}
+        <div className="absolute -right-3 top-6 z-10">
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="w-6 h-6 bg-dark-card border border-dark-border rounded-full flex items-center justify-center hover:bg-[#2a2a2a] transition-colors"
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="w-3 h-3 text-text-muted" />
+            ) : (
+              <ChevronLeft className="w-3 h-3 text-text-muted" />
+            )}
+          </button>
+        </div>
+
+        {/* Logo Section - with 50px top margin */}
+        <div className={`${sidebarCollapsed ? 'p-4' : 'p-6'} border-b border-dark-border mt-12`}>
+          <div className={`flex ${sidebarCollapsed ? 'justify-center' : 'flex-col items-center text-center'} space-y-2`}>
             <img 
               src={`/logo.png?v=${Date.now()}`} 
               alt="AI Search Booster" 
-              className="w-24 h-24 object-contain"
+              className={`${sidebarCollapsed ? 'w-8 h-8' : 'w-24 h-24'} object-contain transition-all duration-300`}
             />
-            <p className="text-text-muted text-sm">Make your store AI‑discoverable</p>
+            {!sidebarCollapsed && (
+              <p className="text-text-muted text-sm">Make your store AI‑discoverable</p>
+            )}
           </div>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {/* Optimization Section Header */}
-          <div className="px-3 pb-2">
-            <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Optimize</h3>
-          </div>
+          {!sidebarCollapsed && (
+            <div className="px-3 pb-2">
+              <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Optimize</h3>
+            </div>
+          )}
           
           {/* Main Content Sections */}
           {[
@@ -1874,23 +1893,26 @@ const Dashboard = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 ease-out ${
+              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-3'} rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === tab.id
                   ? 'bg-[#363636] text-white font-medium'
                   : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
               }`}
+              title={sidebarCollapsed ? tab.label : ''}
             >
-              <div className="flex items-center space-x-3">
+              <div className={`flex items-center ${sidebarCollapsed ? '' : 'space-x-3'}`}>
                 <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-white' : ''}`} />
-                <span className="text-sm">{tab.label}</span>
+                {!sidebarCollapsed && <span className="text-sm">{tab.label}</span>}
               </div>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                activeTab === tab.id 
-                  ? 'bg-[#3a3a3a] text-white' 
-                  : 'bg-dark-border text-text-muted'
-              }`}>
-                {tab.count}
-              </span>
+              {!sidebarCollapsed && (
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  activeTab === tab.id 
+                    ? 'bg-[#3a3a3a] text-white' 
+                    : 'bg-dark-border text-text-muted'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
           
@@ -1898,9 +1920,11 @@ const Dashboard = () => {
           <div className="border-t border-dark-border my-3"></div>
           
           {/* Support Section Header */}
-          <div className="px-3 pb-2">
-            <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Support</h3>
-          </div>
+          {!sidebarCollapsed && (
+            <div className="px-3 pb-2">
+              <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Support</h3>
+            </div>
+          )}
           
           {/* Help & Support Sections */}
           {[
@@ -1911,32 +1935,34 @@ const Dashboard = () => {
             <button
               key={helpTab.id}
               onClick={() => setActiveTab(helpTab.id)}
-              className={`w-full flex items-center space-x-3 p-3 rounded-xl text-left transition-all duration-200 ease-out ${
+              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 p-3'} rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === helpTab.id
                   ? 'bg-[#363636] text-white font-medium'
                   : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
               }`}
+              title={sidebarCollapsed ? helpTab.label : ''}
             >
               <helpTab.icon className={`w-5 h-5 ${activeTab === helpTab.id ? 'text-white' : ''}`} />
-              <span className="text-sm">{helpTab.label}</span>
+              {!sidebarCollapsed && <span className="text-sm">{helpTab.label}</span>}
             </button>
           ))}
         </nav>
 
-        {/* Settings Button */}
+        {/* Settings Button - Fixed at Bottom */}
         <div className="p-4 border-t border-dark-border">
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className="w-full flex items-center space-x-3 p-3 rounded-xl text-text-secondary hover:bg-dark-border hover:text-text-primary transition-all duration-200"
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 p-3'} rounded-xl text-text-secondary hover:bg-dark-border hover:text-text-primary transition-all duration-200`}
+            title={sidebarCollapsed ? 'Settings' : ''}
           >
             <Settings className="w-5 h-5" />
-            <span className="text-sm">Settings</span>
+            {!sidebarCollapsed && <span className="text-sm">Settings</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-h-screen bg-dark-bg-secondary scrollbar-dark">
+      {/* Main Content Area - with left margin to account for fixed sidebar */}
+      <main className={`flex-1 flex flex-col min-h-screen bg-dark-bg-secondary scrollbar-dark transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
         {/* Mobile Header */}
         <header className="lg:hidden bg-dark-card border-b border-dark-border p-4">
           <div className="flex items-center justify-between">
