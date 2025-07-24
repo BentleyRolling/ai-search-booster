@@ -3121,31 +3121,57 @@ app.post('/api/optimize/articles', simpleVerifyShop, optimizationLimiter, async 
         // Call the optimization engine
         const optimizationResult = await optimizeContent(articleContent, 'article', settings);
         
-        // Store as draft metafield on the article
-        const draftMetafield = {
-          namespace: 'ai_search_booster',
-          key: 'optimization_draft',
-          value: JSON.stringify({
-            ...optimizationResult,
-            originalTitle: article.title,
-            originalContent: article.body_html,
-            optimizedAt: new Date().toISOString()
-          }),
-          type: 'json'
-        };
-        
-        // Save the draft to Shopify
-        await axios.post(
-          `https://${shop}/admin/api/2024-01/blogs/${blogId}/articles/${articleId}/metafields.json`,
-          { metafield: draftMetafield },
+        // Store draft metafields on the article (using consistent namespace and keys)
+        const draftMetafields = [
           {
-            headers: {
-              'X-Shopify-Access-Token': shopInfo.accessToken,
-              'Content-Type': 'application/json'
-            },
-            timeout: 10000
+            namespace: 'asb',
+            key: 'optimized_content_draft',
+            value: JSON.stringify({
+              title: optimizationResult.optimizedTitle,
+              body_html: optimizationResult.content,
+              optimizedDescription: optimizationResult.optimizedDescription,
+              llmDescription: optimizationResult.llmDescription,
+              summary: optimizationResult.summary,
+              riskScore: optimizationResult.riskScore,
+              visibilityScore: optimizationResult.visibilityScore,
+              promptVersion: optimizationResult.promptVersion,
+              optimizedAt: new Date().toISOString()
+            }),
+            type: 'json'
+          },
+          {
+            namespace: 'asb',
+            key: 'faq_data_draft',
+            value: JSON.stringify({
+              questions: optimizationResult.faqs
+            }),
+            type: 'json'
+          },
+          {
+            namespace: 'asb',
+            key: 'optimization_settings_draft',
+            value: JSON.stringify({
+              settings,
+              timestamp: new Date().toISOString()
+            }),
+            type: 'json'
           }
-        );
+        ];
+        
+        // Save all draft metafields to Shopify
+        for (const metafield of draftMetafields) {
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/blogs/${blogId}/articles/${articleId}/metafields.json`,
+            { metafield },
+            {
+              headers: {
+                'X-Shopify-Access-Token': shopInfo.accessToken,
+                'Content-Type': 'application/json'
+              },
+              timeout: 10000
+            }
+          );
+        }
         
         // Track usage
         incrementOptimizationUsage(shop, 'article', articleId);
