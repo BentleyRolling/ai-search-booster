@@ -681,21 +681,24 @@ Product data (from Shopify):
 ${JSON.stringify(content)}
 
 ✅ Output Format:
-Return a JSON object like this:
+Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 {
-  "optimizedTitle": "...",         // 60–90 chars, emotionally compelling, clear
-  "optimizedDescription": "...",   // 3–6 sentence persuasive overview for humans
-  "llmDescription": "...",         // 2–3 sentences focused on use case and user type (AI-facing)
-  "summary": "...",                // 1–2 sentence value summary
+  "optimizedTitle": "...",         // REQUIRED: 60–90 chars, emotionally compelling, clear
+  "optimizedDescription": "...",   // REQUIRED: 3–6 sentence persuasive overview for humans  
+  "llmDescription": "...",         // REQUIRED: 2–3 sentences focused on use case and user type (AI-facing)
+  "summary": "...",                // REQUIRED: 1–2 sentence value summary
   "content": "...",                // REQUIRED: Additional persuasive content in coherent paragraphs for product page. Expand on the summary with detailed benefits and features.
-  "faqs": [                        // 3–5 FAQs based on features, use, sizing, care
+  "faqs": [                        // REQUIRED: 3–5 FAQs based on features, use, sizing, care
     { "q": "...", "a": "..." },
     ...
   ]
 }
 
 🧠 Rules:
+- ALL SIX FIELDS ARE MANDATORY - never omit any field
+- optimizedDescription MUST be 3-6 complete sentences  
+- content MUST always be present, even if similar to original copy
 - DO NOT add generic SEO fluff.
 - DO NOT erase brand voice.
 - DO NOT oversimplify or remove important product-specific content.
@@ -720,15 +723,15 @@ Optional:
 Detected Category: ${category || "N/A"}
 
 ✅ Output Format:
-Return this structured JSON:
+Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 {
-  "optimizedTitle": "...",         // 60–90 chars, describes collection contents clearly
-  "optimizedDescription": "...",   // 3–5 sentences summarizing products and use cases
-  "llmDescription": "...",         // 2–3 sentences for AI — what this is, who it's for
-  "summary": "...",                // 1–2 sentence value summary
+  "optimizedTitle": "...",         // REQUIRED: 60–90 chars, describes collection contents clearly
+  "optimizedDescription": "...",   // REQUIRED: 3–6 sentence persuasive overview summarizing products and use cases
+  "llmDescription": "...",         // REQUIRED: 2–3 sentences for AI — what this is, who it's for
+  "summary": "...",                // REQUIRED: 1–2 sentence value summary
   "content": "...",                // REQUIRED: Expanded persuasive body text in coherent paragraphs for collection page. Build on the summary with detailed, engaging content about the collection.
-  "faqs": [                        // Exactly 4 context-specific FAQs (materials, fit, usage, etc.)
+  "faqs": [                        // REQUIRED: Exactly 4 context-specific FAQs (materials, fit, usage, etc.)
     { "q": "...", "a": "..." },
     { "q": "...", "a": "..." },
     { "q": "...", "a": "..." },
@@ -737,6 +740,9 @@ Return this structured JSON:
 }
 
 🧠 Rules:
+- ALL SIX FIELDS ARE MANDATORY - never omit any field
+- optimizedDescription MUST be 3-6 complete sentences
+- content MUST always be present, even if similar to original copy
 - DO NOT flatten variety or remove specificity.
 - Avoid generic SEO filler.
 - Keep persuasive, human language.
@@ -753,21 +759,24 @@ Page data (from Shopify):
 ${JSON.stringify(content)}
 
 ✅ Output Format:
-Return a structured JSON like this:
+Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 {
-  "optimizedTitle": "...",         // 60–90 chars, clearly describing the page
-  "optimizedDescription": "...",   // 3–6 sentences explaining content and value
-  "llmDescription": "...",         // 2–3 sentences summarizing page function for AI
-  "summary": "...",                // 1-line human-facing benefit
+  "optimizedTitle": "...",         // REQUIRED: 60–90 chars, clearly describing the page
+  "optimizedDescription": "...",   // REQUIRED: 3–6 sentence persuasive overview explaining content and value
+  "llmDescription": "...",         // REQUIRED: 2–3 sentences summarizing page function for AI
+  "summary": "...",                // REQUIRED: 1–2 sentence human-facing benefit
   "content": "...",                // REQUIRED: Expanded persuasive body text in coherent paragraphs for page. Build on the summary with detailed, engaging content.
-  "faqs": [                        // 3–5 questions on key user concerns
+  "faqs": [                        // REQUIRED: 3–5 questions on key user concerns
     { "q": "...", "a": "..." },
     ...
   ]
 }
 
 🧠 Rules:
+- ALL SIX FIELDS ARE MANDATORY - never omit any field
+- optimizedDescription MUST be 3-6 complete sentences
+- content MUST always be present, even if similar to original copy
 - DO NOT hallucinate policies or remove required legal terms.
 - DO NOT flatten branding or tone.
 - Clarify vague sections and reframe for AI + human usefulness.
@@ -786,21 +795,24 @@ ${JSON.stringify(content)}
 ${contentAnalysis.hasAITerms ? 'Note: This content contains AI-related terms, include relevant context.' : 'Only use terminology present in the original content.'}
 
 ✅ Output Format:
-Return a JSON object in this structure:
+Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 {
-  "optimizedTitle": "...",       // Clear, 70–90 chars max, emotionally or practically compelling
-  "optimizedDescription": "...", // 3–6 sentence persuasive overview for humans
-  "llmDescription": "...",       // 2–3 sentences explaining purpose and audience (AI-focused)
-  "summary": "...",              // 1 sentence abstract of value to the human reader
+  "optimizedTitle": "...",       // REQUIRED: Clear, 70–90 chars max, emotionally or practically compelling
+  "optimizedDescription": "...", // REQUIRED: 3–6 sentence persuasive overview for humans
+  "llmDescription": "...",       // REQUIRED: 2–3 sentences explaining purpose and audience (AI-focused)
+  "summary": "...",              // REQUIRED: 1–2 sentence abstract of value to the human reader
   "content": "...",              // REQUIRED: Rewritten article in 800-1200 words, plain text paragraphs ONLY (no HTML tags), preserving voice and value.
-  "faqs": [                      // 3–5 helpful FAQs from the article's content
+  "faqs": [                      // REQUIRED: 3–5 helpful FAQs from the article's content
     { "q": "...", "a": "..." },
     ...
   ]
 }
 
 🧠 Rules:
+- ALL SIX FIELDS ARE MANDATORY - never omit any field
+- optimizedDescription MUST be 3-6 complete sentences
+- content MUST always be present, even if similar to original copy
 - KEEP content field under 1200 words (approximately 7000 characters) to avoid truncation
 - USE ONLY plain text paragraphs in content field - NO HTML tags, no <div>, no <p>, no markup
 - DO NOT reduce to summary or strip human voice.
@@ -977,6 +989,46 @@ Return only the JSON above. No extra commentary.`;
             }
           }
           console.log('[AI-OPTIMIZATION] Parsed OpenAI response:', parsedResponse);
+          
+          // === VALIDATION FALLBACK FOR MISSING FIELDS ===
+          const requiredFields = ['optimizedTitle', 'optimizedDescription', 'llmDescription', 'summary', 'content', 'faqs'];
+          let hasFieldRepairs = false;
+          
+          requiredFields.forEach(field => {
+            if (!parsedResponse[field] || parsedResponse[field] === '' || parsedResponse[field] === 'N/A') {
+              console.warn(`[AI-OPTIMIZATION] Missing or empty field '${field}', applying fallback...`);
+              hasFieldRepairs = true;
+              
+              switch (field) {
+                case 'optimizedTitle':
+                  parsedResponse[field] = content.title || 'Optimized Content';
+                  break;
+                case 'optimizedDescription':
+                  parsedResponse[field] = parsedResponse.summary || parsedResponse.llmDescription || 'Enhanced content optimized for better search visibility and user engagement.';
+                  break;
+                case 'llmDescription':
+                  parsedResponse[field] = parsedResponse.summary || parsedResponse.optimizedDescription || 'Content optimized for AI assistant search visibility.';
+                  break;
+                case 'summary':
+                  parsedResponse[field] = parsedResponse.llmDescription || parsedResponse.optimizedDescription || 'Optimized content for better discoverability.';
+                  break;
+                case 'content':
+                  parsedResponse[field] = parsedResponse.summary + ' ' + (parsedResponse.llmDescription || '') || content.body_html?.substring(0, 1200) || 'Content has been optimized for better search visibility.';
+                  break;
+                case 'faqs':
+                  parsedResponse[field] = [
+                    { q: "What is this content about?", a: parsedResponse.summary || "This content provides valuable information on the topic." },
+                    { q: "Who should find this useful?", a: "Anyone looking for information on this subject." }
+                  ];
+                  break;
+              }
+            }
+          });
+          
+          if (hasFieldRepairs) {
+            console.warn('[AI-OPTIMIZATION] Applied field repairs to ensure all required fields are present');
+            parsedResponse.fieldRepairsApplied = true;
+          }
           
           // === PRODUCTION SCORING & SAFETY INFRASTRUCTURE ===
           console.log('[SCORING] Calculating content quality scores...');
@@ -2300,8 +2352,10 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
                 value: JSON.stringify({
                   title: optimized.optimizedTitle,
                   body_html: optimized.optimizedDescription,
-                  summary: optimized.summary,
+                  optimizedDescription: optimized.optimizedDescription,
                   llmDescription: optimized.llmDescription,
+                  summary: optimized.summary,
+                  content: optimized.content,
                   riskScore: optimized.riskScore,
                   visibilityScore: optimized.visibilityScore,
                   promptVersion: optimized.promptVersion,
@@ -2552,8 +2606,10 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
                 value: JSON.stringify({
                   title: optimized.optimizedTitle,
                   body_html: optimized.optimizedDescription,
+                  optimizedDescription: optimized.optimizedDescription,
                   llmDescription: optimized.llmDescription,
                   summary: optimized.summary,
+                  content: optimized.content,
                   riskScore: optimized.riskScore,
                   visibilityScore: optimized.visibilityScore,
                   promptVersion: optimized.promptVersion,
@@ -3376,15 +3432,50 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
                 key: 'optimized_content_draft',
                 value: JSON.stringify({
                   title: optimized.optimizedTitle,
+                  body_html: optimized.optimizedDescription,
                   optimizedDescription: optimized.optimizedDescription,
-                  content: optimized.content,
                   llmDescription: optimized.llmDescription,
                   summary: optimized.summary,
-                  faqs: optimized.faqs,
+                  content: optimized.content,
                   riskScore: optimized.riskScore,
                   visibilityScore: optimized.visibilityScore,
                   promptVersion: optimized.promptVersion,
                   optimizedAt: new Date().toISOString()
+                }),
+                type: 'json'
+              }
+            },
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
+            }
+          );
+          
+          // Store FAQ data as draft
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/custom_collections/${collectionId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'asb',
+                key: 'faq_data_draft',
+                value: JSON.stringify({ questions: optimized.faqs }),
+                type: 'json'
+              }
+            },
+            {
+              headers: { 'X-Shopify-Access-Token': accessToken }
+            }
+          );
+          
+          // Store optimization settings as draft
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/custom_collections/${collectionId}/metafields.json`,
+            {
+              metafield: {
+                namespace: 'asb',
+                key: 'optimization_settings_draft',
+                value: JSON.stringify({
+                  settings,
+                  timestamp: new Date().toISOString()
                 }),
                 type: 'json'
               }
@@ -4653,7 +4744,7 @@ app.get('/api/pages', simpleVerifyShop, async (req, res) => {
           { headers: { 'X-Shopify-Access-Token': accessToken } }
         );
         const metafields = metafieldsRes.data.metafields;
-        optimized = metafields.some(m => m.key === 'optimized_content');
+        optimized = metafields.some(m => m.key === 'optimization_data');
         hasDraft = metafields.some(m => m.key === 'optimized_content_draft');
       } catch (metaError) {
         console.log(`Could not fetch metafields for page ${page.id}:`, metaError.message);
@@ -4816,7 +4907,7 @@ app.get('/api/collections', async (req, res) => {
         );
         
         const metafields = metafieldsResponse.data.metafields || [];
-        optimized = metafields.some(m => m.key === 'optimized_content');
+        optimized = metafields.some(m => m.key === 'optimization_data');
         hasDraft = metafields.some(m => m.key === 'optimized_content_draft');
       } catch (metaError) {
         console.log(`Error checking metafields for collection ${collection.id}:`, metaError.message);
