@@ -1931,7 +1931,6 @@ const Dashboard = () => {
             { id: 'instructions', label: 'Instructions', icon: BookOpen },
             { id: 'support', label: 'FAQ', icon: MessageSquare },
             { id: 'terms', label: 'Terms & Disclaimer', icon: FileText },
-            { id: 'settings', label: 'Settings', icon: Settings },
           ].map((helpTab) => (
             <button
               key={helpTab.id}
@@ -1949,8 +1948,21 @@ const Dashboard = () => {
           ))}
         </nav>
 
-        {/* Empty space for consistent layout */}
-        <div className="p-4"></div>
+        {/* Settings Button - Fixed at Bottom */}
+        <div className="p-4">
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 p-3'} rounded-xl text-left transition-all duration-200 ease-out ${
+              activeTab === 'settings'
+                ? 'bg-[#2a2a2a] text-white font-medium shadow-lg'
+                : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
+            }`}
+            title={sidebarCollapsed ? 'Settings' : ''}
+          >
+            <Settings className={`w-5 h-5 ${activeTab === 'settings' ? 'text-white' : ''}`} />
+            {!sidebarCollapsed && <span className="text-sm">Settings</span>}
+          </button>
+        </div>
       </aside>
 
       {/* Main Content Area - with left margin to account for fixed sidebar */}
