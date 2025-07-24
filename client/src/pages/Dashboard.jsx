@@ -1851,7 +1851,7 @@ const Dashboard = () => {
             <img 
               src={`/logo.png?v=${Date.now()}`} 
               alt="AI Search Booster" 
-              className="w-16 h-16 object-contain"
+              className="w-32 h-32 object-contain"
             />
             <p className="text-text-muted text-sm">Make your store AI‑discoverable</p>
           </div>
@@ -1973,7 +1973,7 @@ const Dashboard = () => {
                   <img 
                     src={`/logo.png?v=${Date.now()}`} 
                     alt="AI Search Booster" 
-                    className="w-16 h-16 object-contain"
+                    className="w-32 h-32 object-contain"
                   />
                   <p className="text-text-muted text-sm">Make your store AI‑discoverable</p>
                 </div>
@@ -2516,7 +2516,7 @@ const Dashboard = () => {
             {activeTab === 'products' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-text-primary">Select Products to Optimize</h3>
+                  <h3 className="text-lg font-semibold text-text-primary">Select Products</h3>
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
@@ -2627,7 +2627,7 @@ const Dashboard = () => {
             {activeTab === 'blogs' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-text-primary">Select Blog Articles to Optimize</h3>
+                  <h3 className="text-lg font-semibold text-text-primary">Select Blog Articles</h3>
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
@@ -2738,7 +2738,7 @@ const Dashboard = () => {
             {activeTab === 'pages' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-text-primary">Select Pages to Optimize</h3>
+                  <h3 className="text-lg font-semibold text-text-primary">Select Pages</h3>
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
@@ -2855,7 +2855,7 @@ const Dashboard = () => {
             {activeTab === 'collections' && (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-text-primary">Select Collections to Optimize</h3>
+                  <h3 className="text-lg font-semibold text-text-primary">Select Collections</h3>
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
