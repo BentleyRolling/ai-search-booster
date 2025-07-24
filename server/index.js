@@ -789,6 +789,20 @@ Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 Return only the JSON above. No extra commentary.`;
   } else {
+    // 🔧 Step 1 & 2 — Strip HTML and truncate for articles only
+    let processedContent = content;
+    if (type === 'article') {
+      const plainText = content.body_html?.replace(/<[^>]*>/g, '') || '';
+      const truncatedText = plainText.slice(0, 8000);
+      console.log("[TRUNCATION] Blog input truncated to 8000 chars for safe OpenAI optimization.");
+      
+      // Create processed content object with truncated text
+      processedContent = {
+        ...content,
+        body_html: truncatedText
+      };
+    }
+    
     prompt = `System Prompt (Articles only):
 
 > Your task is to optimize this blog article for AI visibility without rewriting it entirely.
@@ -805,7 +819,7 @@ Return only the JSON above. No extra commentary.`;
 
 ---
 
-${JSON.stringify(content)}`;
+${JSON.stringify(processedContent)}`;
   }
   
   try {
