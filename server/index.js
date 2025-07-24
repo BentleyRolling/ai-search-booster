@@ -681,6 +681,8 @@ Product data (from Shopify):
 ${JSON.stringify(content)}
 
 ✅ Output Format:
+Return exactly these field names: optimizedTitle, optimizedDescription, llmDescription, summary, content, faqs; do not use different keys like Title, Description, or Content.
+
 Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 {
@@ -723,6 +725,8 @@ Optional:
 Detected Category: ${category || "N/A"}
 
 ✅ Output Format:
+Return exactly these field names: optimizedTitle, optimizedDescription, llmDescription, summary, content, faqs; do not use different keys like Title, Description, or Content.
+
 Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 {
@@ -759,6 +763,8 @@ Page data (from Shopify):
 ${JSON.stringify(content)}
 
 ✅ Output Format:
+Return exactly these field names: optimizedTitle, optimizedDescription, llmDescription, summary, content, faqs; do not use different keys like Title, Description, or Content.
+
 Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 {
@@ -795,6 +801,8 @@ ${JSON.stringify(content)}
 ${contentAnalysis.hasAITerms ? 'Note: This content contains AI-related terms, include relevant context.' : 'Only use terminology present in the original content.'}
 
 ✅ Output Format:
+Return exactly these field names: optimizedTitle, optimizedDescription, llmDescription, summary, content, faqs; do not use different keys like Title, Description, or Content.
+
 Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 {
@@ -990,6 +998,16 @@ Return only the JSON above. No extra commentary.`;
           }
           console.log('[AI-OPTIMIZATION] Parsed OpenAI response:', parsedResponse);
           
+          // === KEY NORMALIZATION FOR INCORRECT FIELD NAMES ===
+          // Handle cases where LLM returns incorrect key names
+          if (!parsedResponse.optimizedTitle && parsedResponse.Title) parsedResponse.optimizedTitle = parsedResponse.Title;
+          if (!parsedResponse.optimizedDescription && parsedResponse.Description) parsedResponse.optimizedDescription = parsedResponse.Description;
+          if (!parsedResponse.content && parsedResponse.Content) parsedResponse.content = parsedResponse.Content;
+          if (!parsedResponse.llmDescription && parsedResponse.LLMDescription) parsedResponse.llmDescription = parsedResponse.LLMDescription;
+          if (!parsedResponse.summary && parsedResponse.Summary) parsedResponse.summary = parsedResponse.Summary;
+          if (!parsedResponse.faqs && parsedResponse.FAQs) parsedResponse.faqs = parsedResponse.FAQs;
+          if (!parsedResponse.faqs && parsedResponse.faq) parsedResponse.faqs = parsedResponse.faq;
+          
           // === VALIDATION FALLBACK FOR MISSING FIELDS ===
           const requiredFields = ['optimizedTitle', 'optimizedDescription', 'llmDescription', 'summary', 'content', 'faqs'];
           let hasFieldRepairs = false;
@@ -1013,13 +1031,12 @@ Return only the JSON above. No extra commentary.`;
                   parsedResponse[field] = parsedResponse.llmDescription || parsedResponse.optimizedDescription || 'Optimized content for better discoverability.';
                   break;
                 case 'content':
-                  parsedResponse[field] = parsedResponse.summary + ' ' + (parsedResponse.llmDescription || '') || content.body_html?.substring(0, 1200) || 'Content has been optimized for better search visibility.';
+                  // Fallback to llmDescription if content is missing
+                  parsedResponse[field] = parsedResponse.llmDescription || parsedResponse.summary + ' ' + (parsedResponse.optimizedDescription || '') || content.body_html?.substring(0, 1200) || 'Content has been optimized for better search visibility.';
                   break;
                 case 'faqs':
-                  parsedResponse[field] = [
-                    { q: "What is this content about?", a: parsedResponse.summary || "This content provides valuable information on the topic." },
-                    { q: "Who should find this useful?", a: "Anyone looking for information on this subject." }
-                  ];
+                  // Default to empty array if faqs is missing
+                  parsedResponse[field] = [];
                   break;
               }
             }
