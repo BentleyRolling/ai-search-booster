@@ -1851,7 +1851,7 @@ const Dashboard = () => {
             <img 
               src={`/logo.png?v=${Date.now()}`} 
               alt="AI Search Booster" 
-              className="w-32 h-32 object-contain"
+              className="w-28 h-28 object-contain"
             />
             <p className="text-text-muted text-sm">Make your store AI‑discoverable</p>
           </div>
@@ -1973,7 +1973,7 @@ const Dashboard = () => {
                   <img 
                     src={`/logo.png?v=${Date.now()}`} 
                     alt="AI Search Booster" 
-                    className="w-32 h-32 object-contain"
+                    className="w-28 h-28 object-contain"
                   />
                   <p className="text-text-muted text-sm">Make your store AI‑discoverable</p>
                 </div>
