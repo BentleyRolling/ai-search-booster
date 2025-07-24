@@ -302,6 +302,96 @@ const Dashboard = () => {
     }
   }, [isReady, authFetch]); // Re-run when authFetch becomes ready
 
+  // Clear optimization progress when switching tabs
+  useEffect(() => {
+    setOptimizationProgress(null);
+  }, [activeTab]);
+
+  // Utility function to add timeout to requests
+  const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await authFetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - please try again');
+      }
+      throw error;
+    }
+  };
+
+  // Reusable component for item status badges and action buttons
+  const ItemActions = ({ item, type, onPreview, onPublish, onRollback }) => (
+    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+      {/* Status Badges */}
+      {item.rollbackTriggered && (
+        <span className="inline-block px-2 py-1 bg-orange-900/30 text-orange-300 text-xs rounded-full font-medium border border-orange-700/50 flex items-center space-x-1">
+          <AlertCircle className="w-3 h-3" />
+          <span>⚠️ Rolled Back</span>
+        </span>
+      )}
+      {item.optimized && !item.rollbackTriggered && (
+        <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
+          ✓ Optimized
+        </span>
+      )}
+      {item.hasDraft && !item.rollbackTriggered && (
+        <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
+          📝 Draft Ready
+        </span>
+      )}
+      
+      {/* Action Buttons */}
+      {item.hasDraft && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPreview(type, item.id);
+          }}
+          className="px-3 py-1.5 bg-transparent text-white border border-white/20 rounded-full text-xs font-medium flex items-center space-x-1 hover:border-blue-500 transition-all duration-200"
+          title="Preview draft content"
+        >
+          <Eye className="w-3 h-3" />
+          <span>Preview</span>
+        </button>
+      )}
+      {item.hasDraft && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPublish(type, item.id);
+          }}
+          className="px-3 py-1.5 bg-transparent text-white border border-white/20 rounded-full text-xs font-medium flex items-center space-x-1 hover:border-green-500 transition-all duration-200"
+          title="Publish draft content"
+        >
+          <CheckCircle className="w-3 h-3" />
+          <span>Publish</span>
+        </button>
+      )}
+      {item.optimized && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRollback(type, item.id);
+          }}
+          className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
+          title="Rollback to original content"
+        >
+          <RotateCcw className="w-3 h-3" />
+          <span>Rollback</span>
+        </button>
+      )}
+    </div>
+  );
+
   const fetchStatus = async (shopName) => {
     try {
       console.log('[ASB-DEBUG] Dashboard: Fetching status for shop:', shopName);
@@ -583,7 +673,7 @@ const Dashboard = () => {
         
         try {
           console.log(`Optimizing product ${i + 1}/${selectedProducts.length}: ${productId}`);
-          const response = await authFetch(`${API_BASE}/api/optimize/products?shop=${shop}`, {
+          const response = await fetchWithTimeout(`${API_BASE}/api/optimize/products?shop=${shop}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -595,7 +685,7 @@ const Dashboard = () => {
                 tone: settings.tone
               }
             })
-          });
+          }, 60000); // 60 second timeout for AI optimization
           
           console.log(`Product ${productId} response status:`, response.status);
           
@@ -658,10 +748,15 @@ const Dashboard = () => {
       setSelectedProducts([]);
     } catch (error) {
       console.error('Optimization error:', error);
-      addNotification('Failed to optimize products. Please try again.', 'error');
+      if (error.message.includes('timeout')) {
+        addNotification('Request timed out. Please check your connection and try again.', 'error');
+      } else {
+        addNotification('Failed to optimize products. Please try again.', 'error');
+      }
     } finally {
       setOptimizing(false);
-      setTimeout(() => setOptimizationProgress(null), 1000); // Keep progress visible for a moment
+      // Always clear progress, even on errors
+      setTimeout(() => setOptimizationProgress(null), 1000);
     }
   };
 
@@ -686,7 +781,7 @@ const Dashboard = () => {
         
         try {
           console.log(`Optimizing page ${i + 1}/${selectedPages.length}: ${pageId}`);
-          const response = await authFetch(`${API_BASE}/api/optimize/pages?shop=${shop}`, {
+          const response = await fetchWithTimeout(`${API_BASE}/api/optimize/pages?shop=${shop}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -698,9 +793,11 @@ const Dashboard = () => {
                 tone: settings.tone
               }
             })
-          });
+          }, 60000);
           
           if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Page optimization failed for ${pageId}:`, response.status, errorText);
             failedCount++;
             continue;
           }
@@ -710,10 +807,16 @@ const Dashboard = () => {
           if (data.results && data.results[0]?.status === 'success') {
             successCount++;
           } else {
+            console.error(`Page optimization returned non-success for ${pageId}:`, data);
             failedCount++;
           }
         } catch (itemError) {
-          console.error(`Failed to optimize page ${pageId}:`, itemError);
+          if (itemError.name === 'AbortError') {
+            console.error(`Page optimization timed out for ${pageId}`);
+            addNotification(`Page optimization timed out for page ${pageId}`, 'error');
+          } else {
+            console.error(`Failed to optimize page ${pageId}:`, itemError);
+          }
           failedCount++;
         }
         
@@ -762,7 +865,7 @@ const Dashboard = () => {
         
         try {
           console.log(`Optimizing collection ${i + 1}/${selectedCollections.length}: ${collectionId}`);
-          const response = await authFetch(`${API_BASE}/api/optimize/collections?shop=${shop}`, {
+          const response = await fetchWithTimeout(`${API_BASE}/api/optimize/collections?shop=${shop}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -774,9 +877,11 @@ const Dashboard = () => {
                 tone: settings.tone
               }
             })
-          });
+          }, 60000);
           
           if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Collection optimization failed for ${collectionId}:`, response.status, errorText);
             failedCount++;
             continue;
           }
@@ -803,10 +908,16 @@ const Dashboard = () => {
               }
             }
           } else {
+            console.error(`Collection optimization returned non-success for ${collectionId}:`, data);
             failedCount++;
           }
         } catch (itemError) {
-          console.error(`Failed to optimize collection ${collectionId}:`, itemError);
+          if (itemError.name === 'AbortError') {
+            console.error(`Collection optimization timed out for ${collectionId}`);
+            addNotification(`Collection optimization timed out for collection ${collectionId}`, 'error');
+          } else {
+            console.error(`Failed to optimize collection ${collectionId}:`, itemError);
+          }
           failedCount++;
         }
         
@@ -854,7 +965,7 @@ const Dashboard = () => {
         
         try {
           console.log(`Optimizing blog ${i + 1}/${selectedBlogs.length}: ${blogId}`);
-          const response = await authFetch(`${API_BASE}/api/optimize/blogs?shop=${shop}`, {
+          const response = await fetchWithTimeout(`${API_BASE}/api/optimize/blogs?shop=${shop}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -866,10 +977,13 @@ const Dashboard = () => {
                 tone: settings.tone
               }
             })
-          });
+          }, 60000);
           
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error(`Blog optimization failed for ${blogId}:`, response.status, errorText);
+            failedCount++;
+            continue;
           }
           
           const data = await response.json();
@@ -894,10 +1008,16 @@ const Dashboard = () => {
               }
             }
           } else {
+            console.error(`Blog optimization returned non-success for ${blogId}:`, data);
             failedCount++;
           }
         } catch (itemError) {
-          console.error(`Failed to optimize blog ${blogId}:`, itemError);
+          if (itemError.name === 'AbortError') {
+            console.error(`Blog optimization timed out for ${blogId}`);
+            addNotification(`Blog optimization timed out for blog ${blogId}`, 'error');
+          } else {
+            console.error(`Failed to optimize blog ${blogId}:`, itemError);
+          }
           failedCount++;
         }
         
@@ -2521,71 +2641,13 @@ const Dashboard = () => {
                                 {product.product_type}
                               </span>
                             )}
-                            <div className="mt-3 flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                {product.rollbackTriggered && (
-                                  <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium flex items-center space-x-1">
-                                    <AlertCircle className="w-3 h-3" />
-                                    <span>⚠️ Rolled Back</span>
-                                  </span>
-                                )}
-                                {product.optimized && !product.rollbackTriggered && (
-                                  <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
-                                    ✓ Optimized
-                                  </span>
-                                )}
-                                {product.hasDraft && !product.rollbackTriggered && (
-                                  <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
-                                    📝 Draft Ready
-                                  </span>
-                                )}
-                              </div>
-                              
-                              {/* Action Buttons */}
-                              <div className="flex items-center space-x-1 flex-shrink-0">
-                                {product.hasDraft && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePreviewDraft('product', product.id);
-                                    }}
-                                    className="px-3 py-1.5 bg-transparent text-white border border-white/20 rounded-full text-xs font-medium flex items-center space-x-1 hover:border-blue-500 transition-all duration-200"
-                                    title="Preview draft content"
-                                  >
-                                    <Eye className="w-3 h-3" />
-                                    <span>Preview</span>
-                                  </button>
-                                )}
-                                
-                                {product.hasDraft && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      publishDraft('product', product.id);
-                                    }}
-                                    className="px-4 py-1.5 bg-blue-900 text-blue-300 border border-blue-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-blue-800 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-200"
-                                    title="Publish draft optimization"
-                                  >
-                                    <CheckCircle className="w-3 h-3" />
-                                    <span>Publish</span>
-                                  </button>
-                                )}
-                                
-                                {product.optimized && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      rollback('product', product.id);
-                                    }}
-                                    className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
-                                    title="Rollback to original content"
-                                  >
-                                    <RotateCcw className="w-3 h-3" />
-                                    <span>Rollback</span>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
+                            <ItemActions 
+                              item={product}
+                              type="product"
+                              onPreview={handlePreviewDraft}
+                              onPublish={publishDraft}
+                              onRollback={rollback}
+                            />
                           </div>
                         </div>
                       </div>
@@ -2740,71 +2802,13 @@ const Dashboard = () => {
                               <p className="text-sm text-gray-300 mt-1">Blog: {article.blogTitle}</p>
                               <p className="text-sm text-gray-300">Created: {new Date(article.created_at).toLocaleDateString()}</p>
                               
-                              <div className="mt-3 flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  {article.rollbackTriggered && (
-                                    <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium flex items-center space-x-1">
-                                      <AlertCircle className="w-3 h-3" />
-                                      <span>⚠️ Rolled Back</span>
-                                    </span>
-                                  )}
-                                  {article.optimized && !article.rollbackTriggered && (
-                                    <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
-                                      ✓ Optimized
-                                    </span>
-                                  )}
-                                  {article.hasDraft && !article.rollbackTriggered && (
-                                    <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
-                                      📝 Draft Ready
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                {/* Action Buttons */}
-                                <div className="flex items-center space-x-1 flex-shrink-0">
-                                  {article.hasDraft && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handlePreviewDraft('article', article.id);
-                                      }}
-                                      className="px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-blue-700/50 hover:border-blue-500/50"
-                                      title="Preview draft content"
-                                    >
-                                      <Eye className="w-3 h-3" />
-                                      <span>Preview</span>
-                                    </button>
-                                  )}
-                                  
-                                  {article.hasDraft && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        publishDraft('article', article.id);
-                                      }}
-                                      className="px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-green-700/50 hover:border-green-500/50"
-                                      title="Publish draft optimization"
-                                    >
-                                      <CheckCircle className="w-3 h-3" />
-                                      <span>Publish</span>
-                                    </button>
-                                  )}
-                                  
-                                  {article.optimized && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        rollback('article', article.id);
-                                      }}
-                                      className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
-                                      title="Rollback to original content"
-                                    >
-                                      <RotateCcw className="w-3 h-3" />
-                                      <span>Rollback</span>
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
+                              <ItemActions 
+                                item={article}
+                                type="article"
+                                onPreview={handlePreviewDraft}
+                                onPublish={publishDraft}
+                                onRollback={rollback}
+                              />
                             </div>
                           </div>
                         </div>
@@ -2965,71 +2969,13 @@ const Dashboard = () => {
                               <p className="text-sm text-gray-300 mt-1">Handle: {page.handle}</p>
                               <p className="text-sm text-gray-300">Updated: {new Date(page.updated_at).toLocaleDateString()}</p>
                               
-                              <div className="mt-3 flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  {page.rollbackTriggered && (
-                                    <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium flex items-center space-x-1">
-                                      <AlertCircle className="w-3 h-3" />
-                                      <span>⚠️ Rolled Back</span>
-                                    </span>
-                                  )}
-                                  {page.optimized && !page.rollbackTriggered && (
-                                    <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
-                                      ✓ Optimized
-                                    </span>
-                                  )}
-                                  {page.hasDraft && !page.rollbackTriggered && (
-                                    <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
-                                      📝 Draft Ready
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                {/* Action Buttons */}
-                                <div className="flex items-center space-x-1 flex-shrink-0">
-                                  {page.hasDraft && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handlePreviewDraft('page', page.id);
-                                      }}
-                                      className="px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-blue-700/50 hover:border-blue-500/50"
-                                      title="Preview draft content"
-                                    >
-                                      <Eye className="w-3 h-3" />
-                                      <span>Preview</span>
-                                    </button>
-                                  )}
-                                  
-                                  {page.hasDraft && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        publishDraft('page', page.id);
-                                      }}
-                                      className="px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-green-700/50 hover:border-green-500/50"
-                                      title="Publish draft optimization"
-                                    >
-                                      <CheckCircle className="w-3 h-3" />
-                                      <span>Publish</span>
-                                    </button>
-                                  )}
-                                  
-                                  {page.optimized && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        rollback('page', page.id);
-                                      }}
-                                      className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
-                                      title="Rollback to original content"
-                                    >
-                                      <RotateCcw className="w-3 h-3" />
-                                      <span>Rollback</span>
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
+                              <ItemActions 
+                                item={page}
+                                type="page"
+                                onPreview={handlePreviewDraft}
+                                onPublish={publishDraft}
+                                onRollback={rollback}
+                              />
                             </div>
                           </div>
                         </div>
@@ -3194,71 +3140,13 @@ const Dashboard = () => {
                               <p className="text-sm text-gray-300 mt-1">Handle: {category.handle}</p>
                               <p className="text-sm text-gray-300">Description: {category.description?.substring(0, 50)}...</p>
                               
-                              <div className="mt-3 flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  {category.rollbackTriggered && (
-                                    <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded font-medium flex items-center space-x-1">
-                                      <AlertCircle className="w-3 h-3" />
-                                      <span>⚠️ Rolled Back</span>
-                                    </span>
-                                  )}
-                                  {category.optimized && !category.rollbackTriggered && (
-                                    <span className="inline-block px-4 py-1.5 bg-green-900 text-green-300 border border-green-500 text-xs rounded-full font-medium hover:bg-green-800 transition-colors">
-                                      ✓ Optimized
-                                    </span>
-                                  )}
-                                  {category.hasDraft && !category.rollbackTriggered && (
-                                    <span className="inline-block px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
-                                      📝 Draft Ready
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                {/* Action Buttons */}
-                                <div className="flex items-center space-x-1 flex-shrink-0">
-                                  {category.hasDraft && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handlePreviewDraft('collection', category.id);
-                                      }}
-                                      className="px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-blue-700/50 hover:border-blue-500/50"
-                                      title="Preview draft content"
-                                    >
-                                      <Eye className="w-3 h-3" />
-                                      <span>Preview</span>
-                                    </button>
-                                  )}
-                                  
-                                  {category.hasDraft && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        publishDraft('collection', category.id);
-                                      }}
-                                      className="px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium flex items-center space-x-1 transition-all duration-200 border border-green-700/50 hover:border-green-500/50"
-                                      title="Publish draft optimization"
-                                    >
-                                      <CheckCircle className="w-3 h-3" />
-                                      <span>Publish</span>
-                                    </button>
-                                  )}
-                                  
-                                  {category.optimized && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        rollback('collection', category.id);
-                                      }}
-                                      className="px-4 py-1.5 bg-red-900 text-red-300 border border-red-500 text-xs rounded-full font-medium flex items-center space-x-1 hover:bg-red-800 hover:shadow-lg hover:shadow-red-500/20 transition-all duration-200"
-                                      title="Rollback to original content"
-                                    >
-                                      <RotateCcw className="w-3 h-3" />
-                                      <span>Rollback</span>
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
+                              <ItemActions 
+                                item={category}
+                                type="collection"
+                                onPreview={handlePreviewDraft}
+                                onPublish={publishDraft}
+                                onRollback={rollback}
+                              />
                             </div>
                           </div>
                         </div>
