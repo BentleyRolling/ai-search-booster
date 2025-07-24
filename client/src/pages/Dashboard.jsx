@@ -1860,8 +1860,8 @@ const Dashboard = () => {
           </button>
         </div>
 
-        {/* Logo Section - with 50px top margin */}
-        <div className={`${sidebarCollapsed ? 'p-4' : 'p-6'} border-b border-dark-border mt-12`}>
+        {/* Logo Section - with 75px top margin */}
+        <div className={`${sidebarCollapsed ? 'p-4' : 'p-6'} border-b border-dark-border mt-20`}>
           <div className={`flex ${sidebarCollapsed ? 'justify-center' : 'flex-col items-center text-center'} space-y-2`}>
             <img 
               src={`/logo.png?v=${Date.now()}`} 
@@ -1895,7 +1895,7 @@ const Dashboard = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-3'} rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === tab.id
-                  ? 'bg-[#363636] text-white font-medium'
+                  ? 'bg-white text-black font-medium'
                   : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
               }`}
               title={sidebarCollapsed ? tab.label : ''}
@@ -1907,7 +1907,7 @@ const Dashboard = () => {
               {!sidebarCollapsed && (
                 <span className={`text-xs px-2 py-1 rounded-full ${
                   activeTab === tab.id 
-                    ? 'bg-[#3a3a3a] text-white' 
+                    ? 'bg-gray-200 text-black' 
                     : 'bg-dark-border text-text-muted'
                 }`}>
                   {tab.count}
@@ -1937,7 +1937,7 @@ const Dashboard = () => {
               onClick={() => setActiveTab(helpTab.id)}
               className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 p-3'} rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === helpTab.id
-                  ? 'bg-[#363636] text-white font-medium'
+                  ? 'bg-white text-black font-medium'
                   : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
               }`}
               title={sidebarCollapsed ? helpTab.label : ''}
