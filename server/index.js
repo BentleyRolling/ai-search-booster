@@ -992,20 +992,29 @@ Return only the JSON above. No extra commentary.`;
           parsedResponse.visibilityScore = visibilityScore;
           parsedResponse.promptVersion = parsedResponse.promptVersion || 'v5.1-infra';
           
-          // Log optimization session
-          await logger.logOptimizationSession({
-            shop: 'system', // Will be overridden by calling endpoint
-            contentType: type,
-            title: content.title || content.name || 'untitled',
-            modelUsed: selectedModel,
-            promptVersion: parsedResponse.promptVersion,
-            riskScore,
-            visibilityScore,
-            rollbackTriggered: false,
-            tokenEstimate: aiResponse.length / 4, // Rough token estimate
-            processingTime: Date.now() - Date.now(), // Will be calculated by calling endpoint
-            success: true
-          });
+          // Log optimization session (with graceful fallback)
+          try {
+            await logger.logOptimizationSession({
+              shop: 'system', // Will be overridden by calling endpoint
+              contentType: type,
+              title: content.title || content.name || 'untitled',
+              modelUsed: selectedModel,
+              promptVersion: parsedResponse.promptVersion,
+              riskScore,
+              visibilityScore,
+              rollbackTriggered: false,
+              tokenEstimate: aiResponse.length / 4, // Rough token estimate
+              processingTime: Date.now() - Date.now(), // Will be calculated by calling endpoint
+              success: true
+            });
+          } catch (logError) {
+            console.log('[OPTIMIZATION] Logging failed, optimization still successful:', {
+              shop: 'system',
+              contentType: type,
+              title: content.title || content.name || 'untitled',
+              logError: logError.message
+            });
+          }
           
           // Check if rollback is needed
           if (rollbackUtils.shouldRollback(riskScore)) {
@@ -2308,19 +2317,28 @@ app.post('/api/optimize/products', simpleVerifyShop, optimizationLimiter, async 
         }
         
         // Log optimization session with complete metadata
-        await logger.logOptimizationSession({
-          shop,
-          contentType: 'product',
-          title: product.title,
-          modelUsed: 'gpt-4o-mini-2024-07-18',
-          promptVersion: optimized.promptVersion || 'v5.1-product',
-          riskScore,
-          visibilityScore,
-          rollbackTriggered: rollbackExecuted,
-          tokenEstimate: JSON.stringify(optimized).length / 4,
-          processingTime: Date.now() - sessionStart,
-          success: !rollbackExecuted
-        });
+        try {
+          await logger.logOptimizationSession({
+            shop,
+            contentType: 'product',
+            title: product.title,
+            modelUsed: 'gpt-4o-mini-2024-07-18',
+            promptVersion: optimized.promptVersion || 'v5.1-product',
+            riskScore,
+            visibilityScore,
+            rollbackTriggered: rollbackExecuted,
+            tokenEstimate: JSON.stringify(optimized).length / 4,
+            processingTime: Date.now() - sessionStart,
+            success: !rollbackExecuted
+          });
+        } catch (logError) {
+          console.log('[PRODUCT-OPTIMIZE] Logging failed, optimization still successful:', {
+            shop,
+            contentType: 'product',
+            title: product.title,
+            logError: logError.message
+          });
+        }
         
         // Store FAQ data as draft
         await axios.post(
@@ -2587,19 +2605,28 @@ app.post('/api/optimize/pages', simpleVerifyShop, optimizationLimiter, async (re
         );
         
         // Log optimization session with complete metadata
-        await logger.logOptimizationSession({
-          shop,
-          contentType: 'page',
-          title: page.title,
-          modelUsed: 'gpt-4o-mini-2024-07-18',
-          promptVersion: optimized.promptVersion || 'v5.1-page',
-          riskScore,
-          visibilityScore,
-          rollbackTriggered: rollbackExecuted,
-          tokenEstimate: JSON.stringify(optimized).length / 4,
-          processingTime: Date.now() - sessionStart,
-          success: !rollbackExecuted
-        });
+        try {
+          await logger.logOptimizationSession({
+            shop,
+            contentType: 'page',
+            title: page.title,
+            modelUsed: 'gpt-4o-mini-2024-07-18',
+            promptVersion: optimized.promptVersion || 'v5.1-page',
+            riskScore,
+            visibilityScore,
+            rollbackTriggered: rollbackExecuted,
+            tokenEstimate: JSON.stringify(optimized).length / 4,
+            processingTime: Date.now() - sessionStart,
+            success: !rollbackExecuted
+          });
+        } catch (logError) {
+          console.log('[PAGE-OPTIMIZE] Logging failed, optimization still successful:', {
+            shop,
+            contentType: 'page',
+            title: page.title,
+            logError: logError.message
+          });
+        }
         
         results.push({
           pageId,
@@ -2853,19 +2880,28 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
             );
             
             // Log optimization session with complete metadata
-            await logger.logOptimizationSession({
-              shop,
-              contentType: 'article',
-              title: article.title,
-              modelUsed: 'gpt-4o-mini-2024-07-18',
-              promptVersion: optimized.promptVersion || 'v5.1-article',
-              riskScore,
-              visibilityScore,
-              rollbackTriggered: rollbackExecuted,
-              tokenEstimate: JSON.stringify(optimized).length / 4,
-              processingTime: Date.now() - sessionStart,
-              success: !rollbackExecuted
-            });
+            try {
+              await logger.logOptimizationSession({
+                shop,
+                contentType: 'article',
+                title: article.title,
+                modelUsed: 'gpt-4o-mini-2024-07-18',
+                promptVersion: optimized.promptVersion || 'v5.1-article',
+                riskScore,
+                visibilityScore,
+                rollbackTriggered: rollbackExecuted,
+                tokenEstimate: JSON.stringify(optimized).length / 4,
+                processingTime: Date.now() - sessionStart,
+                success: !rollbackExecuted
+              });
+            } catch (logError) {
+              console.log('[BLOG-OPTIMIZE] Logging failed, optimization still successful:', {
+                shop,
+                contentType: 'article',
+                title: article.title,
+                logError: logError.message
+              });
+            }
             
             console.log(`[BLOGS-OPTIMIZE] Draft optimization stored for article ${article.id}`);
             
@@ -3112,7 +3148,7 @@ app.post('/api/optimize/articles', simpleVerifyShop, optimizationLimiter, async 
         );
         
         // Track usage
-        trackOptimization(shop);
+        incrementOptimizationUsage(shop, 'article', articleId);
         
         results.push({
           id: articleId,
@@ -3334,19 +3370,28 @@ app.post('/api/optimize/collections', simpleVerifyShop, optimizationLimiter, asy
         }
         
         // Log optimization session with complete metadata
-        await logger.logOptimizationSession({
-          shop,
-          contentType: 'collection',
-          title: collection.title,
-          modelUsed: 'gpt-4o-mini-2024-07-18',
-          promptVersion: optimized.promptVersion || 'v5.1-infra',
-          riskScore,
-          visibilityScore,
-          rollbackTriggered: rollbackExecuted,
-          tokenEstimate: JSON.stringify(optimized).length / 4,
-          processingTime: Date.now() - sessionStart,
-          success: !rollbackExecuted
-        });
+        try {
+          await logger.logOptimizationSession({
+            shop,
+            contentType: 'collection',
+            title: collection.title,
+            modelUsed: 'gpt-4o-mini-2024-07-18',
+            promptVersion: optimized.promptVersion || 'v5.1-infra',
+            riskScore,
+            visibilityScore,
+            rollbackTriggered: rollbackExecuted,
+            tokenEstimate: JSON.stringify(optimized).length / 4,
+            processingTime: Date.now() - sessionStart,
+            success: !rollbackExecuted
+          });
+        } catch (logError) {
+          console.log('[COLLECTION-OPTIMIZE] Logging failed, optimization still successful:', {
+            shop,
+            contentType: 'collection',
+            title: collection.title,
+            logError: logError.message
+          });
+        }
         
         results.push({
           id: collectionId,
