@@ -2100,7 +2100,7 @@ const Dashboard = () => {
 
 
         {/* Content Area */}
-        <div className="flex-1 px-6 pt-8 pb-6 overflow-y-auto">
+        <div className="flex-1 px-6 pt-0 pb-6 overflow-y-auto">
 
       {/* Notifications */}
       {notifications.length > 0 && (
