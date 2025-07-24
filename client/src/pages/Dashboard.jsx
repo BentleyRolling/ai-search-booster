@@ -1860,8 +1860,8 @@ const Dashboard = () => {
           </button>
         </div>
 
-        {/* Logo Section - with 50px top margin */}
-        <div className={`${sidebarCollapsed ? 'p-4' : 'p-6'} border-b border-dark-border mt-12`}>
+        {/* Logo Section - moved UP 25px */}
+        <div className={`${sidebarCollapsed ? 'p-4' : 'p-6'} border-b border-dark-border mt-6`}>
           <div className={`flex ${sidebarCollapsed ? 'justify-center' : 'flex-col items-center text-center'} space-y-2`}>
             <img 
               src={`/logo.png?v=${Date.now()}`} 
