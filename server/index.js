@@ -687,7 +687,7 @@ Return a JSON object like this:
   "optimizedDescription": "...",   // 3–6 sentence persuasive overview for humans
   "llmDescription": "...",         // 2–3 sentences focused on use case and user type (AI-facing)
   "summary": "...",                // 1–2 sentence value summary
-  "content": "...",                // Additional persuasive content for product page
+  "content": "...",                // REQUIRED: Additional persuasive content in coherent paragraphs for product page. Expand on the summary with detailed benefits and features.
   "faqs": [                        // 3–5 FAQs based on features, use, sizing, care
     { "q": "...", "a": "..." },
     ...
@@ -726,7 +726,7 @@ Return this structured JSON:
   "optimizedDescription": "...",   // 3–5 sentences summarizing products and use cases
   "llmDescription": "...",         // 2–3 sentences for AI — what this is, who it's for
   "summary": "...",                // 1–2 sentence value summary
-  "content": "...",                // Expanded persuasive body text for page
+  "content": "...",                // REQUIRED: Expanded persuasive body text in coherent paragraphs for collection page. Build on the summary with detailed, engaging content about the collection.
   "faqs": [                        // Exactly 4 context-specific FAQs (materials, fit, usage, etc.)
     { "q": "...", "a": "..." },
     { "q": "...", "a": "..." },
@@ -759,7 +759,7 @@ Return a structured JSON like this:
   "optimizedDescription": "...",   // 3–6 sentences explaining content and value
   "llmDescription": "...",         // 2–3 sentences summarizing page function for AI
   "summary": "...",                // 1-line human-facing benefit
-  "content": "...",                // Expanded persuasive body text for page
+  "content": "...",                // REQUIRED: Expanded persuasive body text in coherent paragraphs for page. Build on the summary with detailed, engaging content.
   "faqs": [                        // 3–5 questions on key user concerns
     { "q": "...", "a": "..." },
     ...
@@ -792,7 +792,7 @@ Return a JSON object in this structure:
   "optimizedDescription": "...", // 3–6 sentence persuasive overview for humans
   "llmDescription": "...",       // 2–3 sentences explaining purpose and audience (AI-focused)
   "summary": "...",              // 1 sentence abstract of value to the human reader
-  "content": "...",              // Full rewritten article, preserving voice and value
+  "content": "...",              // REQUIRED: Full rewritten article in coherent paragraphs, preserving voice and value. Expand on the summary with detailed, engaging content.
   "faqs": [                      // 3–5 helpful FAQs from the article's content
     { "q": "...", "a": "..." },
     ...
@@ -986,8 +986,29 @@ Return only the JSON above. No extra commentary.`;
             });
           }
           
-          // 🔧 STRICT FIELD VALIDATION for all v5.1-infra types
+          // 🔧 REPAIR MISSING CONTENT FIELD BEFORE VALIDATION
           if (['collection', 'page', 'product', 'article'].includes(type)) {
+            // If content field is missing or empty, create it from other fields
+            if (!parsedResponse.content || parsedResponse.content === 'N/A' || parsedResponse.content === '') {
+              console.log('[AI-OPTIMIZATION] Content field missing, generating fallback...');
+              
+              const fallbackContent = [];
+              if (parsedResponse.summary) {
+                fallbackContent.push(parsedResponse.summary);
+              }
+              if (parsedResponse.llmDescription) {
+                fallbackContent.push(parsedResponse.llmDescription);
+              }
+              if (parsedResponse.faqs && Array.isArray(parsedResponse.faqs)) {
+                const faqText = parsedResponse.faqs.map(faq => `${faq.q} ${faq.a}`).join(' ');
+                fallbackContent.push(faqText);
+              }
+              
+              parsedResponse.content = fallbackContent.join(' ') || parsedResponse.llmDescription || parsedResponse.summary || 'Optimized content generated.';
+              console.log('[AI-OPTIMIZATION] Generated fallback content field');
+            }
+          
+            // 🔧 STRICT FIELD VALIDATION for all v5.1-infra types
             const requiredFields = ['optimizedTitle', 'optimizedDescription', 'summary', 'llmDescription', 'content', 'faqs'];
             const missingFields = requiredFields.filter(field => !parsedResponse[field] || parsedResponse[field] === 'N/A' || parsedResponse[field] === '');
             
@@ -2846,6 +2867,211 @@ app.post('/api/optimize/blogs', simpleVerifyShop, optimizationLimiter, async (re
   } catch (error) {
     console.error('Blog optimization error:', error);
     res.status(500).json({ error: 'Failed to optimize blogs: ' + error.message });
+  }
+});
+
+// API: Optimize individual articles
+app.post('/api/optimize/articles', simpleVerifyShop, optimizationLimiter, async (req, res) => {
+  try {
+    const { articles, articleIds, settings } = req.body;
+    const { shop } = req;
+    
+    // Support both old format (articleIds) and new format (articles with blogIds)
+    const articlesToProcess = articles || (articleIds || []).map(id => ({ articleId: id, blogId: null }));
+    
+    console.log(`[ARTICLES-OPTIMIZE] Starting optimization for shop: ${shop}, articles: ${articlesToProcess.map(a => a.articleId)}`);
+    
+    // Check usage quota before proceeding
+    if (!hasOptimizationQuota(shop)) {
+      const usage = initializeShopUsage(shop);
+      const limit = tierConfig[usage.tier] || tierConfig.Free;
+      return res.status(429).json({
+        error: 'Optimization limit reached',
+        message: `You've reached your monthly limit of ${limit} optimizations. Upgrade your plan to continue.`,
+        usageThisMonth: usage.optimizationsThisMonth,
+        monthlyLimit: limit,
+        currentTier: usage.tier
+      });
+    }
+    
+    // Get shop info for access token
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo || !shopInfo.accessToken) {
+      return res.status(401).json({ error: 'Shop not authenticated' });
+    }
+    
+    const results = [];
+    
+    for (const articleInfo of articlesToProcess) {
+      const { articleId, blogId: providedBlogId } = articleInfo;
+      
+      try {
+        console.log(`[ARTICLES-OPTIMIZE] Processing article: ${articleId} (blog: ${providedBlogId || 'unknown'})`);
+        
+        let article = null;
+        let blogId = providedBlogId;
+        
+        if (blogId) {
+          // We have the blog ID, so fetch the article directly
+          try {
+            const articleResponse = await axios.get(
+              `https://${shop}/admin/api/2024-01/blogs/${blogId}/articles/${articleId}.json`,
+              {
+                headers: {
+                  'X-Shopify-Access-Token': shopInfo.accessToken,
+                  'Content-Type': 'application/json'
+                },
+                timeout: 10000
+              }
+            );
+            
+            if (articleResponse.data && articleResponse.data.article) {
+              article = articleResponse.data.article;
+              console.log(`[ARTICLES-OPTIMIZE] Found article ${articleId} in blog ${blogId}`);
+            }
+          } catch (directFetchError) {
+            console.error(`[ARTICLES-OPTIMIZE] Error fetching article ${articleId} from blog ${blogId}:`, directFetchError.message);
+          }
+        }
+        
+        // If we don't have the article yet, fall back to searching all blogs
+        if (!article) {
+          console.log(`[ARTICLES-OPTIMIZE] Searching all blogs for article ${articleId}`);
+          try {
+            const blogsResponse = await axios.get(
+              `https://${shop}/admin/api/2024-01/blogs.json`,
+              {
+                headers: {
+                  'X-Shopify-Access-Token': shopInfo.accessToken,
+                  'Content-Type': 'application/json'
+                },
+                timeout: 10000
+              }
+            );
+            
+            if (blogsResponse.data && blogsResponse.data.blogs) {
+              for (const blog of blogsResponse.data.blogs) {
+                const articlesResponse = await axios.get(
+                  `https://${shop}/admin/api/2024-01/blogs/${blog.id}/articles.json`,
+                  {
+                    headers: {
+                      'X-Shopify-Access-Token': shopInfo.accessToken,
+                      'Content-Type': 'application/json'
+                    },
+                    timeout: 10000
+                  }
+                );
+                
+                if (articlesResponse.data && articlesResponse.data.articles) {
+                  const foundArticle = articlesResponse.data.articles.find(a => a.id.toString() === articleId.toString());
+                  if (foundArticle) {
+                    article = foundArticle;
+                    blogId = blog.id;
+                    console.log(`[ARTICLES-OPTIMIZE] Found article ${articleId} in blog ${blogId} via search`);
+                    break;
+                  }
+                }
+              }
+            }
+          } catch (findError) {
+            console.error(`[ARTICLES-OPTIMIZE] Error searching for article ${articleId}:`, findError.message);
+          }
+        }
+        
+        if (!article) {
+          results.push({
+            id: articleId,
+            status: 'error',
+            error: `Article ${articleId} not found in any blog`
+          });
+          continue;
+        }
+        
+        console.log(`[ARTICLES-OPTIMIZE] Found article: ${article.title}`);
+        
+        // Use the full article body as input for LLM optimization
+        const articleContent = {
+          id: article.id,
+          title: article.title,
+          body_html: article.body_html,
+          summary: article.summary,
+          author: article.author,
+          created_at: article.created_at,
+          updated_at: article.updated_at,
+          tags: article.tags,
+          handle: article.handle
+        };
+        
+        // Call the optimization engine
+        const optimizationResult = await optimizeContent(articleContent, 'article', settings);
+        
+        // Store as draft metafield on the article
+        const draftMetafield = {
+          namespace: 'ai_search_booster',
+          key: 'optimization_draft',
+          value: JSON.stringify({
+            ...optimizationResult,
+            originalTitle: article.title,
+            originalContent: article.body_html,
+            optimizedAt: new Date().toISOString()
+          }),
+          type: 'json'
+        };
+        
+        // Save the draft to Shopify
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/blogs/${blogId}/articles/${articleId}/metafields.json`,
+          { metafield: draftMetafield },
+          {
+            headers: {
+              'X-Shopify-Access-Token': shopInfo.accessToken,
+              'Content-Type': 'application/json'
+            },
+            timeout: 10000
+          }
+        );
+        
+        // Track usage
+        trackOptimization(shop);
+        
+        results.push({
+          id: articleId,
+          status: 'success',
+          title: article.title,
+          riskScore: optimizationResult.riskScore,
+          visibilityScore: optimizationResult.visibilityScore,
+          rollbackTriggered: optimizationResult.rollbackTriggered || false
+        });
+        
+        console.log(`[ARTICLES-OPTIMIZE] ✅ Successfully optimized article: ${articleId}`);
+        
+      } catch (articleError) {
+        console.error(`[ARTICLES-OPTIMIZE] Error processing article ${articleId}:`, articleError.message);
+        results.push({
+          id: articleId,
+          status: 'error',
+          error: `Failed to optimize article: ${articleError.message}`
+        });
+      }
+    }
+    
+    console.log(`[ARTICLES-OPTIMIZE] Completed: ${results.filter(r => r.status === 'success').length} successful, ${results.filter(r => r.status === 'error').length} failed`);
+    
+    res.json({
+      shop,
+      results,
+      summary: {
+        total: results.length,
+        successful: results.filter(r => r.status === 'success').length,
+        failed: results.filter(r => r.status === 'error').length
+      }
+    });
+  } catch (error) {
+    console.error('[ARTICLES-OPTIMIZE] Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to optimize articles: ' + error.message,
+      details: error.message 
+    });
   }
 });
 

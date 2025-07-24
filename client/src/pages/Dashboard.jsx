@@ -1095,93 +1095,82 @@ const Dashboard = () => {
     addNotification(`Starting optimization of ${selectedArticles.length} articles...`, 'info');
     
     try {
-      let successCount = 0;
-      let failedCount = 0;
+      // Prepare article data with blog IDs for efficient backend processing
+      const articlesWithBlogIds = selectedArticles.map(articleId => {
+        const article = articles.find(a => a.id.toString() === articleId.toString());
+        return {
+          articleId: articleId,
+          blogId: article ? article.blogId : null
+        };
+      }).filter(item => item.blogId !== null);
       
-      // Group articles by their blog IDs for batch optimization
-      const articlesByBlog = {};
-      selectedArticles.forEach(articleId => {
-        const article = articles.find(a => a.id.toString() === articleId);
-        if (article) {
-          if (!articlesByBlog[article.blogId]) {
-            articlesByBlog[article.blogId] = [];
+      console.log('Optimizing individual articles:', articlesWithBlogIds);
+      const response = await authFetch(`${API_BASE}/api/optimize/articles?shop=${shop}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shop,
+          articles: articlesWithBlogIds,
+          settings: {
+            targetLLM: settings.targetLLM,
+            keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
+            tone: settings.tone
           }
-          articlesByBlog[article.blogId].push(article);
-        }
+        })
       });
       
-      let processedCount = 0;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
       
-      // Process each blog's articles
-      for (const [blogId, blogArticles] of Object.entries(articlesByBlog)) {
-        try {
-          console.log(`Optimizing ${blogArticles.length} articles from blog ${blogId}`);
-          const response = await authFetch(`${API_BASE}/api/optimize/blogs?shop=${shop}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              shop,
-              blogIds: [blogId],
-              settings: {
-                targetLLM: settings.targetLLM,
-                keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k),
-                tone: settings.tone
-              }
-            })
-          });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          
-          if (data.results && data.results.length > 0) {
-            data.results.forEach(result => {
-              if (result.status === 'success') {
-                successCount++;
-                
-                // Log quality scores for user awareness
-                if (result.riskScore !== undefined || result.visibilityScore !== undefined) {
-                  console.log(`Article in blog ${blogId} quality scores:`, {
-                    risk: result.riskScore,
-                    visibility: result.visibilityScore,
-                    rolledBack: result.rollbackTriggered
-                  });
-                  
-                  // Show specific feedback for high-risk items
-                  if (result.rollbackTriggered) {
-                    addNotification(`Article in blog ${blogId}: High-risk content detected, original preserved`, 'warning');
-                  } else if (result.riskScore > 0.5) {
-                    addNotification(`Article in blog ${blogId}: Optimized with medium risk score (${(result.riskScore * 100).toFixed(0)}%)`, 'info');
-                  }
-                }
-              } else {
-                failedCount++;
-              }
-            });
-          } else {
-            failedCount += blogArticles.length;
-          }
-          
-          processedCount += blogArticles.length;
-        } catch (itemError) {
-          console.error(`Failed to optimize articles in blog ${blogId}:`, itemError);
-          failedCount += blogArticles.length;
-          processedCount += blogArticles.length;
-        }
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        let successCount = 0;
+        let failedCount = 0;
         
-        // Update progress
-        setOptimizationProgress({ type: 'articles', current: processedCount, total: selectedArticles.length });
+        data.results.forEach(result => {
+          if (result.status === 'success') {
+            successCount++;
+            
+            // Log quality scores for user awareness
+            if (result.riskScore !== undefined || result.visibilityScore !== undefined) {
+              console.log(`Article ${result.id} quality scores:`, {
+                risk: result.riskScore,
+                visibility: result.visibilityScore,
+                rolledBack: result.rollbackTriggered
+              });
+              
+              // Show specific feedback for high-risk items
+              if (result.rollbackTriggered) {
+                addNotification(`Article "${result.title}": High-risk content detected, original preserved`, 'warning');
+              } else if (result.riskScore > 0.5) {
+                addNotification(`Article "${result.title}": Optimized with medium risk score (${(result.riskScore * 100).toFixed(0)}%)`, 'info');
+              }
+            }
+          } else {
+            failedCount++;
+            // Show specific error message if available
+            if (result.error) {
+              addNotification(`Article ${result.id}: ${result.error}`, 'error');
+            }
+          }
+        });
+        
+        // Show final results
+        if (successCount > 0) {
+          addNotification(`Successfully optimized ${successCount} articles!`, 'success');
+        }
+        if (failedCount > 0) {
+          addNotification(`${failedCount} articles failed to optimize`, 'error');
+        }
+      } else {
+        addNotification('No articles were processed', 'warning');
       }
       
-      // Show final results
-      if (successCount > 0) {
-        addNotification(`Successfully optimized ${successCount} articles!`, 'success');
-      }
-      if (failedCount > 0) {
-        addNotification(`${failedCount} articles failed to optimize`, 'error');
-      }
+      // Update progress
+      setOptimizationProgress({ type: 'articles', current: selectedArticles.length, total: selectedArticles.length });
       
       // Refresh all data to update status
       fetchStatus(shop);
@@ -1191,7 +1180,9 @@ const Dashboard = () => {
       setSelectedArticles([]);
     } catch (error) {
       console.error('Article optimization error:', error);
-      addNotification('Failed to optimize articles. Please try again.', 'error');
+      // Show specific error message to user
+      const errorMessage = error.message || 'Failed to optimize articles. Please try again.';
+      addNotification(`Article optimization failed: ${errorMessage}`, 'error');
     } finally {
       setOptimizing(false);
       setTimeout(() => setOptimizationProgress(null), 1000);
