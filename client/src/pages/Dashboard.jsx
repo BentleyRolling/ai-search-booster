@@ -2342,18 +2342,13 @@ const Dashboard = () => {
               {/* Enterprise Status - Hidden on support tabs */}
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-purple-400/50 transition-all duration-200 ease-out">
                 <div className="text-center">
-                  <h3 className="text-sm font-medium text-text-muted mb-4">Enterprise Status</h3>
-                  <p className="text-4xl font-bold text-purple-400 mb-2">
-                    {optimizationPercentage}%
+                  <h3 className="text-sm font-medium text-text-muted mb-4">System Status</h3>
+                  <p className="text-4xl font-bold text-green-400 mb-2">
+                    LLM Optimized
                   </p>
-                  <p className="text-xs text-text-muted mb-3">
-                    Production-Grade • Auto-Rollback
-                  </p>
-                  <div className="flex items-center justify-center space-x-2">
-                    <TrendingUp className="w-4 h-4 text-purple-400" />
-                    <div className="w-2 h-2 bg-accent-primary rounded-full animate-pulse" />
-                    <div className="w-1.5 h-1.5 bg-accent-primary rounded-full" />
-                    <span className="text-xs text-accent-primary">JSON-LD Active</span>
+                  <div className="flex items-center justify-center space-x-4 text-xs">
+                    <span className="text-green-400">JSON-LD: Active</span>
+                    <span className="text-green-400">Auto-Rollback: On</span>
                   </div>
                 </div>
               </div>
