@@ -1845,7 +1845,7 @@ const Dashboard = () => {
       />
 
       {/* ChatGPT-style Collapsible Sidebar Navigation */}
-      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-[#1e1e1e] border-r border-dark-border flex-shrink-0 hidden lg:flex flex-col fixed left-0 top-0 h-screen z-50 transition-all duration-300 ease-in-out`}>
+      <aside className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-[#1e1e1e] flex-shrink-0 hidden lg:flex flex-col fixed left-0 top-0 h-screen z-50 transition-all duration-300 ease-in-out`}>
         {/* Collapse Toggle Button */}
         <div className="absolute -right-3 top-6 z-10">
           <button
@@ -1992,7 +1992,7 @@ const Dashboard = () => {
         {/* Mobile Sidebar Overlay */}
         {mobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 backdrop-blur-sm bg-black/40 animate-fade-in" onClick={() => setMobileMenuOpen(false)}>
-            <aside className="w-64 bg-[#1e1e1e] h-full border-r border-dark-border animate-slide-in-left" onClick={e => e.stopPropagation()}>
+            <aside className="w-64 bg-[#1e1e1e] h-full animate-slide-in-left" onClick={e => e.stopPropagation()}>
               {/* Logo Section */}
               <div className="p-6">
                 <div className="flex flex-col items-center text-center space-y-2">
@@ -2096,7 +2096,7 @@ const Dashboard = () => {
 
 
         {/* Content Area */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 px-6 pt-0 pb-6 overflow-y-auto">
 
       {/* Notifications */}
       {notifications.length > 0 && (
