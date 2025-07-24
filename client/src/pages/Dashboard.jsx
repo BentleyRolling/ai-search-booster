@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QuotaToast from '../components/QuotaToast';
-import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft, Loader, Play, Square } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { useCitations } from '../hooks/useCitations';
@@ -2100,7 +2100,7 @@ const Dashboard = () => {
 
 
         {/* Content Area */}
-        <div className="flex-1 px-6 pt-8 pb-6 overflow-y-auto">
+        <div className="flex-1 px-6 pt-0 pb-6 overflow-y-auto">
 
       {/* Notifications */}
       {notifications.length > 0 && (
@@ -2221,7 +2221,7 @@ const Dashboard = () => {
       )}
 
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-8">
         {/* Section Headers */}
         
         {/* Tab-Specific Status Cards */}
