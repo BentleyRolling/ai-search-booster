@@ -1024,18 +1024,23 @@ ${JSON.stringify(processedContent)}`;
           }
           
           // === FAQ KEY NORMALIZATION ===
-          // Normalize incorrect FAQ keys (question/answer → q/a)
+          // Normalize FAQ keys (Q/A, question/answer → q/a)
           if (Array.isArray(parsedResponse.faqs)) {
-            parsedResponse.faqs = parsedResponse.faqs.map(faq => {
-              if (faq.question && faq.answer) {
-                return { q: faq.question, a: faq.answer };
-              }
-              return faq;
-            });
+            parsedResponse.faqs = parsedResponse.faqs.map((faq) => ({
+              q: faq.q || faq.Q || faq.question,
+              a: faq.a || faq.A || faq.answer
+            }));
             
             // Filter out incomplete FAQ entries
             parsedResponse.faqs = parsedResponse.faqs.filter(f => f.q && f.a);
             console.log(`[AI-OPTIMIZATION] Normalized ${parsedResponse.faqs.length} FAQ entries to q/a format.`);
+          }
+          
+          // === CONTENT FIELD FALLBACK ===
+          // Ensure content field is always present
+          if (!parsedResponse.content) {
+            parsedResponse.content = parsedResponse.llmDescription || parsedResponse.summary || parsedResponse.optimizedDescription;
+            console.log('[AI-OPTIMIZATION] Applied content field fallback.');
           }
           
           // === VALIDATION FALLBACK FOR MISSING FIELDS ===
