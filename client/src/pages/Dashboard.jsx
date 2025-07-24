@@ -1861,7 +1861,7 @@ const Dashboard = () => {
         </div>
 
         {/* Logo Section - moved UP 25px */}
-        <div className={`${sidebarCollapsed ? 'p-4' : 'p-6'} border-b border-dark-border mt-6`}>
+        <div className={`${sidebarCollapsed ? 'p-4' : 'p-6'} mt-6`}>
           <div className={`flex ${sidebarCollapsed ? 'justify-center' : 'flex-col items-center text-center'} space-y-2`}>
             <img 
               src={`/logo.png?v=${Date.now()}`} 
@@ -1916,8 +1916,8 @@ const Dashboard = () => {
             </button>
           ))}
           
-          {/* Divider */}
-          <div className="border-t border-dark-border my-3"></div>
+          {/* Spacer */}
+          <div className="my-3"></div>
           
           {/* Support Section Header */}
           {!sidebarCollapsed && (
@@ -1949,7 +1949,7 @@ const Dashboard = () => {
         </nav>
 
         {/* Settings Button - Fixed at Bottom */}
-        <div className="p-4 border-t border-dark-border">
+        <div className="p-4">
           <button
             onClick={() => setShowSettings(!showSettings)}
             className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 p-3'} rounded-xl text-text-secondary hover:bg-dark-border hover:text-text-primary transition-all duration-200`}
@@ -1994,7 +1994,7 @@ const Dashboard = () => {
           <div className="lg:hidden fixed inset-0 z-50 backdrop-blur-sm bg-black/40 animate-fade-in" onClick={() => setMobileMenuOpen(false)}>
             <aside className="w-64 bg-[#1e1e1e] h-full border-r border-dark-border animate-slide-in-left" onClick={e => e.stopPropagation()}>
               {/* Logo Section */}
-              <div className="p-6 border-b border-dark-border">
+              <div className="p-6">
                 <div className="flex flex-col items-center text-center space-y-2">
                   <img 
                     src={`/logo.png?v=${Date.now()}`} 
@@ -2046,7 +2046,7 @@ const Dashboard = () => {
                 ))}
                 
                 {/* Divider */}
-                <div className="border-t border-dark-border my-3"></div>
+                <div className="my-3"></div>
                 
                 {/* Support Section Header */}
                 <div className="px-3 pb-2">
@@ -2078,7 +2078,7 @@ const Dashboard = () => {
               </nav>
 
               {/* Mobile Settings Button */}
-              <div className="p-4 border-t border-dark-border">
+              <div className="p-4">
                 <button
                   onClick={() => {
                     setShowSettings(!showSettings);
@@ -2362,7 +2362,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8">
         {/* Section Headers */}
         
         {/* Tab-Specific Status Cards */}
@@ -2502,8 +2502,7 @@ const Dashboard = () => {
           )}
         </div>
 
-
-          <div className="p-6">
+          <div className="px-6 pt-0 pb-6">
             {/* Products Tab */}
             {activeTab === 'products' && (
               <div>
@@ -3051,7 +3050,7 @@ const Dashboard = () => {
         {/* Instructions Tab */}
         {activeTab === 'instructions' && (
           <div className="prose prose-blue max-w-none">
-            <div className="bg-dark-bg rounded-lg p-6 max-h-96 overflow-y-auto scrollbar-dark border border-dark-border">
+            <div className="bg-dark-bg rounded-lg p-6 border border-dark-border">
               <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
                 🧭 How to Use AI Search Booster
               </h3>
@@ -3127,7 +3126,7 @@ const Dashboard = () => {
         {/* FAQ Tab */}
         {activeTab === 'support' && (
           <div className="prose prose-blue max-w-none">
-            <div className="bg-dark-bg rounded-lg p-6 max-h-96 overflow-y-auto scrollbar-dark border border-dark-border">
+            <div className="bg-dark-bg rounded-lg p-6 border border-dark-border">
               <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
                 🧰 FAQ
               </h3>
@@ -3186,7 +3185,7 @@ const Dashboard = () => {
         {/* Terms & Disclaimer Tab */}
         {activeTab === 'terms' && (
           <div className="prose prose-blue max-w-none">
-            <div className="bg-dark-bg rounded-lg p-6 max-h-96 overflow-y-auto scrollbar-dark border border-dark-border">
+            <div className="bg-dark-bg rounded-lg p-6 border border-dark-border">
               <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
                 📜 Legal Disclaimer
               </h3>
