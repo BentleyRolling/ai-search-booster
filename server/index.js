@@ -817,6 +817,10 @@ Return only the JSON above. No extra commentary.`;
 > Do not use alternate keys such as 'Title', 'Description', or 'Content'.
 > The 'content' field must be a full rewritten version of the blog body in plain English, maintaining the same narrative style and tone.
 
+> Return all FAQs in this format only:
+> { "q": "string", "a": "string" }
+> Do not use keys like "question" or "answer". Use "q" and "a" only.
+
 ---
 
 ${JSON.stringify(processedContent)}`;
@@ -1017,6 +1021,21 @@ ${JSON.stringify(processedContent)}`;
           if (!parsedResponse.faqs && parsedResponse.faq) {
             parsedResponse.faqs = parsedResponse.faq;
             delete parsedResponse.faq;
+          }
+          
+          // === FAQ KEY NORMALIZATION ===
+          // Normalize incorrect FAQ keys (question/answer → q/a)
+          if (Array.isArray(parsedResponse.faqs)) {
+            parsedResponse.faqs = parsedResponse.faqs.map(faq => {
+              if (faq.question && faq.answer) {
+                return { q: faq.question, a: faq.answer };
+              }
+              return faq;
+            });
+            
+            // Filter out incomplete FAQ entries
+            parsedResponse.faqs = parsedResponse.faqs.filter(f => f.q && f.a);
+            console.log(`[AI-OPTIMIZATION] Normalized ${parsedResponse.faqs.length} FAQ entries to q/a format.`);
           }
           
           // === VALIDATION FALLBACK FOR MISSING FIELDS ===
