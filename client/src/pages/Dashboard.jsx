@@ -1901,7 +1901,7 @@ const Dashboard = () => {
               title={sidebarCollapsed ? tab.label : ''}
             >
               <div className={`flex items-center ${sidebarCollapsed ? '' : 'space-x-3'}`}>
-                <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-white' : ''}`} />
+                <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-black' : ''}`} />
                 {!sidebarCollapsed && <span className="text-sm">{tab.label}</span>}
               </div>
               {!sidebarCollapsed && (
@@ -2032,7 +2032,7 @@ const Dashboard = () => {
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-white' : ''}`} />
+                      <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-black' : ''}`} />
                       <span className="text-sm">{tab.label}</span>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full ${
