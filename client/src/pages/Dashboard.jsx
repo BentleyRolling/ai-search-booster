@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QuotaToast from '../components/QuotaToast';
-import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { useCitations } from '../hooks/useCitations';
@@ -1846,17 +1846,13 @@ const Dashboard = () => {
 
       {/* ChatGPT-style Collapsible Sidebar Navigation */}
       <aside className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-dark-card border-r border-dark-border flex-shrink-0 hidden lg:flex flex-col fixed left-0 top-0 h-screen z-50 transition-all duration-300 ease-in-out`}>
-        {/* Collapse Toggle Button */}
-        <div className="absolute -right-3 top-6 z-10">
+        {/* Collapse Toggle Button - ChatGPT style */}
+        <div className="absolute top-4 left-3 z-10">
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-6 h-6 bg-dark-card border border-dark-border rounded-full flex items-center justify-center hover:bg-[#2a2a2a] transition-colors"
+            className="w-8 h-8 bg-transparent hover:bg-[#2a2a2a] rounded-md flex items-center justify-center transition-all duration-200"
           >
-            {sidebarCollapsed ? (
-              <ChevronRight className="w-3 h-3 text-text-muted" />
-            ) : (
-              <ChevronLeft className="w-3 h-3 text-text-muted" />
-            )}
+            <PanelLeft className={`w-5 h-5 text-text-muted hover:text-white transition-colors ${sidebarCollapsed ? 'rotate-180' : ''}`} />
           </button>
         </div>
 
@@ -2094,40 +2090,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Top Status Bar - Desktop */}
-        <div className="hidden lg:block bg-dark-card border-b border-dark-border p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              {/* Citation Badge */}
-              {stats && stats.total > 0 && (
-                <div className="flex items-center space-x-2 bg-accent-primary text-white px-3 py-1 rounded-full">
-                  <span className="text-sm font-medium">{stats.total} citations</span>
-                </div>
-              )}
-              
-              {/* Monitoring Status */}
-              <div className="flex items-center space-x-2">
-                <Monitor className={`w-4 h-4 ${isMonitoring ? 'text-accent-primary' : 'text-text-muted'}`} />
-                <span className={`text-sm ${isMonitoring ? 'text-accent-primary' : 'text-text-muted'}`}>
-                  {isMonitoring ? 'Monitoring Active' : 'Monitoring Inactive'}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              {/* Test Button - Dev Only */}
-              {(window.location.hostname === 'localhost' || window.location.search.includes('debug=true')) && (
-                <button
-                  onClick={runEndToEndTest}
-                  className="px-3 py-1 text-xs bg-accent-primary text-white rounded-md hover:bg-accent-primary-hover transition-colors"
-                  title="Run end-to-end test"
-                >
-                  Test E2E
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Content Area */}
         <div className="flex-1 p-6 overflow-y-auto">
