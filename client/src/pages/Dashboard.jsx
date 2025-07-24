@@ -35,7 +35,7 @@ const Dashboard = () => {
     keywords: '',
     tone: 'professional'
   });
-  const [showSettings, setShowSettings] = useState(false);
+  // Removed showSettings state - now handled by activeTab
   const [activeTab, setActiveTab] = useState('products');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -1931,6 +1931,7 @@ const Dashboard = () => {
             { id: 'instructions', label: 'Instructions', icon: BookOpen },
             { id: 'support', label: 'FAQ', icon: MessageSquare },
             { id: 'terms', label: 'Terms & Disclaimer', icon: FileText },
+            { id: 'settings', label: 'Settings', icon: Settings },
           ].map((helpTab) => (
             <button
               key={helpTab.id}
@@ -1948,17 +1949,8 @@ const Dashboard = () => {
           ))}
         </nav>
 
-        {/* Settings Button - Fixed at Bottom */}
-        <div className="p-4">
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 p-3'} rounded-xl text-text-secondary hover:bg-dark-border hover:text-text-primary transition-all duration-200`}
-            title={sidebarCollapsed ? 'Settings' : ''}
-          >
-            <Settings className="w-5 h-5" />
-            {!sidebarCollapsed && <span className="text-sm">Settings</span>}
-          </button>
-        </div>
+        {/* Empty space for consistent layout */}
+        <div className="p-4"></div>
       </aside>
 
       {/* Main Content Area - with left margin to account for fixed sidebar */}
@@ -1981,7 +1973,7 @@ const Dashboard = () => {
               <h1 className="text-text-primary font-semibold">AI Search Booster</h1>
             </div>
             <button
-              onClick={() => setShowSettings(!showSettings)}
+              onClick={() => setActiveTab('settings')}
               className="p-2 rounded-lg hover:bg-dark-border text-text-secondary transition-colors"
             >
               <Settings className="w-5 h-5" />
@@ -2081,7 +2073,7 @@ const Dashboard = () => {
               <div className="p-4">
                 <button
                   onClick={() => {
-                    setShowSettings(!showSettings);
+                    setActiveTab('settings');
                     setMobileMenuOpen(false);
                   }}
                   className="w-full flex items-center space-x-3 p-3 rounded-xl text-text-secondary hover:bg-dark-border hover:text-text-primary transition-all duration-200"
@@ -2216,151 +2208,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Settings Panel */}
-      {showSettings && (
-        <div className="bg-dark-card border-b border-dark-border shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <h2 className="text-lg font-semibold text-text-primary mb-4">Optimization Settings</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">
-                  Target AI Platform
-                </label>
-                <select
-                  value={settings.targetLLM}
-                  onChange={(e) => setSettings({...settings, targetLLM: e.target.value})}
-                  className="w-full px-3 py-2 border border-dark-border bg-dark-bg-secondary text-text-primary rounded-lg focus:ring-2 focus:ring-accent-primary"
-                >
-                  <option value="general">All Platforms</option>
-                  <option value="chatgpt">ChatGPT</option>
-                  <option value="claude">Claude</option>
-                  <option value="perplexity">Perplexity</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">
-                  Keywords (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={settings.keywords}
-                  onChange={(e) => setSettings({...settings, keywords: e.target.value})}
-                  placeholder="organic, sustainable, premium"
-                  className="w-full px-3 py-2 border border-dark-border bg-dark-bg-secondary text-text-primary rounded-lg focus:ring-2 focus:ring-accent-primary placeholder-text-muted"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">
-                  Tone
-                </label>
-                <select
-                  value={settings.tone}
-                  onChange={(e) => setSettings({...settings, tone: e.target.value})}
-                  className="w-full px-3 py-2 border border-dark-border bg-dark-bg-secondary text-text-primary rounded-lg focus:ring-2 focus:ring-accent-primary"
-                >
-                  <option value="professional">Professional</option>
-                  <option value="casual">Casual</option>
-                  <option value="technical">Technical</option>
-                  <option value="friendly">Friendly</option>
-                </select>
-              </div>
-            </div>
-            
-            {/* Testing Controls */}
-            <div className="mt-6 pt-6 border-t border-dark-border">
-              <h3 className="text-md font-semibold mb-4">Testing & Development</h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={resetConsent}
-                    className="px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    <span>Reset Consent Modal</span>
-                  </button>
-                  <p className="text-sm text-gray-300">
-                    Reset consent to test the first-time launch modal again
-                  </p>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={viewConsentRecords}
-                    className="px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span>View Legal Records</span>
-                  </button>
-                  <p className="text-sm text-gray-300">
-                    Display consent records for legal verification (check browser console)
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Citation Monitoring Controls */}
-            <div className="mt-6 pt-6 border-t border-dark-border">
-              <h3 className="text-md font-semibold mb-4">Citation Monitoring</h3>
-              
-              {/* Debug Info - Always show for troubleshooting */}
-              <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
-                <strong>Debug:</strong> shop={shop ? 'loaded' : 'missing'}, authFetch={authFetch ? 'ready' : 'missing'}, citationLoading={citationLoading.toString()}, isMonitoring={isMonitoring.toString()}, citationError={citationError || 'none'}
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Monitor className={`w-5 h-5 ${isMonitoring ? 'text-green-600' : 'text-gray-400'}`} />
-                  <span className={`text-sm ${isMonitoring ? 'text-green-600' : 'text-gray-400'}`}>
-                    Status: {isMonitoring ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-                
-                {!isMonitoring ? (
-                  <button
-                    onClick={async () => {
-                      console.log('Start monitoring clicked');
-                      const success = await startMonitoring({ 
-                        interval: 'daily', 
-                        keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k) 
-                      });
-                      if (success) {
-                        addNotification('Citation monitoring started successfully', 'success');
-                      } else {
-                        addNotification('Failed to start citation monitoring', 'error');
-                      }
-                    }}
-                    disabled={citationLoading || !shop || !authFetch}
-                    className="px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out bg-transparent text-white border border-white/20 hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-white/20"
-                    title={citationLoading ? 'Loading...' : !shop ? 'Shop not loaded' : !authFetch ? 'Auth not ready' : 'Start citation monitoring'}
-                  >
-                    {citationLoading ? 'Loading...' : 'Start Monitoring'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={async () => {
-                      const success = await stopMonitoring();
-                      if (success) {
-                        addNotification('Citation monitoring stopped', 'info');
-                      } else {
-                        addNotification('Failed to stop citation monitoring', 'error');
-                      }
-                    }}
-                    disabled={citationLoading}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {citationLoading ? 'Stopping...' : 'Stop Monitoring'}
-                  </button>
-                )}
-                
-                {stats && stats.total > 0 && (
-                  <div className="text-sm text-gray-300">
-                    Total citations: {stats.total}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-8">
         {/* Section Headers */}
@@ -2448,7 +2295,7 @@ const Dashboard = () => {
           )}
           
           {/* Hide usage and enterprise status on support tabs */}
-          {activeTab !== 'instructions' && activeTab !== 'support' && activeTab !== 'terms' && (
+          {activeTab !== 'instructions' && activeTab !== 'support' && activeTab !== 'terms' && activeTab !== 'settings' && (
             <>
               {/* Monthly Optimization Usage - Hidden on support tabs */}
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
@@ -3211,6 +3058,164 @@ const Dashboard = () => {
               <p className="text-xs text-white mt-6 p-3 bg-dark-bg-secondary rounded border border-dark-border">
                 Consent to these terms is recorded with a timestamp and securely stored. This record may be referenced in the event of legal inquiries or disputes regarding usage.
               </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="prose prose-blue max-w-none">
+            <div className="bg-[#1e1e1e] rounded-lg p-6 border border-dark-border">
+              <h3 className="text-lg font-semibold text-white mb-4">Optimization Settings</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Target AI Platform
+                  </label>
+                  <select
+                    value={settings.targetLLM}
+                    onChange={(e) => setSettings({...settings, targetLLM: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="general">All Platforms</option>
+                    <option value="chatgpt">ChatGPT</option>
+                    <option value="claude">Claude</option>
+                    <option value="perplexity">Perplexity</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Keywords (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.keywords}
+                    onChange={(e) => setSettings({...settings, keywords: e.target.value})}
+                    placeholder="organic, sustainable, premium"
+                    className="w-full px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Tone
+                  </label>
+                  <select
+                    value={settings.tone}
+                    onChange={(e) => setSettings({...settings, tone: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="professional">Professional</option>
+                    <option value="casual">Casual</option>
+                    <option value="technical">Technical</option>
+                    <option value="friendly">Friendly</option>
+                  </select>
+                </div>
+              </div>
+              
+              {/* Testing Controls */}
+              <div className="mt-6 pt-6 border-t border-gray-600">
+                <h4 className="text-md font-semibold text-white mb-4">Testing & Development</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={resetConsent}
+                      className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span>Reset Consent Modal</span>
+                    </button>
+                    <p className="text-sm text-gray-300">
+                      Reset consent to test the first-time launch modal again
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={viewConsentRecords}
+                      className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>View Legal Records</span>
+                    </button>
+                    <p className="text-sm text-gray-300">
+                      Display consent records for legal verification (check browser console)
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Citation Monitoring Controls */}
+              <div className="mt-6 pt-6 border-t border-gray-600">
+                <h4 className="text-md font-semibold text-white mb-4">Citation Monitoring</h4>
+                
+                {/* Debug Info */}
+                <div className="mb-4 p-3 bg-gray-800 rounded text-xs text-gray-300">
+                  <strong>Debug:</strong> shop={shop ? 'loaded' : 'missing'}, authFetch={authFetch ? 'ready' : 'missing'}, citationLoading={citationLoading.toString()}, isMonitoring={isMonitoring.toString()}, citationError={citationError || 'none'}
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Monitor className={`w-5 h-5 ${isMonitoring ? 'text-green-400' : 'text-gray-400'}`} />
+                    <span className={`text-sm ${isMonitoring ? 'text-green-400' : 'text-gray-400'}`}>
+                      Status: {isMonitoring ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  
+                  {!isMonitoring ? (
+                    <button
+                      onClick={async () => {
+                        console.log('Start monitoring clicked');
+                        const success = await startMonitoring({ 
+                          interval: 'daily', 
+                          keywords: settings.keywords.split(',').map(k => k.trim()).filter(k => k) 
+                        });
+                        if (success) {
+                          console.log('Start monitoring success');
+                        } else {
+                          console.log('Start monitoring failed');
+                        }
+                      }}
+                      disabled={citationLoading || !shop || !authFetch}
+                      className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                    >
+                      {citationLoading ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                      <span>{citationLoading ? 'Starting...' : 'Start Monitoring'}</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        console.log('Stop monitoring clicked');
+                        const success = await stopMonitoring();
+                        if (success) {
+                          console.log('Stop monitoring success');
+                        } else {
+                          console.log('Stop monitoring failed');
+                        }
+                      }}
+                      disabled={citationLoading}
+                      className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-500 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+                    >
+                      {citationLoading ? (
+                        <Loader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Square className="w-4 h-4" />
+                      )}
+                      <span>{citationLoading ? 'Stopping...' : 'Stop Monitoring'}</span>
+                    </button>
+                  )}
+                  
+                  {citationError && (
+                    <div className="text-red-400 text-sm flex items-center space-x-1">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{citationError}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
