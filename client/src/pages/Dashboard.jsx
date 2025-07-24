@@ -1856,16 +1856,13 @@ const Dashboard = () => {
       <aside className="w-64 bg-dark-card border-r border-dark-border flex-shrink-0 hidden lg:flex flex-col">
         {/* Logo Section */}
         <div className="p-6 border-b border-dark-border">
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col items-center text-center space-y-2">
             <img 
               src={`/logo.png?v=${Date.now()}`} 
               alt="AI Search Booster" 
-              className="w-10 h-10 object-contain"
+              className="w-16 h-16 object-contain"
             />
-            <div>
-              <h1 className="text-text-primary font-semibold text-lg">AI Search Booster</h1>
-              <p className="text-text-muted text-xs">Make your store AI‑discoverable</p>
-            </div>
+            <p className="text-text-muted text-sm">Make your store AI‑discoverable</p>
           </div>
         </div>
 
@@ -1981,16 +1978,13 @@ const Dashboard = () => {
             <aside className="w-64 bg-dark-card h-full border-r border-dark-border animate-slide-in-left" onClick={e => e.stopPropagation()}>
               {/* Logo Section */}
               <div className="p-6 border-b border-dark-border">
-                <div className="flex items-center space-x-3">
+                <div className="flex flex-col items-center text-center space-y-2">
                   <img 
                     src={`/logo.png?v=${Date.now()}`} 
                     alt="AI Search Booster" 
-                    className="w-10 h-10 object-contain"
+                    className="w-16 h-16 object-contain"
                   />
-                  <div>
-                    <h1 className="text-text-primary font-semibold text-lg">AI Search Booster</h1>
-                    <p className="text-text-muted text-xs">Make your store AI‑discoverable</p>
-                  </div>
+                  <p className="text-text-muted text-sm">Make your store AI‑discoverable</p>
                 </div>
               </div>
 
