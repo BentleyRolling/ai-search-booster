@@ -2343,11 +2343,12 @@ const Dashboard = () => {
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-purple-400/50 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">System Status</h3>
-                  <div className="flex items-center justify-center space-x-4 text-sm">
-                    <span className="text-green-500 font-medium">LLM Optimized</span>
-                    <span className="text-text-muted">JSON-LD: <span className="text-green-500">Active</span></span>
-                    <span className="text-text-muted">Auto-Rollback: <span className="text-green-500">On</span></span>
-                  </div>
+                  <p className="text-2xl font-bold text-accent-primary mb-2">
+                    LLM Optimized
+                  </p>
+                  <p className="text-xs text-text-muted">
+                    JSON-LD: <span className="text-accent-primary">Active</span> Auto-Rollback: <span className="text-accent-primary">On</span>
+                  </p>
                 </div>
               </div>
             </>
