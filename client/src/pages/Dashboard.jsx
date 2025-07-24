@@ -360,10 +360,10 @@ const Dashboard = () => {
         />
         <div className="flex-1 min-w-0">
           {/* Title and Quality Indicators */}
-          <div className="flex items-start justify-between mb-2">
+          <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">
               <h4 className="font-medium text-white truncate">{title}</h4>
-              {subtitle && <p className="text-sm text-gray-300 mt-1">{subtitle}</p>}
+              {subtitle && <p className="text-sm text-gray-400 mt-1">{subtitle}</p>}
             </div>
             {/* Quality Indicators */}
             {(showRiskIndicator || showVisibilityIndicator) && (
@@ -399,20 +399,20 @@ const Dashboard = () => {
           </div>
 
           {/* Status Badges Row */}
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             {item.rollbackTriggered && (
-              <span className="inline-flex items-center px-2 py-1 bg-orange-900/30 text-orange-300 text-xs rounded-full font-medium border border-orange-700/50">
+              <span className="inline-flex items-center px-2 py-1 bg-orange-900/30 text-orange-300 text-xs rounded font-medium border border-orange-700/50">
                 <AlertCircle className="w-3 h-3 mr-1" />
                 Rolled Back
               </span>
             )}
             {item.optimized && !item.rollbackTriggered && (
-              <span className="inline-flex items-center px-3 py-1 bg-green-900/30 text-green-300 text-xs rounded-full font-medium border border-green-700/50">
+              <span className="inline-flex items-center px-2 py-1 bg-green-900/30 text-green-300 text-xs rounded font-medium border border-green-700/50">
                 ✓ Optimized
               </span>
             )}
             {item.hasDraft && !item.rollbackTriggered && (
-              <span className="inline-flex items-center px-3 py-1 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50">
+              <span className="inline-flex items-center px-2 py-1 bg-amber-900/50 text-amber-200 text-xs rounded font-medium border border-amber-600">
                 📝 Draft Ready
               </span>
             )}
@@ -426,7 +426,7 @@ const Dashboard = () => {
                   e.stopPropagation();
                   onPreview(type, item.id);
                 }}
-                className="inline-flex items-center px-3 py-1.5 bg-blue-900/30 text-blue-300 hover:bg-blue-900/50 text-xs rounded-full font-medium border border-blue-700/50 hover:border-blue-500/50 transition-all duration-200"
+                className="inline-flex items-center px-3 py-1.5 bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 text-xs rounded font-medium border border-blue-500/30 hover:border-blue-400 transition-all duration-200"
                 title="Preview draft content"
               >
                 <Eye className="w-3 h-3 mr-1" />
@@ -439,7 +439,7 @@ const Dashboard = () => {
                   e.stopPropagation();
                   onPublish(type, item.id);
                 }}
-                className="inline-flex items-center px-3 py-1.5 bg-green-900/30 text-green-300 hover:bg-green-900/50 text-xs rounded-full font-medium border border-green-700/50 hover:border-green-500/50 transition-all duration-200"
+                className="inline-flex items-center px-3 py-1.5 bg-green-600/20 text-green-300 hover:bg-green-600/30 text-xs rounded font-medium border border-green-500/30 hover:border-green-400 transition-all duration-200"
                 title="Publish draft content"
               >
                 <CheckCircle className="w-3 h-3 mr-1" />
@@ -452,7 +452,7 @@ const Dashboard = () => {
                   e.stopPropagation();
                   onRollback(type, item.id);
                 }}
-                className="inline-flex items-center px-3 py-1.5 bg-red-900/30 text-red-300 hover:bg-red-800/50 text-xs rounded-full font-medium border border-red-700/50 hover:border-red-500/50 transition-all duration-200"
+                className="inline-flex items-center px-3 py-1.5 bg-red-600/20 text-red-300 hover:bg-red-600/30 text-xs rounded font-medium border border-red-500/30 hover:border-red-400 transition-all duration-200"
                 title="Rollback to original content"
               >
                 <RotateCcw className="w-3 h-3 mr-1" />
@@ -2669,7 +2669,7 @@ const Dashboard = () => {
                         onPublish={publishDraft}
                         onRollback={rollback}
                         title={product.title}
-                        subtitle={`${product.vendor}${product.product_type ? ` • ${product.product_type}` : ''}`}
+                        subtitle={product.vendor || product.product_type ? `${product.vendor || ''}${product.vendor && product.product_type ? ' • ' : ''}${product.product_type || ''}` : ''}
                         showRiskIndicator={true}
                         showVisibilityIndicator={true}
                       />
