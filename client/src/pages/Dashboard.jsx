@@ -2100,7 +2100,7 @@ const Dashboard = () => {
 
 
         {/* Content Area */}
-        <div className="flex-1 px-6 pt-0 pb-6 overflow-y-auto">
+        <div className="flex-1 px-6 pt-8 pb-6 overflow-y-auto">
 
       {/* Notifications */}
       {notifications.length > 0 && (
@@ -2908,7 +2908,7 @@ const Dashboard = () => {
 
         {/* Instructions Tab */}
         {activeTab === 'instructions' && (
-          <div className="prose prose-blue max-w-none">
+          <div className="prose prose-blue max-w-none -mt-8">
             <div className="bg-dark-bg rounded-lg p-6 border border-dark-border">
               <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
                 🧭 How to Use AI Search Booster
@@ -2984,7 +2984,7 @@ const Dashboard = () => {
 
         {/* FAQ Tab */}
         {activeTab === 'support' && (
-          <div className="prose prose-blue max-w-none">
+          <div className="prose prose-blue max-w-none -mt-8">
             <div className="bg-dark-bg rounded-lg p-6 border border-dark-border">
               <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
                 🧰 FAQ
@@ -3043,7 +3043,7 @@ const Dashboard = () => {
 
         {/* Terms & Disclaimer Tab */}
         {activeTab === 'terms' && (
-          <div className="prose prose-blue max-w-none">
+          <div className="prose prose-blue max-w-none -mt-8">
             <div className="bg-dark-bg rounded-lg p-6 border border-dark-border">
               <h3 className="text-lg font-semibold text-text-primary mb-4 flex items-center">
                 📜 Legal Disclaimer
@@ -3077,7 +3077,7 @@ const Dashboard = () => {
 
         {/* Settings Tab */}
         {activeTab === 'settings' && (
-          <div className="prose prose-blue max-w-none">
+          <div className="prose prose-blue max-w-none -mt-8">
             <div className="bg-[#1e1e1e] rounded-lg p-6 border border-dark-border">
               <h3 className="text-lg font-semibold text-white mb-4">Optimization Settings</h3>
               
