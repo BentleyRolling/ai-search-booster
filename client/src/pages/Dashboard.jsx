@@ -2362,7 +2362,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
         {/* Section Headers */}
         
         {/* Tab-Specific Status Cards */}
@@ -2447,56 +2447,59 @@ const Dashboard = () => {
             </>
           )}
           
-          {/* AI Optimizations This Month - Clean Design */}
-          <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
-            <div className="text-center">
-              <h3 className="text-sm font-medium text-text-muted mb-4">AI Optimizations This Month</h3>
-              
-              {/* Large Usage Counter */}
-              <p className={`text-4xl font-bold mb-2 ${
-                tierUsage && !tierUsage.hasQuota ? 'text-red-400' : 'text-accent-secondary'
-              }`}>
-                {tierUsage?.usageThisMonth || 0} / {tierUsage?.monthlyLimit || 25}
-              </p>
-              
-              {/* Usage Description */}
-              <p className="text-xs text-text-muted mb-3">
-                Each content optimization = 1 usage
-              </p>
-              
-              {/* Tier Badge */}
-              <span className={`inline-block text-xs px-2 py-1 rounded-full ${
-                tierUsage?.currentTier === 'Enterprise' ? 'bg-purple-900/30 text-purple-300' :
-                tierUsage?.currentTier === 'Scale' ? 'bg-green-900/30 text-green-300' :
-                tierUsage?.currentTier === 'Pro' ? 'bg-blue-900/30 text-blue-300' :
-                tierUsage?.currentTier === 'Starter' ? 'bg-yellow-900/30 text-yellow-300' :
-                'bg-gray-700 text-gray-300'
-              }`}>
-                {tierUsage?.currentTier || 'Free'}
-              </span>
-            </div>
-          </div>
-          
-          {/* Enterprise Performance - Always shown on all tabs */}
-          <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-purple-400/50 transition-all duration-200 ease-out">
-            <div className="text-center">
-              <h3 className="text-sm font-medium text-text-muted mb-4">Enterprise Status</h3>
-              <p className="text-4xl font-bold text-purple-400 mb-2">
-                {optimizationPercentage}%
-              </p>
-              <p className="text-xs text-text-muted mb-3">
-                Production-Grade • Auto-Rollback
-              </p>
-              <div className="flex items-center justify-center space-x-1 mb-2">
-                <TrendingUp className="w-4 h-4 text-purple-400" />
-                <div className="w-2 h-2 bg-accent-primary rounded-full animate-pulse" />
+          {/* Hide usage and enterprise status on support tabs */}
+          {activeTab !== 'instructions' && activeTab !== 'support' && activeTab !== 'terms' && (
+            <>
+              {/* Monthly Optimization Usage - Hidden on support tabs */}
+              <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-text-muted mb-4">Monthly Optimization Usage</h3>
+                  
+                  {/* Large Usage Counter */}
+                  <p className={`text-4xl font-bold mb-2 ${
+                    tierUsage && !tierUsage.hasQuota ? 'text-red-400' : 'text-accent-secondary'
+                  }`}>
+                    {tierUsage?.usageThisMonth || 0} / {tierUsage?.monthlyLimit || 25}
+                  </p>
+                  
+                  {/* Usage Description */}
+                  <p className="text-xs text-text-muted mb-3">
+                    Remaining
+                  </p>
+                  
+                  {/* Tier Badge */}
+                  <span className={`inline-block text-xs px-2 py-1 rounded-full ${
+                    tierUsage?.currentTier === 'Enterprise' ? 'bg-purple-900/30 text-purple-300' :
+                    tierUsage?.currentTier === 'Scale' ? 'bg-green-900/30 text-green-300' :
+                    tierUsage?.currentTier === 'Pro' ? 'bg-blue-900/30 text-blue-300' :
+                    tierUsage?.currentTier === 'Starter' ? 'bg-yellow-900/30 text-yellow-300' :
+                    'bg-gray-700 text-gray-300'
+                  }`}>
+                    {tierUsage?.currentTier || 'Free'}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-center space-x-1">
-                <div className="w-1.5 h-1.5 bg-accent-primary rounded-full" />
-                <span className="text-xs text-accent-primary">JSON-LD Active</span>
+              
+              {/* Enterprise Status - Hidden on support tabs */}
+              <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-purple-400/50 transition-all duration-200 ease-out">
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-text-muted mb-4">Enterprise Status</h3>
+                  <p className="text-4xl font-bold text-purple-400 mb-2">
+                    {optimizationPercentage}%
+                  </p>
+                  <p className="text-xs text-text-muted mb-3">
+                    Production-Grade • Auto-Rollback
+                  </p>
+                  <div className="flex items-center justify-center space-x-2">
+                    <TrendingUp className="w-4 h-4 text-purple-400" />
+                    <div className="w-2 h-2 bg-accent-primary rounded-full animate-pulse" />
+                    <div className="w-1.5 h-1.5 bg-accent-primary rounded-full" />
+                    <span className="text-xs text-accent-primary">JSON-LD Active</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
 
