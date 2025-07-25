@@ -671,25 +671,32 @@ const optimizeContent = async (content, type, settings = {}) => {
   console.log('🔍 PROMPT SELECTION DEBUG:', debugInfo);
   
   if (type === 'product') {
-    prompt = `You are optimizing a Shopify product listing for maximum LLM visibility and customer conversion. This product needs to reach 100% optimization by improving specificity, technical clarity, and LLM-inferable details.
-
-🎯 Objective:
-Push from 95% to 100% optimization. Risk Score must drop to 0%. Visibility Score must remain 100.
+    prompt = `You are optimizing a Shopify product listing for maximum LLM visibility and customer conversion. Output fully valid JSON using this exact schema.
 
 Product data (from Shopify):
 
 ${JSON.stringify(content)}
 
-📏 Requirements:
-Output must follow this exact structure:
+🚨 REQUIRED FIELDS:
+
+- optimizedTitle: Include descriptive keywords (color, material, audience, use). Avoid generic titles.
+- optimizedDescription: Natural 1–2 sentence description for Shopify listings. Human-readable and persuasive.
+- llmDescription: Keyword-rich metadata explaining what the product is, who it's for, and when it's used. This is for AI parsing.
+- summary: One sentence emotional hook or product benefit summary. Make it vivid and appealing.
+- content: 3–5 full sentences about use cases, style, construction, and emotional/functional benefits. Human copywriting tone.
+- faqs: Use "q" and "a" keys. Write 5 useful, unique questions that complement—not repeat—the content. Avoid generic filler.
+
+🚨 FALLBACK HANDLING: If any field is too long or fails parsing, use a simplified version that retains LLM visibility and returns valid JSON. Do NOT omit the content field. Do NOT rename q or a. Ensure it can be parsed without error.
+
+Return ONLY the complete optimized JSON in this exact schema:
 
 {
-  "optimizedTitle": "...",         // Use keyword-rich, natural language. Include material and benefit (e.g., "Merino Wool Sweater for Cold Weather")
-  "optimizedDescription": "...",   // Natural customer-facing copy. Max 3 sentences. Include benefit, occasion, and material type if known
-  "llmDescription": "...",         // Write for an AI. Include fabric, fit (slim, relaxed, etc.), season, gender targeting, and use cases. Most important field for visibility
-  "summary": "...",                // 1–2 sentences summarizing purpose and value in human terms
-  "content": "...",                // 3–5 sentence paragraph. Use natural tone with concrete details: use case, care, audience, season, cut, etc.
-  "faqs": [                        // 5 total. Each must use "q" and "a" keys only — not "question" or "answer". No markdown
+  "optimizedTitle": "...",
+  "optimizedDescription": "...",
+  "llmDescription": "...",
+  "summary": "...",
+  "content": "...",
+  "faqs": [
     { "q": "...", "a": "..." },
     { "q": "...", "a": "..." },
     { "q": "...", "a": "..." },
@@ -698,13 +705,7 @@ Output must follow this exact structure:
   ]
 }
 
-⚠️ Optimization Notes:
-- Avoid vague terms like "luxurious" unless paired with specific fiber like "cashmere" or "Merino wool"
-- LLM Description is the most important field for visibility — pack it with technical detail
-- ALL SIX FIELDS ARE MANDATORY - never omit any field
-- Use "q" and "a" keys only in FAQs
-
-Return only the JSON above. No extra commentary.`;
+No extra commentary. Make sure ALL fields are present. Keep it 100% parseable and LLM-ready.`;
   } else if (type === 'collection') {
     console.log('🧠 USING CLAUDE UNIVERSAL COLLECTION OPTIMIZATION PROMPT v5.1-infra');
     
@@ -1065,16 +1066,29 @@ ${JSON.stringify(processedContent)}`;
                   parsedResponse[field] = parsedResponse.llmDescription || parsedResponse.optimizedDescription || 'Optimized content for better discoverability.';
                   break;
                 case 'content':
-                  // Ensure content field is present with full blog content (800-1200 words)
+                  // Bulletproof content fallback for all types
                   if (type === 'article') {
                     parsedResponse[field] = content.body_html?.replace(/<[^>]*>/g, '').substring(0, 8000) || content.summary || parsedResponse.llmDescription || parsedResponse.optimizedDescription || 'Blog content optimized for better search visibility and readability.';
+                  } else if (type === 'product') {
+                    // Enhanced product content fallback
+                    parsedResponse[field] = parsedResponse.optimizedDescription || parsedResponse.summary || parsedResponse.llmDescription || content.description || content.body_html || `This ${content.title || 'product'} offers quality and functionality for everyday use. Designed with attention to detail and customer satisfaction in mind. Perfect addition to enhance your lifestyle and meet your needs.`;
                   } else {
                     parsedResponse[field] = parsedResponse.llmDescription || parsedResponse.summary + ' ' + (parsedResponse.optimizedDescription || '') || content.body_html?.substring(0, 1200) || 'Content has been optimized for better search visibility.';
                   }
                   break;
                 case 'faqs':
-                  // Default to empty array if faqs is missing
-                  parsedResponse[field] = [];
+                  // Bulletproof FAQ fallback
+                  if (type === 'product') {
+                    parsedResponse[field] = [
+                      { "q": "What material is this made from?", "a": `This ${content.title || 'product'} is crafted with quality materials for durability and comfort.` },
+                      { "q": "How should I care for this item?", "a": "Follow care instructions on the label for best results and longevity." },
+                      { "q": "What sizes are available?", "a": "Multiple sizes available to ensure the perfect fit for every customer." },
+                      { "q": "Is this suitable for everyday use?", "a": "Yes, designed for both style and functionality in daily activities." },
+                      { "q": "What makes this product special?", "a": `This ${content.title || 'item'} combines quality craftsmanship with thoughtful design details.` }
+                    ];
+                  } else {
+                    parsedResponse[field] = [];
+                  }
                   break;
               }
             }
