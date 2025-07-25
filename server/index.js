@@ -4410,7 +4410,7 @@ app.post('/api/billing/subscribe', simpleVerifyShop, async (req, res) => {
         price: planConfig.price,
         return_url: `${process.env.APP_URL}/billing/confirm?shop=${shop}&plan=${plan}`,
         trial_days: 7, // 7-day free trial
-        test: process.env.NODE_ENV !== 'production' // Sandbox mode for development
+        test: true // Always use test mode for now to avoid dev store limitations
       }
     };
     

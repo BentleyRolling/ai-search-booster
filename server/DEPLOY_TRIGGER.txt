@@ -1,1 +1,1 @@
-DEPLOY_BACKEND_20250725_enhanced_shopify_billing_error_logging
+DEPLOY_BACKEND_20250725_enable_test_mode_for_dev_stores
