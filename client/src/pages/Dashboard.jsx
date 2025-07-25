@@ -2233,7 +2233,7 @@ const Dashboard = () => {
 
       {/* Notifications */}
       {notifications.length > 0 && (
-        <div className="fixed top-4 left-4 z-50 space-y-2 max-w-sm">
+        <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
           {notifications.map((notification) => (
             <div
               key={notification.id}
@@ -2284,7 +2284,7 @@ const Dashboard = () => {
 
       {/* Citation Notifications */}
       {citations.length > 0 && (
-        <div className="fixed top-20 left-4 z-40 max-w-sm">
+        <div className="fixed top-20 right-4 z-40 max-w-sm">
           <div className="bg-blue-900/20 border border-blue-200 rounded-lg p-4 shadow-lg">
             <div className="flex items-start">
               <div className="flex-shrink-0">
