@@ -1733,41 +1733,25 @@ app.post('/api/optimize/publish', simpleVerifyShop, async (req, res) => {
         console.log(`[PUBLISH] Final content length:`, finalContent.length);
         console.log(`[PUBLISH] Optimized title:`, optimizedTitle);
         
-        const updatePayload = resourceType === 'product' 
-          ? { 
-              product: { 
-                id: resourceId, 
-                body_html: finalContent,
-                ...(optimizedTitle && { title: optimizedTitle })
-              } 
-            }
-          : resourceType === 'page'
-          ? {
-              page: {
-                id: resourceId,
-                body_html: finalContent,
-                ...(optimizedTitle && { title: optimizedTitle })
-              }
-            }
-          : resourceType === 'collection'
-          ? {
-              custom_collection: {
-                id: resourceId,
-                body_html: finalContent,
-                ...(optimizedTitle && { title: optimizedTitle })
-              }
-            }
-          : { 
-              article: { 
-                id: resourceId, 
-                body_html: finalContent,
-                ...(optimizedTitle && { title: optimizedTitle })
-              } 
-            };
+        // Store optimized content in metafields instead of overwriting merchant content
+        const metafieldPayload = {
+          metafield: {
+            namespace: 'asb_optimized',
+            key: `${resourceType}_${resourceId}`,
+            value: JSON.stringify({
+              optimizedContent: finalContent,
+              ...(optimizedTitle && { optimizedTitle }),
+              lastOptimized: new Date().toISOString(),
+              resourceType,
+              resourceId
+            }),
+            type: 'json'
+          }
+        };
             
-        await axios.put(
-          `https://${shop}/admin/api/2024-01/${updateEndpoint}/${resourceId}.json`,
-          updatePayload,
+        await axios.post(
+          `https://${shop}/admin/api/2024-01/metafields.json`,
+          metafieldPayload,
           { headers: { 'X-Shopify-Access-Token': accessToken } }
         );
         console.log(`[PUBLISH] Successfully updated ${resourceType} content`);
@@ -1909,39 +1893,14 @@ app.post('/api/publish/product/:id', simpleVerifyShop, async (req, res) => {
           }
         }
         
-        // Combine optimized content with FAQs for LLM discovery
-        const finalContent = optimizedContent + faqHtml;
-        
         console.log(`[PUBLISH] Parsed draft data:`, draftData);
         console.log(`[PUBLISH] Optimized content length:`, optimizedContent?.length);
         console.log(`[PUBLISH] FAQ HTML length:`, faqHtml.length);
-        console.log(`[PUBLISH] Final content length:`, finalContent.length);
         console.log(`[PUBLISH] Optimized title:`, optimizedTitle);
         
-        if (optimizedContent) {
-          const updatePayload = { 
-            product: { 
-              id: resourceId, 
-              body_html: finalContent,
-              ...(optimizedTitle && { title: optimizedTitle })
-            } 
-          };
-              
-          console.log(`[PUBLISH] Updating product content for ID ${resourceId}`);
-          console.log(`[PUBLISH] PUT URL: https://${shop}/admin/api/2024-01/products/${resourceId}.json`);
-          console.log(`[PUBLISH] PUT Payload:`, JSON.stringify(updatePayload, null, 2));
-          
-          const putResponse = await axios.put(
-            `https://${shop}/admin/api/2024-01/products/${resourceId}.json`,
-            updatePayload,
-            { headers: { 'X-Shopify-Access-Token': accessToken } }
-          );
-          console.log(`[PUBLISH] Shopify PUT Response Status:`, putResponse.status);
-          console.log(`[PUBLISH] Shopify PUT Response Data:`, JSON.stringify(putResponse.data, null, 2));
-          console.log(`[PUBLISH] Successfully updated product content and title`);
-        } else {
-          console.warn(`[PUBLISH] No optimized content found in draft data`);
-        }
+        // ✅ NON-DESTRUCTIVE: Store optimized content in metafield ONLY
+        // DO NOT update product.body_html or product.title to preserve merchant content
+        console.log(`[PUBLISH] Storing optimized content in metafield ONLY - preserving original product content`);
       } catch (contentError) {
         console.error(`[PUBLISH] Failed to update product content:`, contentError.response?.data || contentError.message);
         console.error(`[PUBLISH] Draft content that failed:`, draftContent);
@@ -1949,25 +1908,37 @@ app.post('/api/publish/product/:id', simpleVerifyShop, async (req, res) => {
       }
     }
     
-    // Create live metafields
+    // ✅ CRITICAL FIX: Store optimized content in structured metafield for Theme App Extension
+    // Parse the draft data to create proper JSON structure
+    let optimizedPayload = {};
+    try {
+      const parsedDraft = JSON.parse(draftContent);
+      optimizedPayload = {
+        optimizedTitle: parsedDraft.optimizedTitle || parsedDraft.title,
+        optimizedDescription: parsedDraft.optimizedDescription || parsedDraft.description,
+        llmDescription: parsedDraft.llmDescription,
+        summary: parsedDraft.summary,
+        content: parsedDraft.content,
+        faqs: parsedDraft.faqs || [],
+        publishedAt: new Date().toISOString()
+      };
+    } catch (parseError) {
+      console.error('[PUBLISH] Error parsing draft for structured storage:', parseError);
+      // Fallback to simple storage
+      optimizedPayload = {
+        content: draftContent,
+        faqs: draftFaq ? JSON.parse(draftFaq) : [],
+        publishedAt: new Date().toISOString()
+      };
+    }
+
+    // Create live metafields using proper namespace for Theme App Extension
     const liveMetafields = [
       {
-        namespace: 'asb',
-        key: 'optimized_content',
-        value: draftContent,
-        type: 'multi_line_text_field'
-      },
-      {
-        namespace: 'asb',
-        key: 'faq_data',
-        value: draftFaq,
+        namespace: 'asb_optimized',
+        key: `product_${resourceId}`,
+        value: JSON.stringify(optimizedPayload),
         type: 'json'
-      },
-      {
-        namespace: 'asb',
-        key: 'enable_schema',
-        value: 'true',
-        type: 'boolean'
       },
       {
         namespace: 'asb',
@@ -2091,20 +2062,28 @@ app.post('/api/publish/article/:id', simpleVerifyShop, async (req, res) => {
         console.log(`[PUBLISH] Final content length:`, finalContent.length);
         
         if (optimizedContent) {
-          const updatePayload = { 
-            article: { 
-              id: resourceId, 
-              body_html: finalContent,
-              ...(optimizedTitle && { title: optimizedTitle })
-            } 
+          // Store optimized content in metafields instead of overwriting merchant content
+          const metafieldPayload = {
+            metafield: {
+              namespace: 'asb_optimized',
+              key: `article_${resourceId}`,
+              value: JSON.stringify({
+                optimizedContent: finalContent,
+                ...(optimizedTitle && { optimizedTitle }),
+                lastOptimized: new Date().toISOString(),
+                resourceType: 'article',
+                resourceId
+              }),
+              type: 'json'
+            }
           };
               
-          await axios.put(
-            `https://${shop}/admin/api/2024-01/articles/${resourceId}.json`,
-            updatePayload,
+          await axios.post(
+            `https://${shop}/admin/api/2024-01/metafields.json`,
+            metafieldPayload,
             { headers: { 'X-Shopify-Access-Token': accessToken } }
           );
-          console.log(`[PUBLISH] Successfully updated article content and title`);
+          console.log(`[PUBLISH] Successfully stored optimized article content in metafields`);
         }
       } catch (contentError) {
         console.error(`[PUBLISH] Failed to update article content:`, contentError.response?.data || contentError.message);
