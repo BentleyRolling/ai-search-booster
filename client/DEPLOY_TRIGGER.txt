@@ -1,1 +1,1 @@
-DEPLOY_FRONTEND_20250725_add_billing_debug_logging
+DEPLOY_FRONTEND_20250725_enable_test_mode_for_dev_stores
