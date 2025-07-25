@@ -2148,7 +2148,11 @@ const Dashboard = () => {
       )}
 
       {/* Theme App Extension Activation */}
-      <AppBridgeActivation shopDomain={shop} apiKey={process.env.SHOPIFY_API_KEY} />
+      <AppBridgeActivation 
+        shopDomain={shop} 
+        apiKey={process.env.SHOPIFY_API_KEY}
+        onToast={addNotification}
+      />
 
       {/* Citation Notifications */}
       {citations.length > 0 && (
