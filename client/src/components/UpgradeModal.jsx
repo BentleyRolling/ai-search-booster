@@ -4,6 +4,9 @@ import { X, Crown, Zap, TrendingUp, CheckCircle, Sparkles, Infinity } from 'luci
 const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
   if (!isVisible) return null;
 
+  // Get API base URL
+  const API_BASE = process.env.REACT_APP_API_BASE || 'https://ai-search-booster-backend.onrender.com';
+
   const plans = [
     {
       name: 'Starter',
@@ -54,9 +57,54 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
     }
   ];
 
-  const handleSelectPlan = (planName) => {
-    // Navigate to Shopify billing/upgrade page
-    window.open('https://partners.shopify.com/current/app_charges', '_blank');
+  const handleSelectPlan = async (planName) => {
+    try {
+      // Get shop parameter from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const shop = urlParams.get('shop');
+      
+      if (!shop) {
+        console.error('Shop parameter not found in URL');
+        return;
+      }
+
+      // Call billing API to create Shopify subscription
+      const response = await fetch(`${API_BASE}/api/billing/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          shop: shop,
+          plan: planName // Use plan name as-is (Starter, Pro, Enterprise)
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        if (data.confirmationUrl) {
+          // Redirect to Shopify billing confirmation page
+          window.location.href = data.confirmationUrl;
+        } else if (data.redirect) {
+          // Handle Enterprise plan redirect
+          window.location.href = data.redirect;
+        } else {
+          console.error('No redirect URL provided:', data);
+          // Fallback to partners page if no URL
+          window.open('https://partners.shopify.com/current/app_charges', '_blank');
+        }
+      } else {
+        console.error('Failed to create subscription:', data.error || 'Unknown error');
+        // Fallback to partners page if API fails
+        window.open('https://partners.shopify.com/current/app_charges', '_blank');
+      }
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      // Fallback to partners page if API fails
+      window.open('https://partners.shopify.com/current/app_charges', '_blank');
+    }
+    
     onClose();
   };
 

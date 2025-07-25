@@ -8,6 +8,8 @@ const AutoOptimizeToggle = ({
   onToggle,
   onUpgrade
 }) => {
+  // Get API base URL
+  const API_BASE = process.env.REACT_APP_API_BASE || 'https://ai-search-booster-backend.onrender.com';
   const [showModal, setShowModal] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   
