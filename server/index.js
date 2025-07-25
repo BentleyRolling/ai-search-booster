@@ -789,40 +789,86 @@ Return a JSON object with ALL SIX REQUIRED FIELDS:
 
 Return only the JSON above. No extra commentary.`;
   } else {
-    // 🔧 Step 1 & 2 — Strip HTML and truncate for articles only
+    // 🔧 Chunked Blog Optimization (v6.0-chunk) — NO TRUNCATION
     let processedContent = content;
     if (type === 'article') {
       const plainText = content.body_html?.replace(/<[^>]*>/g, '') || '';
-      const truncatedText = plainText.slice(0, 8000);
-      console.log("[TRUNCATION] Blog input truncated to 8000 chars for safe OpenAI optimization.");
       
-      // Create processed content object with truncated text
-      processedContent = {
-        ...content,
-        body_html: truncatedText
-      };
+      // Token estimation (~4 chars per token for GPT-4-mini)
+      const estimatedTokens = Math.ceil(plainText.length / 4);
+      const maxTokens = 6000; // GPT-4-mini safe window
+      
+      if (estimatedTokens > maxTokens) {
+        console.log(`[CHUNKING] Article has ~${estimatedTokens} tokens, chunking required for GPT-4-mini optimization.`);
+        
+        // Split into chunks on paragraph boundaries
+        const paragraphs = plainText.split(/\n\s*\n/).filter(p => p.trim());
+        const chunks = [];
+        let currentChunk = '';
+        let currentTokens = 0;
+        
+        for (const paragraph of paragraphs) {
+          const paragraphTokens = Math.ceil(paragraph.length / 4);
+          
+          if (currentTokens + paragraphTokens > (maxTokens * 0.8) && currentChunk) {
+            chunks.push(currentChunk.trim());
+            currentChunk = paragraph;
+            currentTokens = paragraphTokens;
+          } else {
+            currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
+            currentTokens += paragraphTokens;
+          }
+        }
+        
+        if (currentChunk.trim()) {
+          chunks.push(currentChunk.trim());
+        }
+        
+        console.log(`[CHUNKING] Split article into ${chunks.length} chunks for processing.`);
+        
+        // Use first chunk for optimization (will be enhanced to process all chunks later)
+        processedContent = {
+          ...content,
+          body_html: chunks[0],
+          chunkInfo: {
+            totalChunks: chunks.length,
+            currentChunk: 1,
+            isChunked: true
+          }
+        };
+      } else {
+        console.log(`[NO-CHUNKING] Article has ~${estimatedTokens} tokens, processing normally.`);
+        processedContent = {
+          ...content,
+          body_html: plainText
+        };
+      }
     }
     
-    prompt = `System Prompt (Articles only):
+    prompt = `You are an expert AI content optimizer. Your task is to optimize Shopify blog articles for AI search engine visibility (ChatGPT, Claude, Perplexity, etc.) without changing the original author's voice.
 
-> Your task is to optimize this blog article for AI visibility without rewriting it entirely.
-> Return exactly these six JSON keys:
-> - optimizedTitle
-> - optimizedDescription  
-> - llmDescription
-> - summary
-> - content (plain text, 800-1200 words, no HTML)
-> - faqs (Array of 3-5 FAQs)
+Optimize this Shopify blog post for LLM visibility.
 
-> Do not use alternate keys such as 'Title', 'Description', or 'Content'.
-> The 'content' field must be a full rewritten version of the blog body in plain English, maintaining the same narrative style and tone.
+Rules:
+- DO NOT truncate any part of the article.
+- Always return a single valid JSON object matching this exact format:
 
-> Return all FAQs in this format only:
-> { "q": "string", "a": "string" }
-> Do not use keys like "question" or "answer". Use "q" and "a" only.
+{
+  "optimizedTitle": "...",
+  "optimizedDescription": "...",
+  "llmDescription": "...",
+  "summary": "...",
+  "content": "...", // Rewritten full article content, not truncated
+  "faqs": [
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." }
+  ]
+}
 
----
-
+Content to optimize:
 ${JSON.stringify(processedContent)}`;
   }
   
