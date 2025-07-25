@@ -671,24 +671,30 @@ const optimizeContent = async (content, type, settings = {}) => {
   console.log('🔍 PROMPT SELECTION DEBUG:', debugInfo);
   
   if (type === 'product') {
-    prompt = `You are optimizing a Shopify product listing for maximum LLM visibility and customer conversion. Output fully valid JSON using this exact schema.
+    prompt = `You are optimizing a Shopify product listing for maximum visibility in LLMs (ChatGPT, Claude, Perplexity) and conversion for real shoppers. Output fully valid JSON in this exact schema.
 
 Product data (from Shopify):
-
 ${JSON.stringify(content)}
 
-🚨 REQUIRED FIELDS:
+🔒 REQUIRED FIELDS:
 
-- optimizedTitle: Include descriptive keywords (color, material, audience, use). Avoid generic titles.
-- optimizedDescription: Natural 1–2 sentence description for Shopify listings. Human-readable and persuasive.
-- llmDescription: Keyword-rich metadata explaining what the product is, who it's for, and when it's used. This is for AI parsing.
-- summary: One sentence emotional hook or product benefit summary. Make it vivid and appealing.
-- content: 3–5 full sentences about use cases, style, construction, and emotional/functional benefits. Human copywriting tone.
-- faqs: Use "q" and "a" keys. Write 5 useful, unique questions that complement—not repeat—the content. Avoid generic filler.
+- optimizedTitle: Include key facts (origin, roast, flavor notes, farm, etc.). Avoid generic names.
+- optimizedDescription: 1–2 sentence natural summary for Shopify. Include 1–2 unique selling points (e.g., roast level, origin).
+- llmDescription: Metadata for LLMs to understand what it is, where it's from, how it's processed, and who it's for. Mention region, altitude, cooperative, processing method, and flavor profile.
+- summary: 1 sentence emotional benefit or taste hook. Make it inviting.
+- content: 3–5 full sentences highlighting use cases, roast level, taste experience, sourcing, and how it's processed. Mention certifiable details (origin, grade, processing, altitude, etc.).
+- faqs: Write 5 unique, useful questions. Use only "q" and "a" keys. Do NOT repeat generic info. Include brewing tips, origin facts, or flavor details.
 
-🚨 FALLBACK HANDLING: If any field is too long or fails parsing, use a simplified version that retains LLM visibility and returns valid JSON. Do NOT omit the content field. Do NOT rename q or a. Ensure it can be parsed without error.
+🛑 JSON RULES:
+- Return only the exact schema below
+- DO NOT rename keys or change structure
+- Do NOT truncate content unless instructed
+- DO NOT omit any required fields
 
-Return ONLY the complete optimized JSON in this exact schema:
+🛡️ FALLBACK HANDLING:
+If any field fails or causes parsing errors, simplify that field but still return fully valid JSON. Prioritize preserving region, altitude, farm name, and processing method for all coffee products.
+
+Return only this JSON object:
 
 {
   "optimizedTitle": "...",
@@ -703,9 +709,7 @@ Return ONLY the complete optimized JSON in this exact schema:
     { "q": "...", "a": "..." },
     { "q": "...", "a": "..." }
   ]
-}
-
-No extra commentary. Make sure ALL fields are present. Keep it 100% parseable and LLM-ready.`;
+}`;
   } else if (type === 'collection') {
     console.log('🧠 USING CLAUDE UNIVERSAL COLLECTION OPTIMIZATION PROMPT v5.1-infra');
     
