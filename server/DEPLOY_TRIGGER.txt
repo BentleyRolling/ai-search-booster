@@ -1,1 +1,1 @@
-DEPLOY_BACKEND_20250725_enable_test_mode_for_dev_stores
+DEPLOY_BACKEND_20250725_force_rollback_oauth_fix
