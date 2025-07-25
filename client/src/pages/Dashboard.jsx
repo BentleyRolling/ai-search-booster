@@ -50,6 +50,11 @@ const Dashboard = () => {
   const [testResults, setTestResults] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [optimizationProgress, setOptimizationProgress] = useState(null);
+  const [autoOptimizeEnabled, setAutoOptimizeEnabled] = useState(false);
+  const [autoOptimizeLoading, setAutoOptimizeLoading] = useState(false);
+  const [autoOptimizeStatus, setAutoOptimizeStatus] = useState(null);
+  const [testTier, setTestTier] = useState('Free');
+  const [testTierLoading, setTestTierLoading] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [draftContent, setDraftContent] = useState(new Map());
   const [showDraftModal, setShowDraftModal] = useState(false);
@@ -274,7 +279,9 @@ const Dashboard = () => {
             fetchBlogs(shopParam),
             fetchPages(shopParam),
             fetchCollections(shopParam),
-            fetchUsage(shopParam)
+            fetchUsage(shopParam),
+            fetchAutoOptimizeSettings(shopParam),
+            fetchTestTier(shopParam)
           ]).then(() => {
             clearTimeout(loadingTimeout);
             setLoading(false);
@@ -308,6 +315,17 @@ const Dashboard = () => {
   useEffect(() => {
     setOptimizationProgress(null);
   }, [activeTab]);
+
+  // Refresh auto-optimize status when enabled
+  useEffect(() => {
+    if (autoOptimizeEnabled && shop) {
+      const interval = setInterval(() => {
+        fetchAutoOptimizeStatus();
+      }, 10000); // Refresh every 10 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [autoOptimizeEnabled, shop]);
 
   // Utility function to add timeout to requests
   const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
@@ -629,6 +647,116 @@ const Dashboard = () => {
         aiCalls: { today: 0, thisMonth: 0, total: 0 },
         limits: { monthlyOptimizations: 25, dailyAICalls: 100 }
       });
+    }
+  };
+
+  // Auto-optimization functions
+  const fetchAutoOptimizeSettings = async (shopName) => {
+    try {
+      const response = await authFetch(`${API_BASE}/api/settings/auto-optimize?shop=${shopName}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setAutoOptimizeEnabled(data.autoOptimizeEnabled);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch auto-optimize settings:', error);
+      return { autoOptimizeEnabled: false, requiresPaidPlan: true };
+    }
+  };
+
+  const toggleAutoOptimize = async (enabled) => {
+    setAutoOptimizeLoading(true);
+    try {
+      const response = await authFetch(`${API_BASE}/api/settings/auto-optimize?shop=${shop}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ enabled }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update auto-optimize setting');
+      }
+
+      const data = await response.json();
+      setAutoOptimizeEnabled(enabled);
+      addNotification(data.message, 'success');
+      
+      if (enabled) {
+        fetchAutoOptimizeStatus();
+      }
+    } catch (error) {
+      console.error('Failed to toggle auto-optimize:', error);
+      addNotification(error.message, 'error');
+    } finally {
+      setAutoOptimizeLoading(false);
+    }
+  };
+
+  const fetchAutoOptimizeStatus = async () => {
+    try {
+      const response = await authFetch(`${API_BASE}/api/auto-optimize/status?shop=${shop}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setAutoOptimizeStatus(data);
+    } catch (error) {
+      console.error('Failed to fetch auto-optimize status:', error);
+    }
+  };
+
+  // Test tier functions
+  const fetchTestTier = async (shopName) => {
+    try {
+      const response = await authFetch(`${API_BASE}/api/test/get-tier?shop=${shopName}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setTestTier(data.tier);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch test tier:', error);
+      return { tier: 'Free', isTestTier: false };
+    }
+  };
+
+  const changeTestTier = async (newTier) => {
+    setTestTierLoading(true);
+    try {
+      const response = await authFetch(`${API_BASE}/api/test/set-tier?shop=${shop}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tier: newTier }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to set test tier');
+      }
+
+      const data = await response.json();
+      setTestTier(newTier);
+      
+      // Refresh tier usage data to reflect new tier
+      await fetchUsage(shop);
+      
+      // Refresh auto-optimize settings since tier changed
+      await fetchAutoOptimizeSettings(shop);
+      
+      addNotification(`Test tier changed to ${newTier}`, 'success');
+    } catch (error) {
+      console.error('Failed to change test tier:', error);
+      addNotification(error.message, 'error');
+    } finally {
+      setTestTierLoading(false);
     }
   };
 
@@ -3137,10 +3265,158 @@ const Dashboard = () => {
                 </div>
               )}
               
+              {/* Auto-Optimization Section */}
+              <div className="mt-6 pt-6 border-t border-gray-600">
+                <h4 className="text-md font-semibold text-white mb-4 flex items-center space-x-2">
+                  <Zap className="w-5 h-5 text-yellow-500" />
+                  <span>Background Auto-Optimization</span>
+                  <span className="text-xs bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-2 py-1 rounded-full font-bold">
+                    PAID ONLY
+                  </span>
+                </h4>
+                
+                <div className="space-y-4">
+                  <div className="bg-[#2a2a2a] rounded-lg p-4 border border-gray-600">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="auto-optimize-toggle"
+                            checked={autoOptimizeEnabled}
+                            onChange={(e) => toggleAutoOptimize(e.target.checked)}
+                            disabled={autoOptimizeLoading || testTier === 'Free'}
+                            className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                          />
+                          <label 
+                            htmlFor="auto-optimize-toggle" 
+                            className="text-sm font-medium text-white cursor-pointer"
+                          >
+                            Enable Auto-Optimization
+                          </label>
+                        </div>
+                        {autoOptimizeLoading && (
+                          <Loader className="w-4 h-4 text-blue-500 animate-spin" />
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          autoOptimizeEnabled ? 'bg-green-500' : 'bg-gray-500'
+                        }`}></div>
+                        <span className="text-xs text-gray-400">
+                          {autoOptimizeEnabled ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-gray-300 mb-3">
+                      Automatically optimize new products, blogs, collections, and pages when published in Shopify. 
+                      Content is optimized in the background and injected invisibly via the Theme App Extension.
+                    </p>
+                    
+                    {testTier === 'Free' && (
+                      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <AlertCircle className="w-4 h-4 text-yellow-500" />
+                          <span className="text-sm text-yellow-400 font-medium">
+                            Upgrade Required
+                          </span>
+                        </div>
+                        <p className="text-xs text-yellow-300 mt-1">
+                          Auto-optimization is available for Starter, Pro, and Enterprise plans. 
+                          Upgrade to enable automatic background optimization of your content.
+                        </p>
+                      </div>
+                    )}
+                    
+                    {autoOptimizeEnabled && autoOptimizeStatus && (
+                      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-blue-400">Queue Status:</span>
+                          <span className="text-white">
+                            {autoOptimizeStatus.queueLength} items pending
+                            {autoOptimizeStatus.isProcessing && ' (processing...)'}
+                          </span>
+                        </div>
+                        {autoOptimizeStatus.nextItems && autoOptimizeStatus.nextItems.length > 0 && (
+                          <div className="mt-2 text-xs text-gray-400">
+                            Next: {autoOptimizeStatus.nextItems.map(item => 
+                              `${item.resourceType} ${item.resourceId}`
+                            ).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="text-xs text-gray-400 mt-3 space-y-1">
+                      <div>• Content is never overwritten - optimization stored in metafields</div>
+                      <div>• Prevents duplicate optimizations within 24 hours</div>
+                      <div>• Uses efficient GPT-4o-mini model for background processing</div>
+                      <div>• Automatic retry with exponential backoff on failures</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
               {/* Testing Controls */}
               <div className="mt-6 pt-6 border-t border-gray-600">
                 <h4 className="text-md font-semibold text-white mb-4">Testing & Development</h4>
                 <div className="space-y-3">
+                  {/* Tier Toggle for Testing */}
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <AlertCircle className="w-4 h-4 text-yellow-500" />
+                        <span className="text-sm font-medium text-yellow-400">Test Tier Override</span>
+                        <span className="text-xs bg-yellow-500 text-black px-2 py-1 rounded-full font-bold">
+                          TESTING ONLY
+                        </span>
+                      </div>
+                      {testTierLoading && (
+                        <Loader className="w-4 h-4 text-yellow-500 animate-spin" />
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-4 mb-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-300">Current Test Tier:</span>
+                        <span className={`text-sm font-medium px-2 py-1 rounded ${
+                          testTier === 'Free' ? 'bg-gray-600 text-gray-200' :
+                          testTier === 'Starter' ? 'bg-blue-600 text-white' :
+                          testTier === 'Pro' ? 'bg-green-600 text-white' :
+                          'bg-purple-600 text-white'
+                        }`}>
+                          {testTier}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        ({tierUsage?.currentTier === testTier ? 'synced' : 'updating...'})
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 mb-3">
+                      {['Free', 'Starter', 'Pro', 'Enterprise'].map((tier) => (
+                        <button
+                          key={tier}
+                          onClick={() => changeTestTier(tier)}
+                          disabled={testTierLoading || testTier === tier}
+                          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                            testTier === tier
+                              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                              : 'bg-gray-700 text-white hover:bg-gray-600'
+                          }`}
+                        >
+                          {tier}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <div className="text-xs text-yellow-300 space-y-1">
+                      <div>• Switch between Free/Starter/Pro/Enterprise to test auto-optimization behavior</div>
+                      <div>• Auto-optimization toggle will update based on selected tier</div>
+                      <div>• This is for testing only - remove before production</div>
+                    </div>
+                  </div>
                   <div className="flex items-center space-x-4">
                     <button
                       onClick={() => {

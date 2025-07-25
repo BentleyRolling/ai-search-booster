@@ -6218,4 +6218,598 @@ export default app;// Collections API deployment marker Mon Jul 21 02:48:34 PDT 
 /* Fix rate limiting Mon Jul 21 17:46:10 PDT 2025 */
 /* Fix collections rate limit Mon Jul 21 18:04:38 PDT 2025 */
 /* Updated collection prompt Mon Jul 21 18:14:36 PDT 2025 */
+// === BACKGROUND AUTO-OPTIMIZATION SYSTEM ===
+// Feature: Automatically optimize newly published content via webhooks
+// Available only to paid-tier users
+
+// Helper: Check if shop should auto-optimize (billing + toggle check)
+const shouldAutoOptimize = async (shop, accessToken) => {
+  try {
+    // Check if auto-optimization toggle is enabled
+    const toggleResponse = await axios.get(
+      `https://${shop}/admin/api/2024-01/metafields.json?namespace=asb_settings&key=auto_optimize_enabled`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    const autoOptimizeEnabled = toggleResponse.data.metafields.find(m => 
+      m.namespace === 'asb_settings' && m.key === 'auto_optimize_enabled'
+    )?.value === 'true';
+    
+    if (!autoOptimizeEnabled) {
+      console.log(`[AUTO-OPT] Auto-optimization disabled for shop: ${shop}`);
+      return false;
+    }
+    
+    // Check billing status - use test tier if available, otherwise check real billing
+    const shopInfo = shopData.get(shop);
+    const currentTier = shopInfo?.plan || 'Free';
+    const isPaidTier = ['Starter', 'Pro', 'Enterprise'].includes(currentTier);
+    
+    if (!isPaidTier) {
+      console.log(`[AUTO-OPT] Shop ${shop} not on paid tier - skipping auto-optimization`);
+      return false;
+    }
+    
+    console.log(`[AUTO-OPT] Shop ${shop} eligible for auto-optimization`);
+    return true;
+  } catch (error) {
+    console.error(`[AUTO-OPT] Error checking auto-optimize eligibility for ${shop}:`, error.message);
+    return false;
+  }
+};
+
+// Helper: Check if content is already optimized to prevent duplicates
+const isAlreadyOptimized = async (shop, accessToken, resourceType, resourceId) => {
+  try {
+    const response = await axios.get(
+      `https://${shop}/admin/api/2024-01/metafields.json?namespace=asb_optimized&key=${resourceType}_${resourceId}`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    const existingOptimization = response.data.metafields.find(m => 
+      m.namespace === 'asb_optimized' && m.key === `${resourceType}_${resourceId}`
+    );
+    
+    if (existingOptimization) {
+      const optimizedData = JSON.parse(existingOptimization.value);
+      // Consider optimized if less than 24 hours old
+      const optimizedTime = new Date(optimizedData.lastOptimized || optimizedData.optimizedAt);
+      const hoursSinceOptimized = (Date.now() - optimizedTime.getTime()) / (1000 * 60 * 60);
+      
+      if (hoursSinceOptimized < 24) {
+        console.log(`[AUTO-OPT] ${resourceType} ${resourceId} already optimized ${hoursSinceOptimized.toFixed(1)}h ago`);
+        return true;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.log(`[AUTO-OPT] No existing optimization found for ${resourceType} ${resourceId}`);
+    return false;
+  }
+};
+
+// Background optimization queue with retry handling
+const autoOptimizationQueue = [];
+let isProcessingQueue = false;
+
+const processAutoOptimizationQueue = async () => {
+  if (isProcessingQueue || autoOptimizationQueue.length === 0) return;
+  
+  isProcessingQueue = true;
+  console.log(`[AUTO-OPT] Processing queue with ${autoOptimizationQueue.length} items`);
+  
+  while (autoOptimizationQueue.length > 0) {
+    const task = autoOptimizationQueue.shift();
+    
+    try {
+      await executeAutoOptimization(task);
+      console.log(`[AUTO-OPT] Successfully processed ${task.resourceType} ${task.resourceId}`);
+    } catch (error) {
+      console.error(`[AUTO-OPT] Failed to process ${task.resourceType} ${task.resourceId}:`, error.message);
+      
+      // Retry logic: add back to queue if retries < 3
+      if (task.retries < 3) {
+        task.retries++;
+        task.nextRetry = Date.now() + (Math.pow(2, task.retries) * 60000); // Exponential backoff
+        autoOptimizationQueue.push(task);
+        console.log(`[AUTO-OPT] Scheduled retry ${task.retries}/3 for ${task.resourceType} ${task.resourceId}`);
+      }
+    }
+    
+    // Rate limiting: wait 2 seconds between optimizations
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+  
+  isProcessingQueue = false;
+};
+
+// Execute individual auto-optimization task
+const executeAutoOptimization = async (task) => {
+  const { shop, accessToken, resourceType, resourceId, resourceData } = task;
+  
+  // Double-check eligibility
+  if (!(await shouldAutoOptimize(shop, accessToken))) {
+    throw new Error('Shop no longer eligible for auto-optimization');
+  }
+  
+  // Check for duplicates
+  if (await isAlreadyOptimized(shop, accessToken, resourceType, resourceId)) {
+    console.log(`[AUTO-OPT] Skipping duplicate optimization for ${resourceType} ${resourceId}`);
+    return;
+  }
+  
+  // Prepare content for optimization
+  let contentForOptimization;
+  
+  switch (resourceType) {
+    case 'product':
+      contentForOptimization = {
+        title: resourceData.title,
+        body_html: resourceData.body_html,
+        handle: resourceData.handle,
+        vendor: resourceData.vendor,
+        product_type: resourceData.product_type,
+        tags: resourceData.tags
+      };
+      break;
+      
+    case 'article':
+      contentForOptimization = {
+        title: resourceData.title,
+        body_html: resourceData.body_html,
+        handle: resourceData.handle,
+        summary: resourceData.summary,
+        tags: resourceData.tags
+      };
+      break;
+      
+    case 'page':
+      contentForOptimization = {
+        title: resourceData.title,
+        body_html: resourceData.body_html,
+        handle: resourceData.handle
+      };
+      break;
+      
+    case 'collection':
+      contentForOptimization = {
+        title: resourceData.title,
+        body_html: resourceData.body_html,
+        handle: resourceData.handle
+      };
+      break;
+      
+    default:
+      throw new Error(`Unsupported resource type: ${resourceType}`);
+  }
+  
+  // Run optimization using existing logic
+  console.log(`[AUTO-OPT] Starting optimization for ${resourceType} ${resourceId}`);
+  const optimized = await optimizeContent(contentForOptimization, resourceType, {
+    model: 'gpt-4o-mini', // Use efficient model for background processing
+    autoOptimization: true
+  });
+  
+  // Store results in metafields (non-destructive)
+  const metafieldPayload = {
+    metafield: {
+      namespace: 'asb_optimized',
+      key: `${resourceType}_${resourceId}`,
+      value: JSON.stringify({
+        optimizedContent: optimized.content,
+        optimizedTitle: optimized.optimizedTitle,
+        optimizedDescription: optimized.optimizedDescription,
+        llmDescription: optimized.llmDescription,
+        summary: optimized.summary,
+        faqs: optimized.faqs || [],
+        lastOptimized: new Date().toISOString(),
+        resourceType,
+        resourceId,
+        autoOptimized: true
+      }),
+      type: 'json'
+    }
+  };
+  
+  await axios.post(
+    `https://${shop}/admin/api/2024-01/metafields.json`,
+    metafieldPayload,
+    { headers: { 'X-Shopify-Access-Token': accessToken } }
+  );
+  
+  console.log(`[AUTO-OPT] Successfully stored optimized content for ${resourceType} ${resourceId}`);
+};
+
+// Start queue processor (runs every 30 seconds)
+setInterval(processAutoOptimizationQueue, 30000);
+
+// Webhook handler for products/create
+app.post('/webhooks/products/create', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const shop = req.headers['x-shopify-shop-domain'];
+    const accessToken = shopData.get(shop)?.accessToken;
+    
+    if (!shop || !accessToken) {
+      console.log('[AUTO-OPT] Missing shop or access token for products/create webhook');
+      return res.status(200).send('OK');
+    }
+    
+    const productData = JSON.parse(req.body.toString());
+    console.log(`[AUTO-OPT] Received products/create webhook for shop: ${shop}, product: ${productData.id}`);
+    
+    // Check eligibility and add to queue
+    if (await shouldAutoOptimize(shop, accessToken)) {
+      autoOptimizationQueue.push({
+        shop,
+        accessToken,
+        resourceType: 'product',
+        resourceId: productData.id,
+        resourceData: productData,
+        retries: 0,
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log(`[AUTO-OPT] Added product ${productData.id} to optimization queue`);
+    }
+    
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('[AUTO-OPT] Error processing products/create webhook:', error);
+    res.status(200).send('OK'); // Always return 200 to prevent Shopify retries
+  }
+});
+
+// Webhook handler for products/update
+app.post('/webhooks/products/update', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const shop = req.headers['x-shopify-shop-domain'];
+    const accessToken = shopData.get(shop)?.accessToken;
+    
+    if (!shop || !accessToken) {
+      return res.status(200).send('OK');
+    }
+    
+    const productData = JSON.parse(req.body.toString());
+    console.log(`[AUTO-OPT] Received products/update webhook for shop: ${shop}, product: ${productData.id}`);
+    
+    // Only auto-optimize if content changed significantly
+    const lastUpdated = new Date(productData.updated_at);
+    const minutesSinceUpdate = (Date.now() - lastUpdated.getTime()) / (1000 * 60);
+    
+    if (minutesSinceUpdate > 10) {
+      console.log(`[AUTO-OPT] Skipping old update for product ${productData.id}`);
+      return res.status(200).send('OK');
+    }
+    
+    if (await shouldAutoOptimize(shop, accessToken)) {
+      autoOptimizationQueue.push({
+        shop,
+        accessToken,
+        resourceType: 'product',
+        resourceId: productData.id,
+        resourceData: productData,
+        retries: 0,
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log(`[AUTO-OPT] Added updated product ${productData.id} to optimization queue`);
+    }
+    
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('[AUTO-OPT] Error processing products/update webhook:', error);
+    res.status(200).send('OK');
+  }
+});
+
+// Webhook handler for articles/create  
+app.post('/webhooks/articles/create', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const shop = req.headers['x-shopify-shop-domain'];
+    const accessToken = shopData.get(shop)?.accessToken;
+    
+    if (!shop || !accessToken) {
+      return res.status(200).send('OK');
+    }
+    
+    const articleData = JSON.parse(req.body.toString());
+    console.log(`[AUTO-OPT] Received articles/create webhook for shop: ${shop}, article: ${articleData.id}`);
+    
+    if (await shouldAutoOptimize(shop, accessToken)) {
+      autoOptimizationQueue.push({
+        shop,
+        accessToken,
+        resourceType: 'article',
+        resourceId: articleData.id,
+        resourceData: articleData,
+        retries: 0,
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log(`[AUTO-OPT] Added article ${articleData.id} to optimization queue`);
+    }
+    
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('[AUTO-OPT] Error processing articles/create webhook:', error);
+    res.status(200).send('OK');
+  }
+});
+
+// Webhook handler for articles/update
+app.post('/webhooks/articles/update', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const shop = req.headers['x-shopify-shop-domain'];
+    const accessToken = shopData.get(shop)?.accessToken;
+    
+    if (!shop || !accessToken) {
+      return res.status(200).send('OK');
+    }
+    
+    const articleData = JSON.parse(req.body.toString());
+    console.log(`[AUTO-OPT] Received articles/update webhook for shop: ${shop}, article: ${articleData.id}`);
+    
+    const lastUpdated = new Date(articleData.updated_at);
+    const minutesSinceUpdate = (Date.now() - lastUpdated.getTime()) / (1000 * 60);
+    
+    if (minutesSinceUpdate > 10) {
+      return res.status(200).send('OK');
+    }
+    
+    if (await shouldAutoOptimize(shop, accessToken)) {
+      autoOptimizationQueue.push({
+        shop,
+        accessToken,
+        resourceType: 'article',
+        resourceId: articleData.id,
+        resourceData: articleData,
+        retries: 0,
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log(`[AUTO-OPT] Added updated article ${articleData.id} to optimization queue`);
+    }
+    
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('[AUTO-OPT] Error processing articles/update webhook:', error);
+    res.status(200).send('OK');
+  }
+});
+
+// Webhook handler for collections/create
+app.post('/webhooks/collections/create', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const shop = req.headers['x-shopify-shop-domain'];
+    const accessToken = shopData.get(shop)?.accessToken;
+    
+    if (!shop || !accessToken) {
+      return res.status(200).send('OK');
+    }
+    
+    const collectionData = JSON.parse(req.body.toString());
+    console.log(`[AUTO-OPT] Received collections/create webhook for shop: ${shop}, collection: ${collectionData.id}`);
+    
+    if (await shouldAutoOptimize(shop, accessToken)) {
+      autoOptimizationQueue.push({
+        shop,
+        accessToken,
+        resourceType: 'collection',
+        resourceId: collectionData.id,
+        resourceData: collectionData,
+        retries: 0,
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log(`[AUTO-OPT] Added collection ${collectionData.id} to optimization queue`);
+    }
+    
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('[AUTO-OPT] Error processing collections/create webhook:', error);
+    res.status(200).send('OK');
+  }
+});
+
+// Webhook handler for pages/create
+app.post('/webhooks/pages/create', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const shop = req.headers['x-shopify-shop-domain'];
+    const accessToken = shopData.get(shop)?.accessToken;
+    
+    if (!shop || !accessToken) {
+      return res.status(200).send('OK');
+    }
+    
+    const pageData = JSON.parse(req.body.toString());
+    console.log(`[AUTO-OPT] Received pages/create webhook for shop: ${shop}, page: ${pageData.id}`);
+    
+    if (await shouldAutoOptimize(shop, accessToken)) {
+      autoOptimizationQueue.push({
+        shop,
+        accessToken,
+        resourceType: 'page',
+        resourceId: pageData.id,
+        resourceData: pageData,
+        retries: 0,
+        createdAt: new Date().toISOString()
+      });
+      
+      console.log(`[AUTO-OPT] Added page ${pageData.id} to optimization queue`);
+    }
+    
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('[AUTO-OPT] Error processing pages/create webhook:', error);
+    res.status(200).send('OK');
+  }
+});
+
+// API endpoint to get/set auto-optimization toggle
+app.get('/api/settings/auto-optimize', simpleVerifyShop, async (req, res) => {
+  try {
+    const shop = req.query.shop;
+    const accessToken = shopData.get(shop)?.accessToken || 'mock-token';
+    
+    const response = await axios.get(
+      `https://${shop}/admin/api/2024-01/metafields.json?namespace=asb_settings&key=auto_optimize_enabled`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    const metafield = response.data.metafields.find(m => 
+      m.namespace === 'asb_settings' && m.key === 'auto_optimize_enabled'
+    );
+    
+    const isEnabled = metafield?.value === 'true';
+    
+    res.json({
+      autoOptimizeEnabled: isEnabled,
+      requiresPaidPlan: true
+    });
+  } catch (error) {
+    console.error('Error fetching auto-optimize setting:', error);
+    res.json({
+      autoOptimizeEnabled: false,
+      requiresPaidPlan: true
+    });
+  }
+});
+
+app.post('/api/settings/auto-optimize', simpleVerifyShop, async (req, res) => {
+  try {
+    const shop = req.query.shop || req.body.shop;
+    const { enabled } = req.body;
+    const accessToken = shopData.get(shop)?.accessToken || 'mock-token';
+    
+    // Check if shop is on paid plan - use test tier if available
+    const shopInfo = shopData.get(shop);
+    const currentTier = shopInfo?.plan || 'Free';
+    const isPaidTier = ['Starter', 'Pro', 'Enterprise'].includes(currentTier);
+    
+    if (enabled && !isPaidTier) {
+      return res.status(403).json({
+        error: 'Auto-optimization requires a paid plan',
+        message: 'Upgrade to Starter, Pro, or Enterprise plan to enable auto-optimization'
+      });
+    }
+    
+    const metafieldPayload = {
+      metafield: {
+        namespace: 'asb_settings',
+        key: 'auto_optimize_enabled',
+        value: enabled.toString(),
+        type: 'boolean'
+      }
+    };
+    
+    await axios.post(
+      `https://${shop}/admin/api/2024-01/metafields.json`,
+      metafieldPayload,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    console.log(`[AUTO-OPT] Auto-optimization ${enabled ? 'enabled' : 'disabled'} for shop: ${shop}`);
+    
+    res.json({
+      success: true,
+      autoOptimizeEnabled: enabled,
+      message: `Auto-optimization ${enabled ? 'enabled' : 'disabled'} successfully`
+    });
+  } catch (error) {
+    console.error('Error updating auto-optimize setting:', error);
+    res.status(500).json({
+      error: 'Failed to update auto-optimize setting',
+      message: error.message
+    });
+  }
+});
+
+// API endpoint to get auto-optimization queue status
+app.get('/api/auto-optimize/status', simpleVerifyShop, async (req, res) => {
+  try {
+    const shop = req.query.shop;
+    const shopQueue = autoOptimizationQueue.filter(task => task.shop === shop);
+    
+    res.json({
+      queueLength: shopQueue.length,
+      isProcessing: isProcessingQueue,
+      nextItems: shopQueue.slice(0, 5).map(task => ({
+        resourceType: task.resourceType,
+        resourceId: task.resourceId,
+        retries: task.retries,
+        createdAt: task.createdAt
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching auto-optimize status:', error);
+    res.status(500).json({ error: 'Failed to fetch status' });
+  }
+});
+
+// === TESTING ENDPOINTS ===
+// Temporary tier toggle for testing auto-optimization behavior
+
+app.post('/api/test/set-tier', simpleVerifyShop, async (req, res) => {
+  try {
+    const shop = req.query.shop || req.body.shop;
+    const { tier } = req.body;
+    
+    // Validate tier
+    const validTiers = ['Free', 'Starter', 'Pro', 'Enterprise'];
+    if (!validTiers.includes(tier)) {
+      return res.status(400).json({
+        error: 'Invalid tier',
+        message: `Tier must be one of: ${validTiers.join(', ')}`
+      });
+    }
+    
+    // Update shop data
+    let shopInfo = shopData.get(shop);
+    if (!shopInfo) {
+      shopInfo = { installedAt: new Date().toISOString() };
+    }
+    
+    shopInfo.plan = tier;
+    shopInfo.testTier = true; // Mark as test tier for easy identification
+    shopData.set(shop, shopInfo);
+    
+    console.log(`[TEST] Set shop ${shop} to tier: ${tier}`);
+    
+    res.json({
+      success: true,
+      tier,
+      message: `Test tier set to ${tier}`,
+      shopData: shopInfo
+    });
+  } catch (error) {
+    console.error('Error setting test tier:', error);
+    res.status(500).json({
+      error: 'Failed to set test tier',
+      message: error.message
+    });
+  }
+});
+
+app.get('/api/test/get-tier', simpleVerifyShop, async (req, res) => {
+  try {
+    const shop = req.query.shop;
+    const shopInfo = shopData.get(shop);
+    
+    res.json({
+      tier: shopInfo?.plan || 'Free',
+      isTestTier: shopInfo?.testTier || false,
+      shopData: shopInfo
+    });
+  } catch (error) {
+    console.error('Error getting test tier:', error);
+    res.status(500).json({
+      error: 'Failed to get test tier',
+      message: error.message
+    });
+  }
+});
+
 console.log("✅ Final UI fixes deployed - July 23, 2025");
+console.log("🤖 Background Auto-Optimization system initialized - July 25, 2025");
+console.log("🧪 Test tier endpoints added - July 25, 2025");
