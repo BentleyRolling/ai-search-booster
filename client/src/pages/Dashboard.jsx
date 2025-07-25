@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import QuotaToast from '../components/QuotaToast';
 import AppBridgeActivation from '../components/AppBridgeActivation';
 import AutoOptimizeToggle from '../components/AutoOptimizeToggle';
+import UpgradeModal from '../components/UpgradeModal';
 import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft, Loader, Play, Square } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
@@ -56,6 +57,7 @@ const Dashboard = () => {
   const [autoOptimizeStatus, setAutoOptimizeStatus] = useState(null);
   const [testTier, setTestTier] = useState('Free');
   const [testTierLoading, setTestTierLoading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [draftContent, setDraftContent] = useState(new Map());
   const [showDraftModal, setShowDraftModal] = useState(false);
@@ -2511,7 +2513,7 @@ const Dashboard = () => {
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
-                      onClick={() => window.location.href = '/billing'}
+                      onClick={() => setShowUpgradeModal(true)}
                       className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
                     >
                       <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
@@ -2530,6 +2532,15 @@ const Dashboard = () => {
                       <CheckCircle className="w-3 h-3" />
                       <span>{selectedProducts.length === products.length ? 'Deselect All' : 'Select All'}</span>
                     </button>
+                    
+                    {/* Auto-Optimize Button */}
+                    <AutoOptimizeToggle
+                      enabled={autoOptimizeEnabled}
+                      loading={autoOptimizeLoading}
+                      tier={testTier}
+                      onToggle={toggleAutoOptimize}
+                      onUpgrade={() => setShowUpgradeModal(true)}
+                    />
                     <button
                       onClick={optimizeProducts}
                       disabled={optimizing || selectedProducts.length === 0 || (tierUsage && !tierUsage.hasQuota)}
@@ -2588,14 +2599,6 @@ const Dashboard = () => {
                       <RotateCcw className="w-4 h-4" />
                       <span>Rollback All</span>
                     </button>
-                    
-                    {/* Auto-Optimize Toggle */}
-                    <AutoOptimizeToggle
-                      enabled={autoOptimizeEnabled}
-                      loading={autoOptimizeLoading}
-                      tier={testTier}
-                      onToggle={toggleAutoOptimize}
-                    />
                   </div>
                 </div>
                 
@@ -2630,7 +2633,7 @@ const Dashboard = () => {
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
-                      onClick={() => window.location.href = '/billing'}
+                      onClick={() => setShowUpgradeModal(true)}
                       className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
                     >
                       <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
@@ -2649,6 +2652,15 @@ const Dashboard = () => {
                         <CheckCircle className="w-3 h-3" />
                         <span>{selectedArticles.length === articles.length ? 'Deselect All' : 'Select All'}</span>
                       </button>
+                      
+                      {/* Auto-Optimize Button */}
+                      <AutoOptimizeToggle
+                        enabled={autoOptimizeEnabled}
+                        loading={autoOptimizeLoading}
+                        tier={testTier}
+                        onToggle={toggleAutoOptimize}
+                        onUpgrade={() => setShowUpgradeModal(true)}
+                      />
                       <button
                         onClick={() => optimizeArticles()}
                         disabled={optimizing || selectedArticles.length === 0 || (tierUsage && !tierUsage.hasQuota)}
@@ -2707,14 +2719,6 @@ const Dashboard = () => {
                         <RotateCcw className="w-4 h-4" />
                         <span>Rollback All</span>
                       </button>
-                      
-                      {/* Auto-Optimize Toggle */}
-                      <AutoOptimizeToggle
-                        enabled={autoOptimizeEnabled}
-                        loading={autoOptimizeLoading}
-                        tier={testTier}
-                        onToggle={toggleAutoOptimize}
-                      />
                     </div>
                 </div>
                 
@@ -2749,7 +2753,7 @@ const Dashboard = () => {
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
-                      onClick={() => window.location.href = '/billing'}
+                      onClick={() => setShowUpgradeModal(true)}
                       className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
                     >
                       <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
@@ -2768,6 +2772,15 @@ const Dashboard = () => {
                         <CheckCircle className="w-3 h-3" />
                         <span>{selectedPages.length === pages.length ? 'Deselect All' : 'Select All'}</span>
                       </button>
+                      
+                      {/* Auto-Optimize Button */}
+                      <AutoOptimizeToggle
+                        enabled={autoOptimizeEnabled}
+                        loading={autoOptimizeLoading}
+                        tier={testTier}
+                        onToggle={toggleAutoOptimize}
+                        onUpgrade={() => setShowUpgradeModal(true)}
+                      />
                       <button
                         onClick={optimizePages}
                         disabled={optimizing || selectedPages.length === 0 || (tierUsage && !tierUsage.hasQuota)}
@@ -2825,14 +2838,6 @@ const Dashboard = () => {
                         <RotateCcw className="w-4 h-4" />
                         <span>Rollback All</span>
                       </button>
-                      
-                      {/* Auto-Optimize Toggle */}
-                      <AutoOptimizeToggle
-                        enabled={autoOptimizeEnabled}
-                        loading={autoOptimizeLoading}
-                        tier={testTier}
-                        onToggle={toggleAutoOptimize}
-                      />
                     </div>
                 </div>
                 
@@ -2874,7 +2879,7 @@ const Dashboard = () => {
                   <div className="flex space-x-2">
                     {/* Upgrade Plan Button */}
                     <button
-                      onClick={() => window.location.href = '/billing'}
+                      onClick={() => setShowUpgradeModal(true)}
                       className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
                     >
                       <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
@@ -2893,6 +2898,15 @@ const Dashboard = () => {
                         <CheckCircle className="w-3 h-3" />
                         <span>{selectedCollections.length === collections.length ? 'Deselect All' : 'Select All'}</span>
                       </button>
+                      
+                      {/* Auto-Optimize Button */}
+                      <AutoOptimizeToggle
+                        enabled={autoOptimizeEnabled}
+                        loading={autoOptimizeLoading}
+                        tier={testTier}
+                        onToggle={toggleAutoOptimize}
+                        onUpgrade={() => setShowUpgradeModal(true)}
+                      />
                       <button
                         onClick={optimizeCollections}
                         disabled={optimizing || selectedCollections.length === 0 || (tierUsage && !tierUsage.hasQuota)}
@@ -2950,14 +2964,6 @@ const Dashboard = () => {
                         <RotateCcw className="w-4 h-4" />
                         <span>Rollback All</span>
                       </button>
-                      
-                      {/* Auto-Optimize Toggle */}
-                      <AutoOptimizeToggle
-                        enabled={autoOptimizeEnabled}
-                        loading={autoOptimizeLoading}
-                        tier={testTier}
-                        onToggle={toggleAutoOptimize}
-                      />
                     </div>
                 </div>
                 
@@ -4071,6 +4077,13 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isVisible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentTier={testTier}
+      />
         </div>
       </main>
     </div>
