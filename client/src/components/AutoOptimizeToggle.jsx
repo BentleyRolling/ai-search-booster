@@ -78,9 +78,9 @@ const AutoOptimizeToggle = ({
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#2d2d2d] border border-gray-600 rounded-xl max-w-lg w-full shadow-2xl">
+          <div className="bg-[#2d2d2d] rounded-xl max-w-lg w-full shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-600">
+            <div className="flex items-center justify-between p-6">
               <div className="flex items-center space-x-3">
                 {isFree ? (
                   <>
@@ -113,7 +113,7 @@ const AutoOptimizeToggle = ({
                     <strong className="text-white">Auto-Optimization</strong> automatically optimizes all new content as soon as it's published in your Shopify store - saving you hours of manual work.
                   </p>
                   
-                  <div className="bg-[#1e1e1e] border border-gray-600 rounded-lg p-5 mb-6">
+                  <div className="bg-[#1e1e1e] rounded-lg p-5 mb-6">
                     <h4 className="text-white font-medium mb-3 flex items-center">
                       <Sparkles className="w-5 h-5 text-yellow-500 mr-2" />
                       What you'll get:
@@ -156,7 +156,7 @@ const AutoOptimizeToggle = ({
                     }
                   </p>
                   
-                  <div className="bg-[#1e1e1e] border border-gray-600 rounded-lg p-5 mb-6">
+                  <div className="bg-[#1e1e1e] rounded-lg p-5 mb-6">
                     <h4 className="text-white font-medium mb-3 flex items-center">
                       <Zap className="w-5 h-5 text-blue-400 mr-2" />
                       {enabled ? 'Currently Active:' : 'What will happen:'}
@@ -185,7 +185,7 @@ const AutoOptimizeToggle = ({
             </div>
 
             {/* Actions */}
-            <div className="flex space-x-3 p-6 border-t border-gray-600">
+            <div className="flex space-x-3 p-6">
               {isFree ? (
                 <>
                   <button

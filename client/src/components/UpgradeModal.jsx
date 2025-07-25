@@ -14,7 +14,6 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
       features: [
         'Auto-optimization for all content types',
         '250 optimizations per month',
-        'Advanced SEO improvements',
         'Automated content enhancement',
         'Priority email support'
       ],
@@ -28,12 +27,10 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
       description: 'Best for growing businesses',
       optimizations: '1,000',
       features: [
-        'Everything in Starter',
+        'Auto-optimization for all content types',
         '1,000 optimizations per month',
-        'Advanced analytics and insights',
-        'Custom optimization rules',
-        'Priority support with live chat',
-        'A/B testing capabilities'
+        'Automated content enhancement',
+        'Priority email support'
       ],
       color: 'green',
       recommended: currentTier === 'Starter'
@@ -89,9 +86,9 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#2d2d2d] border border-gray-600 rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-[#2d2d2d] rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-600 sticky top-0 bg-[#2d2d2d] z-10">
+        <div className="flex items-center justify-between p-6 sticky top-0 bg-[#2d2d2d] z-10">
           <div className="flex items-center space-x-3">
             <Crown className="w-7 h-7 text-yellow-500" />
             <div>
@@ -109,7 +106,7 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
 
         {/* Current Plan Banner */}
         {currentTier !== 'Free' && (
-          <div className="bg-[#1e1e1e] border-b border-gray-600 p-4">
+          <div className="bg-[#1e1e1e] p-4">
             <div className="flex items-center justify-center space-x-2">
               <CheckCircle className="w-5 h-5 text-green-400" />
               <span className="text-white font-medium">Current Plan: {currentTier}</span>
@@ -161,7 +158,7 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
                 </div>
 
                 {/* Features List */}
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-8 min-h-[180px]">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-start space-x-3">
                       <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
@@ -201,11 +198,7 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
 
           {/* Additional Info */}
           <div className="mt-8 text-center">
-            <p className="text-gray-400 text-sm mb-4">
-              All plans include a 7-day free trial. Cancel anytime.
-            </p>
             <div className="flex items-center justify-center space-x-6 text-xs text-gray-500">
-              <span>✓ 30-day money-back guarantee</span>
               <span>✓ No setup fees</span>
               <span>✓ Cancel anytime</span>
             </div>
