@@ -3413,10 +3413,18 @@ const Dashboard = () => {
                       ))}
                     </div>
                     
-                    <div className="text-xs text-yellow-300 space-y-1">
+                    <div className="text-xs text-yellow-300 space-y-1 mb-3">
                       <div>• Switch between Free/Starter/Pro/Enterprise to test auto-optimization behavior</div>
                       <div>• Auto-optimization toggle will update based on selected tier</div>
                       <div>• This is for testing only - remove before production</div>
+                    </div>
+                    
+                    <div className="bg-red-500/10 border border-red-500/30 rounded p-2 text-xs text-red-300">
+                      <div className="font-semibold mb-1">🛡️ SAFETY LIMITS ACTIVE:</div>
+                      <div>• Max 10 optimizations per hour</div>
+                      <div>• Max 50 optimizations per day</div>
+                      <div>• 2-hour test session timeout</div>
+                      <div>• Auto-disabled in production</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">

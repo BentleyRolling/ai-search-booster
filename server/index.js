@@ -6255,7 +6255,18 @@ const shouldAutoOptimize = async (shop, accessToken) => {
       return false;
     }
     
-    console.log(`[AUTO-OPT] Shop ${shop} eligible for auto-optimization`);
+    // SAFETY CHECK: If using test tier, check test usage limits
+    if (shopInfo?.testTier) {
+      const usageCheck = checkTestUsageLimits(shop);
+      if (!usageCheck.allowed) {
+        console.log(`[AUTO-OPT] Test limits exceeded for ${shop}: ${usageCheck.reason}`);
+        return false;
+      }
+      console.log(`[AUTO-OPT] Shop ${shop} eligible for auto-optimization (TEST MODE)`);
+    } else {
+      console.log(`[AUTO-OPT] Shop ${shop} eligible for auto-optimization`);
+    }
+    
     return true;
   } catch (error) {
     console.error(`[AUTO-OPT] Error checking auto-optimize eligibility for ${shop}:`, error.message);
@@ -6424,6 +6435,17 @@ const executeAutoOptimization = async (task) => {
   );
   
   console.log(`[AUTO-OPT] Successfully stored optimized content for ${resourceType} ${resourceId}`);
+  
+  // Update test usage tracking if in test mode
+  const shopInfo = shopData.get(shop);
+  if (shopInfo?.testTier) {
+    const testUsage = testUsageTracking.get(shop);
+    if (testUsage) {
+      testUsage.dailyCount++;
+      testUsage.hourlyCount++;
+      console.log(`[TEST-USAGE] ${shop}: ${testUsage.dailyCount}/${TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_DAY} daily, ${testUsage.hourlyCount}/${TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_HOUR} hourly`);
+    }
+  }
 };
 
 // Start queue processor (runs every 30 seconds)
@@ -6753,12 +6775,91 @@ app.get('/api/auto-optimize/status', simpleVerifyShop, async (req, res) => {
 });
 
 // === TESTING ENDPOINTS ===
-// Temporary tier toggle for testing auto-optimization behavior
+// BULLETPROOF tier testing with multiple safety layers
+// WARNING: These endpoints should be REMOVED before production
+
+// Safety configuration for testing
+const TESTING_CONFIG = {
+  ENABLE_TEST_MODE: process.env.NODE_ENV !== 'production', // Automatically disable in production
+  MAX_TEST_OPTIMIZATIONS_PER_HOUR: 10, // Hard limit even for test tiers
+  MAX_TEST_OPTIMIZATIONS_PER_DAY: 50,  // Daily safety cap
+  ALLOWED_TEST_SHOPS: [
+    'test-shop.myshopify.com',
+    'dev-shop.myshopify.com',
+    // Add your specific test shops here
+  ],
+  TEST_SESSION_TIMEOUT: 2 * 60 * 60 * 1000 // 2 hours max test session
+};
+
+// Track test usage to prevent runaway costs
+const testUsageTracking = new Map();
+
+const initializeTestUsageTracking = (shop) => {
+  const now = new Date();
+  const existing = testUsageTracking.get(shop);
+  
+  if (!existing || now - new Date(existing.lastReset) > 24 * 60 * 60 * 1000) {
+    testUsageTracking.set(shop, {
+      dailyCount: 0,
+      hourlyCount: 0,
+      lastReset: now.toISOString(),
+      lastHourReset: now.toISOString(),
+      testSessionStart: now.toISOString()
+    });
+  }
+  
+  return testUsageTracking.get(shop);
+};
+
+const checkTestUsageLimits = (shop) => {
+  const usage = initializeTestUsageTracking(shop);
+  const now = new Date();
+  
+  // Reset hourly counter if needed
+  if (now - new Date(usage.lastHourReset) > 60 * 60 * 1000) {
+    usage.hourlyCount = 0;
+    usage.lastHourReset = now.toISOString();
+  }
+  
+  // Check session timeout
+  if (now - new Date(usage.testSessionStart) > TESTING_CONFIG.TEST_SESSION_TIMEOUT) {
+    return { allowed: false, reason: 'Test session expired (2 hour limit)' };
+  }
+  
+  // Check daily limit
+  if (usage.dailyCount >= TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_DAY) {
+    return { allowed: false, reason: `Daily test limit reached (${TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_DAY})` };
+  }
+  
+  // Check hourly limit  
+  if (usage.hourlyCount >= TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_HOUR) {
+    return { allowed: false, reason: `Hourly test limit reached (${TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_HOUR})` };
+  }
+  
+  return { allowed: true };
+};
 
 app.post('/api/test/set-tier', simpleVerifyShop, async (req, res) => {
   try {
     const shop = req.query.shop || req.body.shop;
     const { tier } = req.body;
+    
+    // SAFETY CHECK 1: Test mode must be enabled
+    if (!TESTING_CONFIG.ENABLE_TEST_MODE) {
+      return res.status(403).json({
+        error: 'Test mode disabled',
+        message: 'Tier testing is disabled in production environment'
+      });
+    }
+    
+    // SAFETY CHECK 2: Shop must be in allowed test list (optional but recommended)
+    // Uncomment this for extra safety:
+    // if (!TESTING_CONFIG.ALLOWED_TEST_SHOPS.includes(shop)) {
+    //   return res.status(403).json({
+    //     error: 'Shop not authorized for testing',
+    //     message: 'This shop is not in the allowed test shops list'
+    //   });
+    // }
     
     // Validate tier
     const validTiers = ['Free', 'Starter', 'Pro', 'Enterprise'];
@@ -6775,17 +6876,28 @@ app.post('/api/test/set-tier', simpleVerifyShop, async (req, res) => {
       shopInfo = { installedAt: new Date().toISOString() };
     }
     
+    // Initialize test usage tracking
+    const testUsage = initializeTestUsageTracking(shop);
+    
     shopInfo.plan = tier;
     shopInfo.testTier = true; // Mark as test tier for easy identification
+    shopInfo.testUsage = testUsage; // Track usage for safety
     shopData.set(shop, shopInfo);
     
-    console.log(`[TEST] Set shop ${shop} to tier: ${tier}`);
+    console.log(`[TEST] Set shop ${shop} to tier: ${tier} (Session: ${testUsage.dailyCount}/${TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_DAY} daily)`);
     
     res.json({
       success: true,
       tier,
       message: `Test tier set to ${tier}`,
-      shopData: shopInfo
+      shopData: shopInfo,
+      testLimits: {
+        dailyUsed: testUsage.dailyCount,
+        dailyLimit: TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_DAY,
+        hourlyUsed: testUsage.hourlyCount,
+        hourlyLimit: TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_HOUR,
+        sessionTimeRemaining: Math.max(0, TESTING_CONFIG.TEST_SESSION_TIMEOUT - (Date.now() - new Date(testUsage.testSessionStart).getTime()))
+      }
     });
   } catch (error) {
     console.error('Error setting test tier:', error);
@@ -6799,12 +6911,31 @@ app.post('/api/test/set-tier', simpleVerifyShop, async (req, res) => {
 app.get('/api/test/get-tier', simpleVerifyShop, async (req, res) => {
   try {
     const shop = req.query.shop;
+    
+    // SAFETY CHECK: Test mode must be enabled
+    if (!TESTING_CONFIG.ENABLE_TEST_MODE) {
+      return res.json({
+        tier: 'Free',
+        isTestTier: false,
+        testModeDisabled: true,
+        message: 'Test mode disabled in production'
+      });
+    }
+    
     const shopInfo = shopData.get(shop);
+    const testUsage = testUsageTracking.get(shop);
     
     res.json({
       tier: shopInfo?.plan || 'Free',
       isTestTier: shopInfo?.testTier || false,
-      shopData: shopInfo
+      shopData: shopInfo,
+      testLimits: testUsage ? {
+        dailyUsed: testUsage.dailyCount,
+        dailyLimit: TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_DAY,
+        hourlyUsed: testUsage.hourlyCount,
+        hourlyLimit: TESTING_CONFIG.MAX_TEST_OPTIMIZATIONS_PER_HOUR,
+        sessionTimeRemaining: Math.max(0, TESTING_CONFIG.TEST_SESSION_TIMEOUT - (Date.now() - new Date(testUsage.testSessionStart).getTime()))
+      } : null
     });
   } catch (error) {
     console.error('Error getting test tier:', error);
@@ -6815,6 +6946,202 @@ app.get('/api/test/get-tier', simpleVerifyShop, async (req, res) => {
   }
 });
 
+// === PRODUCTION BILLING VALIDATION ===
+// Real Shopify billing integration for production tier enforcement
+
+const validateShopifyBilling = async (shop, accessToken) => {
+  try {
+    // Get active app subscriptions from Shopify
+    const response = await axios.get(
+      `https://${shop}/admin/api/2024-01/recurring_application_charges.json`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    const charges = response.data.recurring_application_charges || [];
+    const activeCharge = charges.find(charge => charge.status === 'active');
+    
+    if (!activeCharge) {
+      return {
+        tier: 'Free',
+        isActive: false,
+        chargeId: null,
+        planName: 'Free Plan',
+        monthlyLimit: tierConfig.Free
+      };
+    }
+    
+    // Map Shopify charge to our tier system
+    const tierMapping = {
+      'Starter Plan': 'Starter',
+      'Pro Plan': 'Pro', 
+      'Enterprise Plan': 'Enterprise'
+    };
+    
+    const tier = tierMapping[activeCharge.name] || 'Free';
+    
+    return {
+      tier,
+      isActive: true,
+      chargeId: activeCharge.id,
+      planName: activeCharge.name,
+      monthlyLimit: tierConfig[tier],
+      price: activeCharge.price,
+      billingOn: activeCharge.billing_on,
+      createdAt: activeCharge.created_at
+    };
+  } catch (error) {
+    console.error(`[BILLING] Failed to validate billing for ${shop}:`, error.message);
+    // Default to Free tier on billing API errors
+    return {
+      tier: 'Free',
+      isActive: false,
+      error: error.message,
+      monthlyLimit: tierConfig.Free
+    };
+  }
+};
+
+// API: Get real billing status and enforce limits
+app.get('/api/billing/status', simpleVerifyShop, async (req, res) => {
+  try {
+    const shop = req.query.shop;
+    const accessToken = shopData.get(shop)?.accessToken || 'mock-token';
+    
+    // Get real billing status from Shopify
+    const billingStatus = await validateShopifyBilling(shop, accessToken);
+    
+    // Get current usage
+    const usage = initializeShopUsage(shop);
+    
+    // Override usage tier with real billing tier (not test tier)
+    usage.tier = billingStatus.tier;
+    
+    const response = {
+      ...billingStatus,
+      currentUsage: usage.optimizationsThisMonth,
+      hasQuota: usage.optimizationsThisMonth < billingStatus.monthlyLimit,
+      usageThisMonth: usage.optimizationsThisMonth,
+      monthlyLimit: billingStatus.monthlyLimit,
+      recentOptimizations: usage.optimizationLog.slice(-10)
+    };
+    
+    console.log(`[BILLING] Real billing status for ${shop}:`, {
+      tier: response.tier,
+      isActive: response.isActive,
+      usage: response.currentUsage,
+      limit: response.monthlyLimit
+    });
+    
+    res.json(response);
+  } catch (error) {
+    console.error('[BILLING] Error fetching billing status:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch billing status',
+      tier: 'Free',
+      monthlyLimit: tierConfig.Free
+    });
+  }
+});
+
+// Enhanced shouldAutoOptimize with REAL billing validation
+const shouldAutoOptimizeProduction = async (shop, accessToken) => {
+  try {
+    // Check if auto-optimization toggle is enabled
+    const toggleResponse = await axios.get(
+      `https://${shop}/admin/api/2024-01/metafields.json?namespace=asb_settings&key=auto_optimize_enabled`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    const autoOptimizeEnabled = toggleResponse.data.metafields.find(m => 
+      m.namespace === 'asb_settings' && m.key === 'auto_optimize_enabled'
+    )?.value === 'true';
+    
+    if (!autoOptimizeEnabled) {
+      console.log(`[AUTO-OPT] Auto-optimization disabled for shop: ${shop}`);
+      return false;
+    }
+    
+    // Get REAL billing status from Shopify
+    const billingStatus = await validateShopifyBilling(shop, accessToken);
+    
+    if (!billingStatus.isActive || billingStatus.tier === 'Free') {
+      console.log(`[AUTO-OPT] Shop ${shop} not on active paid plan - skipping auto-optimization (Tier: ${billingStatus.tier}, Active: ${billingStatus.isActive})`);
+      return false;
+    }
+    
+    // Check usage against REAL tier limits
+    const usage = initializeShopUsage(shop);
+    if (usage.optimizationsThisMonth >= billingStatus.monthlyLimit) {
+      console.log(`[AUTO-OPT] Shop ${shop} has exceeded monthly limit: ${usage.optimizationsThisMonth}/${billingStatus.monthlyLimit}`);
+      return false;
+    }
+    
+    console.log(`[AUTO-OPT] Shop ${shop} eligible for auto-optimization (${billingStatus.tier}: ${usage.optimizationsThisMonth}/${billingStatus.monthlyLimit})`);
+    return true;
+  } catch (error) {
+    console.error(`[AUTO-OPT] Error checking real billing for ${shop}:`, error.message);
+    return false;
+  }
+};
+
 console.log("✅ Final UI fixes deployed - July 23, 2025");
 console.log("🤖 Background Auto-Optimization system initialized - July 25, 2025");
 console.log("🧪 Test tier endpoints added - July 25, 2025");
+// API: Test real billing integration (for validation)
+app.get('/api/billing/validate', simpleVerifyShop, async (req, res) => {
+  try {
+    const shop = req.query.shop;
+    const accessToken = shopData.get(shop)?.accessToken || 'mock-token';
+    
+    console.log(`[BILLING-TEST] Validating real billing for shop: ${shop}`);
+    
+    // Get real billing status
+    const billingStatus = await validateShopifyBilling(shop, accessToken);
+    
+    // Get current usage
+    const usage = initializeShopUsage(shop);
+    
+    // Test auto-optimization eligibility
+    const autoOptEligible = await shouldAutoOptimizeProduction(shop, accessToken);
+    
+    const validationResult = {
+      timestamp: new Date().toISOString(),
+      shop,
+      billing: billingStatus,
+      usage: {
+        optimizationsThisMonth: usage.optimizationsThisMonth,
+        monthlyLimit: billingStatus.monthlyLimit,
+        hasQuota: usage.optimizationsThisMonth < billingStatus.monthlyLimit,
+        recentOptimizations: usage.optimizationLog.slice(-5)
+      },
+      autoOptimization: {
+        eligible: autoOptEligible,
+        toggleEnabled: null // Will be filled by the check
+      },
+      validation: {
+        billingApiWorking: !billingStatus.error,
+        tierMapping: billingStatus.tier !== 'Free' ? 'SUCCESS' : 'FREE_TIER',
+        quotaEnforcement: billingStatus.monthlyLimit > 0 ? 'ACTIVE' : 'UNLIMITED',
+        usageTracking: usage.optimizationLog.length > 0 ? 'WORKING' : 'NO_DATA'
+      }
+    };
+    
+    console.log(`[BILLING-TEST] Validation complete:`, {
+      tier: billingStatus.tier,
+      active: billingStatus.isActive,
+      usage: `${usage.optimizationsThisMonth}/${billingStatus.monthlyLimit}`,
+      autoOptEligible
+    });
+    
+    res.json(validationResult);
+  } catch (error) {
+    console.error('[BILLING-TEST] Validation failed:', error);
+    res.status(500).json({
+      error: 'Billing validation failed',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+console.log("💳 Production billing validation system added - July 25, 2025");
