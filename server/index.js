@@ -6780,7 +6780,7 @@ app.get('/api/auto-optimize/status', simpleVerifyShop, async (req, res) => {
 
 // Safety configuration for testing
 const TESTING_CONFIG = {
-  ENABLE_TEST_MODE: process.env.NODE_ENV !== 'production', // Automatically disable in production
+  ENABLE_TEST_MODE: process.env.ENABLE_TIER_TESTING === 'true', // Enable via env var
   MAX_TEST_OPTIMIZATIONS_PER_HOUR: 10, // Hard limit even for test tiers
   MAX_TEST_OPTIMIZATIONS_PER_DAY: 50,  // Daily safety cap
   ALLOWED_TEST_SHOPS: [
@@ -6951,6 +6951,21 @@ app.get('/api/test/get-tier', simpleVerifyShop, async (req, res) => {
 
 const validateShopifyBilling = async (shop, accessToken) => {
   try {
+    // TESTING OVERRIDE: Allow manual tier setting for testing
+    if (process.env.TESTING_TIER_OVERRIDE && process.env.TESTING_SHOPS?.includes(shop)) {
+      const testTier = process.env.TESTING_TIER_OVERRIDE;
+      console.log(`[BILLING] Using test tier override: ${testTier} for shop: ${shop}`);
+      return {
+        tier: testTier,
+        isActive: testTier !== 'Free',
+        chargeId: 'test-charge-123',
+        planName: `${testTier} Plan`,
+        monthlyLimit: tierConfig[testTier],
+        price: testTier === 'Starter' ? '9.00' : testTier === 'Pro' ? '29.00' : '0.00',
+        testOverride: true
+      };
+    }
+
     // Get active app subscriptions from Shopify
     const response = await axios.get(
       `https://${shop}/admin/api/2024-01/recurring_application_charges.json`,
