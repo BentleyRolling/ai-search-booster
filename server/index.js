@@ -671,29 +671,32 @@ const optimizeContent = async (content, type, settings = {}) => {
   console.log('🔍 PROMPT SELECTION DEBUG:', debugInfo);
   
   if (type === 'product') {
-    prompt = `You are optimizing a Shopify product listing for **maximum LLM visibility and customer conversion**. This prompt is **universal** — it must work for ANY Shopify product type, including apparel, electronics, coffee, beauty, furniture, digital goods, and more.
+    prompt = `You are optimizing a Shopify product listing for maximum visibility in AI search engines (ChatGPT, Claude, Perplexity) and for high customer conversion.
 
-Return a **fully valid JSON** object using this exact schema. The result must be LLM-parsable, Shopify-appropriate, and merchant-agnostic.
+⏳ Model constraints: This will be used with GPT‑4‑mini. You must return fully valid JSON that strictly follows the schema. Use fallbacks if necessary.
 
-Product data:
+🛍️ Product data (from Shopify):
 ${JSON.stringify(content)}
 
-REQUIRED FIELDS:
+🧠 Optimization goals:
+- Enhance LLM visibility using keyword-rich, factually correct metadata
+- Retain any verifiable product details (e.g., ingredients, origin, dimensions, processing method, certifications, etc.)
+- Improve customer understanding and emotional appeal
+- Support a wide variety of product types — DO NOT assume a category (like coffee or apparel)
 
-- optimizedTitle: Include descriptive keywords (e.g., color, material, audience, use). Avoid generic titles.
-- optimizedDescription: 1–2 sentence persuasive blurb for the listing.
-- llmDescription: Keyword-rich metadata for AI understanding. Include what the product is, who it's for, and when/where it's used.
-- summary: One-sentence emotional hook or benefit statement.
-- content: 3–5 full sentences. Describe use cases, design, material, utility, and value. Human-readable.
-- faqs: Array of 5 helpful questions and answers. Complement the main content—don't repeat it.
+🚨 REQUIRED FIELDS:
 
-FACTUAL RETENTION RULE:
-If product data contains factual details (e.g., materials, ingredients, certifications, origin, dimensions, grading, warranty, processing methods), **preserve and integrate them** into relevant fields. Do not omit real, parseable facts.
+- optimizedTitle: Include key descriptors (color, material, audience, purpose). Avoid generic titles like "Premium Shirt".
+- optimizedDescription: 1–2 sentence natural summary for Shopify listings. Human-readable and persuasive.
+- llmDescription: Concise metadata summary for AI parsing. Include factual attributes (e.g., material, origin, usage, who it's for).
+- summary: One vivid sentence describing the product's emotional or functional benefit.
+- content: 3–5 full sentences explaining use cases, construction, standout details, and buyer appeal.
+- faqs: Include 5 diverse and helpful questions with answers. Avoid repeating content. Prioritize practical questions based on the product.
 
-FALLBACK HANDLING:
-If any field exceeds length or fails JSON parsing, simplify that field only. NEVER omit the content field. Always return a complete and valid JSON object with correct keys.
+📉 FALLBACK HANDLING:
+If any field fails due to token limits or parsing issues, replace with a simplified version that still returns **valid JSON**. Never omit \`content\`. Never rename \`q\` or \`a\`. Make sure the entire response is parseable.
 
-Return ONLY this JSON format:
+📌 Output ONLY the following JSON schema:
 
 {
   "optimizedTitle": "...",
@@ -708,7 +711,9 @@ Return ONLY this JSON format:
     { "q": "...", "a": "..." },
     { "q": "...", "a": "..." }
   ]
-}`;
+}
+
+Do NOT include any extra explanation. Only output the final optimized JSON.`;
   } else if (type === 'collection') {
     console.log('🧠 USING CLAUDE UNIVERSAL COLLECTION OPTIMIZATION PROMPT v5.1-infra');
     
