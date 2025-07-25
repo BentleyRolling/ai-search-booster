@@ -1,1 +1,1 @@
-DEPLOY_FRONTEND_20250725_notifications_moved_to_right
+DEPLOY_FRONTEND_20250725_auto_optimize_upsell_system

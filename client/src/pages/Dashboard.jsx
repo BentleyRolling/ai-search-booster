@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import QuotaToast from '../components/QuotaToast';
 import AppBridgeActivation from '../components/AppBridgeActivation';
+import AutoOptimizeToggle from '../components/AutoOptimizeToggle';
 import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft, Loader, Play, Square } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
@@ -1971,6 +1972,7 @@ const Dashboard = () => {
         isVisible={tierUsage && !tierUsage.hasQuota}
         usageCount={tierUsage?.usageThisMonth || 0}
         monthlyLimit={tierUsage?.monthlyLimit || 25}
+        tier={testTier}
       />
 
       {/* ChatGPT-style Collapsible Sidebar Navigation */}
@@ -2586,6 +2588,14 @@ const Dashboard = () => {
                       <RotateCcw className="w-4 h-4" />
                       <span>Rollback All</span>
                     </button>
+                    
+                    {/* Auto-Optimize Toggle */}
+                    <AutoOptimizeToggle
+                      enabled={autoOptimizeEnabled}
+                      loading={autoOptimizeLoading}
+                      tier={testTier}
+                      onToggle={toggleAutoOptimize}
+                    />
                   </div>
                 </div>
                 
@@ -2697,6 +2707,14 @@ const Dashboard = () => {
                         <RotateCcw className="w-4 h-4" />
                         <span>Rollback All</span>
                       </button>
+                      
+                      {/* Auto-Optimize Toggle */}
+                      <AutoOptimizeToggle
+                        enabled={autoOptimizeEnabled}
+                        loading={autoOptimizeLoading}
+                        tier={testTier}
+                        onToggle={toggleAutoOptimize}
+                      />
                     </div>
                 </div>
                 
@@ -2807,6 +2825,14 @@ const Dashboard = () => {
                         <RotateCcw className="w-4 h-4" />
                         <span>Rollback All</span>
                       </button>
+                      
+                      {/* Auto-Optimize Toggle */}
+                      <AutoOptimizeToggle
+                        enabled={autoOptimizeEnabled}
+                        loading={autoOptimizeLoading}
+                        tier={testTier}
+                        onToggle={toggleAutoOptimize}
+                      />
                     </div>
                 </div>
                 
@@ -2924,6 +2950,14 @@ const Dashboard = () => {
                         <RotateCcw className="w-4 h-4" />
                         <span>Rollback All</span>
                       </button>
+                      
+                      {/* Auto-Optimize Toggle */}
+                      <AutoOptimizeToggle
+                        enabled={autoOptimizeEnabled}
+                        loading={autoOptimizeLoading}
+                        tier={testTier}
+                        onToggle={toggleAutoOptimize}
+                      />
                     </div>
                 </div>
                 
