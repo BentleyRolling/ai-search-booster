@@ -4376,11 +4376,17 @@ app.post('/api/billing/subscribe', simpleVerifyShop, async (req, res) => {
     const { plan } = req.body;
     
     if (!billingPlans[plan]) {
+      console.log('[BILLING] Invalid plan requested:', plan);
+      console.log('[BILLING] Available plans:', Object.keys(billingPlans));
       return res.status(400).json({ error: 'Invalid billing plan' });
     }
     
     const shopInfo = shopData.get(shop);
+    console.log('[BILLING] Shop info exists:', !!shopInfo);
+    console.log('[BILLING] Access token exists:', !!shopInfo?.accessToken);
+    
     if (!shopInfo || !shopInfo.accessToken) {
+      console.log('[BILLING] Shop not authenticated for:', shop);
       return res.status(401).json({ error: 'Shop not authenticated' });
     }
     
@@ -4395,6 +4401,9 @@ app.post('/api/billing/subscribe', simpleVerifyShop, async (req, res) => {
     }
     
     // Create Shopify recurring application charge
+    console.log('[BILLING] Creating charge for plan:', planConfig);
+    console.log('[BILLING] APP_URL:', process.env.APP_URL);
+    
     const chargeData = {
       recurring_application_charge: {
         name: planConfig.name,
@@ -4404,6 +4413,8 @@ app.post('/api/billing/subscribe', simpleVerifyShop, async (req, res) => {
         test: process.env.NODE_ENV !== 'production' // Sandbox mode for development
       }
     };
+    
+    console.log('[BILLING] Charge data:', chargeData);
     
     try {
       const response = await axios.post(
