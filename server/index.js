@@ -826,13 +826,13 @@ Return only the JSON above. No extra commentary.`;
         
         console.log(`[CHUNKING] Split article into ${chunks.length} chunks for processing.`);
         
-        // Use first chunk for optimization (will be enhanced to process all chunks later)
+        // Store all chunks for processing
         processedContent = {
           ...content,
-          body_html: chunks[0],
+          body_html: plainText, // Keep full text for fallback
+          chunks: chunks,
           chunkInfo: {
             totalChunks: chunks.length,
-            currentChunk: 1,
             isChunked: true
           }
         };
@@ -845,7 +845,37 @@ Return only the JSON above. No extra commentary.`;
       }
     }
     
-    prompt = `You are an expert AI content optimizer. Your task is to optimize Shopify blog articles for AI search engine visibility (ChatGPT, Claude, Perplexity, etc.) without changing the original author's voice.
+    // Handle chunked vs normal processing
+    if (processedContent.chunkInfo?.isChunked) {
+      prompt = `You are an expert AI content optimizer processing a chunked blog article for LLM visibility.
+
+This article was intelligently split into ${processedContent.chunkInfo.totalChunks} chunks. Process each chunk and synthesize into unified output.
+
+Rules:
+- DO NOT truncate any content
+- Maintain the original author's voice across all chunks
+- Synthesize all chunks into one coherent optimized article
+
+Article chunks to process:
+${JSON.stringify(processedContent.chunks)}
+
+Return a single valid JSON object with all chunks synthesized:
+{
+  "optimizedTitle": "...",
+  "optimizedDescription": "...", 
+  "llmDescription": "...",
+  "summary": "...",
+  "content": "...", // Full rewritten article combining all chunks
+  "faqs": [
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." },
+    { "q": "...", "a": "..." }
+  ]
+}`;
+    } else {
+      prompt = `You are an expert AI content optimizer. Your task is to optimize Shopify blog articles for AI search engine visibility (ChatGPT, Claude, Perplexity, etc.) without changing the original author's voice.
 
 Optimize this Shopify blog post for LLM visibility.
 
@@ -870,6 +900,7 @@ Rules:
 
 Content to optimize:
 ${JSON.stringify(processedContent)}`;
+    }
   }
   
   try {
