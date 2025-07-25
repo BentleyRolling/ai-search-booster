@@ -1,1 +1,1 @@
-DEPLOY_FRONTEND_20250725_bulletproof_testing
+DEPLOY_FRONTEND_20250725_bulletproof_app_store_testing
