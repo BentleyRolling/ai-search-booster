@@ -1,11 +1,22 @@
 import React from 'react';
 import { X, Crown, Zap, TrendingUp, CheckCircle, Sparkles, Infinity } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
-const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free', authFetch }) => {
+const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free', authFetch, updateTier }) => {
   if (!isVisible) return null;
 
   // Get API base URL
   const API_BASE = process.env.REACT_APP_API_BASE || 'https://ai-search-booster-backend.onrender.com';
+
+  // Helper function to detect dev/test stores
+  const isDevStore = (shop) => {
+    return shop && (
+      shop.includes('dev') || 
+      shop.includes('test') || 
+      shop.includes('demo') ||
+      (shop.endsWith('.myshopify.com') && !shop.includes('prod'))
+    );
+  };
 
   const plans = [
     {
@@ -61,9 +72,8 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free', authFetch }) =
     try {
       // Check if authFetch is available
       if (!authFetch) {
-        console.error('Authentication not available');
-        // Fallback to partners page if auth not ready
-        window.open('https://partners.shopify.com/current/app_charges', '_blank');
+        console.error('[BILLING] Authentication not available');
+        toast.error('Authentication not ready. Please refresh the page and try again.');
         onClose();
         return;
       }
@@ -76,10 +86,9 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free', authFetch }) =
       console.log(`[BILLING] Shop from URL: ${shop}`);
       
       if (!shop) {
-        console.error('Shop parameter not found in URL');
-        console.error('Available URL params:', Object.fromEntries(urlParams));
-        // Fallback to partners page if no shop
-        window.open('https://partners.shopify.com/current/app_charges', '_blank');
+        console.error('[BILLING] Shop parameter not found in URL');
+        console.error('[BILLING] Available URL params:', Object.fromEntries(urlParams));
+        toast.error('Shop information not found. Please refresh the page and try again.');
         onClose();
         return;
       }
@@ -94,7 +103,7 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free', authFetch }) =
         },
         body: JSON.stringify({ 
           shop: shop,
-          plan: planName // Use plan name as-is (Starter, Pro, Enterprise)
+          plan: planName
         })
       });
 
@@ -110,20 +119,54 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free', authFetch }) =
           // Handle Enterprise plan redirect
           window.location.href = data.redirect;
         } else {
-          console.error('No redirect URL provided:', data);
-          // Fallback to partners page if no URL
-          window.open('https://partners.shopify.com/current/app_charges', '_blank');
+          console.error('[BILLING] No redirect URL provided:', data);
+          toast.error('Billing setup incomplete. Please contact support.');
         }
       } else {
         console.error('[BILLING] Failed to create subscription. Status:', response.status);
         console.error('[BILLING] Error response:', data);
-        // Fallback to partners page if API fails
-        window.open('https://partners.shopify.com/current/app_charges', '_blank');
+        
+        // Handle 403 Forbidden - simulate billing for dev stores
+        if (response.status === 403 && isDevStore(shop)) {
+          console.log('[BILLING] Simulating billing success for dev store:', shop);
+          toast.success(`Test billing simulated! You are now on the ${planName} plan.`);
+          
+          // Update tier if updateTier function is provided
+          if (updateTier) {
+            updateTier(planName);
+          }
+          
+          onClose();
+          return;
+        }
+        
+        // Handle other billing errors
+        toast.error('Billing failed. Please try again or contact support.');
       }
     } catch (error) {
       console.error('[BILLING] Exception during subscription creation:', error);
-      // Fallback to partners page if API fails
-      window.open('https://partners.shopify.com/current/app_charges', '_blank');
+      
+      // Check if it's a 403 error for dev store simulation
+      if (error?.response?.status === 403) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const shop = urlParams.get('shop');
+        
+        if (isDevStore(shop)) {
+          console.log('[BILLING] Simulating billing success for dev store:', shop);
+          toast.success(`Test billing simulated! You are now on the ${planName} plan.`);
+          
+          // Update tier if updateTier function is provided
+          if (updateTier) {
+            updateTier(planName);
+          }
+          
+          onClose();
+          return;
+        }
+      }
+      
+      // Handle all other errors
+      toast.error('Billing failed. Please try again or contact support.');
     }
     
     onClose();

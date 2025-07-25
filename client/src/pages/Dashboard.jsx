@@ -4084,6 +4084,7 @@ const Dashboard = () => {
         onClose={() => setShowUpgradeModal(false)}
         currentTier={testTier}
         authFetch={authFetch}
+        updateTier={setTestTier}
       />
         </div>
       </main>
