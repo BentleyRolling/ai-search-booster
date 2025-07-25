@@ -4371,6 +4371,7 @@ app.get('/api/billing/plans', simpleVerifyShop, async (req, res) => {
 // API: Create Shopify subscription charge
 app.post('/api/billing/subscribe', simpleVerifyShop, async (req, res) => {
   try {
+    console.log('[BILLING] Subscribe request received:', { body: req.body, shop: req.shop });
     const { shop } = req;
     const { plan } = req.body;
     

@@ -72,8 +72,15 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free', authFetch }) =
       const urlParams = new URLSearchParams(window.location.search);
       const shop = urlParams.get('shop');
       
+      console.log(`[BILLING] URL params:`, Object.fromEntries(urlParams));
+      console.log(`[BILLING] Shop from URL: ${shop}`);
+      
       if (!shop) {
         console.error('Shop parameter not found in URL');
+        console.error('Available URL params:', Object.fromEntries(urlParams));
+        // Fallback to partners page if no shop
+        window.open('https://partners.shopify.com/current/app_charges', '_blank');
+        onClose();
         return;
       }
 
@@ -108,12 +115,13 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free', authFetch }) =
           window.open('https://partners.shopify.com/current/app_charges', '_blank');
         }
       } else {
-        console.error('Failed to create subscription:', data.error || 'Unknown error');
+        console.error('[BILLING] Failed to create subscription. Status:', response.status);
+        console.error('[BILLING] Error response:', data);
         // Fallback to partners page if API fails
         window.open('https://partners.shopify.com/current/app_charges', '_blank');
       }
     } catch (error) {
-      console.error('Error creating subscription:', error);
+      console.error('[BILLING] Exception during subscription creation:', error);
       // Fallback to partners page if API fails
       window.open('https://partners.shopify.com/current/app_charges', '_blank');
     }

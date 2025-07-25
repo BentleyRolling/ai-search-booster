@@ -1,1 +1,1 @@
-DEPLOY_FRONTEND_20250725_fix_billing_auth_with_authenticated_fetch
+DEPLOY_FRONTEND_20250725_add_billing_debug_logging
