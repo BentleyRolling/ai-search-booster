@@ -4297,18 +4297,23 @@ app.get('/api/usage', simpleVerifyShop, async (req, res) => {
     const { shop } = req;
     
     const usage = initializeShopUsage(shop);
-    const monthlyLimit = tierConfig[usage.tier] || tierConfig.Free;
     
-    console.log(`[USAGE-DEBUG] Shop: ${shop}, Usage: ${usage.optimizationsThisMonth}, Limit: ${monthlyLimit}, Tier: ${usage.tier}`);
+    // Check for test tier override
+    const shopInfo = shopData.get(shop);
+    const currentTier = shopInfo?.plan || usage.tier;
+    const monthlyLimit = tierConfig[currentTier] || tierConfig.Free;
+    
+    console.log(`[USAGE-DEBUG] Shop: ${shop}, Usage: ${usage.optimizationsThisMonth}, Limit: ${monthlyLimit}, Tier: ${currentTier} ${shopInfo?.testTier ? '(TEST)' : ''}`);
     console.log(`[USAGE-DEBUG] Recent optimizations:`, usage.optimizationLog.slice(-5));
     
     const response = {
       usageThisMonth: usage.optimizationsThisMonth,
       monthlyLimit: monthlyLimit,
-      currentTier: usage.tier,
+      currentTier: currentTier,
       hasQuota: usage.optimizationsThisMonth < monthlyLimit,
       resetDate: usage.monthlyResetDate,
-      recentOptimizations: usage.optimizationLog.slice(-10) // Last 10 optimizations
+      recentOptimizations: usage.optimizationLog.slice(-10), // Last 10 optimizations
+      isTestTier: shopInfo?.testTier || false
     };
     
     console.log(`[USAGE-DEBUG] Sending response:`, response);

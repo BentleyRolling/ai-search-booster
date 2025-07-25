@@ -2459,7 +2459,9 @@ const Dashboard = () => {
                   
                   {/* Usage Description */}
                   <p className="text-xs text-text-muted mb-3">
-                    Remaining
+                    Remaining {tierUsage?.isTestTier && (
+                      <span className="text-yellow-400 font-medium">(Test Tier: {tierUsage.currentTier})</span>
+                    )}
                   </p>
                   
                   {/* Tier Badge */}
