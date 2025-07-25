@@ -2347,17 +2347,17 @@ const Dashboard = () => {
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-purple-400/50 transition-all duration-200 ease-out">
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">System Status</h3>
-                  <p className="text-2xl font-bold text-accent-primary mb-2">
+                  <p className="text-2xl font-bold text-accent-primary mb-4">
                     LLM Optimized
                   </p>
-                  <div className="text-xs grid grid-cols-2 gap-4">
+                  <div className="text-sm space-y-2">
                     <div className="text-center">
-                      <div className="text-text-muted mb-1">JSON-LD:</div>
-                      <div className="text-accent-primary">Active</div>
+                      <span className="text-text-muted">JSON-LD: </span>
+                      <span className="text-accent-primary font-medium">Active</span>
                     </div>
                     <div className="text-center">
-                      <div className="text-text-muted mb-1">Auto-Rollback:</div>
-                      <div className="text-accent-primary">On</div>
+                      <span className="text-text-muted">Auto-Rollback: </span>
+                      <span className="text-accent-primary font-medium">On</span>
                     </div>
                   </div>
                 </div>
