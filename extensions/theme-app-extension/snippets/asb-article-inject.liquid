@@ -5,36 +5,40 @@ Standalone snippet for article.liquid injection
 
 {% liquid
   assign article_id = article.id
-  assign optimized_content = shop.metafields.asb_optimized['article_' | append: article_id]
+  assign optimized_content = article.metafields.asb.optimized_content
+  assign faq_data = article.metafields.asb.faq_data
+  assign enable_schema = article.metafields.asb.enable_schema
+  assign published_timestamp = article.metafields.asb.published_timestamp
 %}
 
-{% if optimized_content and optimized_content != blank %}
+{% if optimized_content and optimized_content != blank and enable_schema %}
+  {% assign parsed_content = optimized_content | parse_json %}
   <!-- AI Search Booster Article Inject Start -->
   <template id="asb-article-data" style="display: none !important;">
     <article itemscope itemtype="https://schema.org/BlogPosting" class="asb-hidden-content">
       <header>
-        <h2 itemprop="headline">{{ optimized_content.optimizedTitle | default: article.title | escape }}</h2>
+        <h2 itemprop="headline">{{ parsed_content.title | default: article.title | escape }}</h2>
         <meta itemprop="datePublished" content="{{ article.published_at | date: '%Y-%m-%d' }}">
-        <meta itemprop="dateModified" content="{{ article.updated_at | date: '%Y-%m-%d' }}">
+        <meta itemprop="dateModified" content="{{ published_timestamp | default: article.updated_at | date: '%Y-%m-%d' }}">
         <meta itemprop="author" content="{{ article.author | escape }}">
-        <meta itemprop="description" content="{{ optimized_content.optimizedDescription | default: article.summary | escape }}">
-        <meta itemprop="llmDescription" content="{{ optimized_content.llmDescription | escape }}">
+        <meta itemprop="description" content="{{ parsed_content.optimizedDescription | default: article.summary | escape }}">
+        <meta itemprop="llmDescription" content="{{ parsed_content.llmDescription | escape }}">
       </header>
       
       <div class="asb-article-summary">
         <h3>Article Summary</h3>
-        <p>{{ optimized_content.summary | escape }}</p>
+        <p>{{ parsed_content.summary | escape }}</p>
       </div>
       
       <div class="asb-article-content" itemprop="articleBody">
-        {{ optimized_content.content | escape | newline_to_br }}
+        {{ parsed_content.content | escape | newline_to_br }}
       </div>
       
-      {% if optimized_content.faqs and optimized_content.faqs.size > 0 %}
+      {% if parsed_content.faqs and parsed_content.faqs.size > 0 %}
         <div class="asb-article-faqs">
           <h3>Frequently Asked Questions</h3>
           <dl>
-            {% for faq in optimized_content.faqs %}
+            {% for faq in parsed_content.faqs %}
               <dt>{{ faq.q | escape }}</dt>
               <dd>{{ faq.a | escape }}</dd>
             {% endfor %}
@@ -43,34 +47,55 @@ Standalone snippet for article.liquid injection
       {% endif %}
       
       <meta itemprop="keywords" content="{{ article.tags | join: ', ' | escape }}">
-      <meta itemprop="wordCount" content="{{ optimized_content.content | strip_html | split: ' ' | size }}">
+      <meta itemprop="wordCount" content="{{ parsed_content.content | strip_html | split: ' ' | size }}">
     </article>
   </template>
   
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    "headline": {{ optimized_content.optimizedTitle | default: article.title | json }},
-    "description": {{ optimized_content.optimizedDescription | default: article.summary | json }},
-    "articleBody": {{ optimized_content.content | json }},
-    "datePublished": {{ article.published_at | date: '%Y-%m-%d' | json }},
-    "dateModified": {{ article.updated_at | date: '%Y-%m-%d' | json }},
-    "author": {
-      "@type": "Person",
-      "name": {{ article.author | json }}
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": {{ shop.name | json }},
-      "url": {{ shop.url | json }}
-    },
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": {{ shop.url | append: blog.url | append: article.url | json }}
-    },
-    "keywords": {{ article.tags | join: ', ' | json }},
-    "wordCount": {{ optimized_content.content | strip_html | split: ' ' | size | json }}
+    "@graph": [
+      {
+        "@type": "Article",
+        "headline": {{ parsed_content.title | default: article.title | json }},
+        "description": {{ parsed_content.optimizedDescription | default: article.summary | json }},
+        "articleBody": {{ parsed_content.content | json }},
+        "datePublished": {{ article.published_at | date: '%Y-%m-%dT%H:%M:%SZ' | json }},
+        "dateModified": {{ published_timestamp | default: article.updated_at | date: '%Y-%m-%dT%H:%M:%SZ' | json }},
+        "author": {
+          "@type": "Person",
+          "name": {{ article.author | json }}
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": {{ shop.name | json }},
+          "url": {{ shop.url | json }}
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": {{ shop.url | append: blog.url | append: article.url | json }}
+        },
+        "keywords": {{ article.tags | join: ', ' | json }},
+        "wordCount": {{ parsed_content.content | strip_html | split: ' ' | size | json }}
+      }
+      {% if parsed_content.faqs and parsed_content.faqs.size > 0 %}
+      ,{
+        "@type": "FAQPage",
+        "mainEntity": [
+          {% for faq in parsed_content.faqs limit: 10 %}
+          {
+            "@type": "Question",
+            "name": {{ faq.q | json }},
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": {{ faq.a | json }}
+            }
+          }{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        ]
+      }
+      {% endif %}
+    ]
   }
   </script>
   <!-- AI Search Booster Article Inject End -->

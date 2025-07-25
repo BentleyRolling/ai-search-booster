@@ -6773,6 +6773,87 @@ app.post('/api/settings/auto-optimize', simpleVerifyShop, async (req, res) => {
   }
 });
 
+// Schema Settings API Endpoints
+app.get('/api/settings/schema', simpleVerifyShop, async (req, res) => {
+  try {
+    const shop = req.query.shop;
+    const accessToken = shopData.get(shop)?.accessToken || 'mock-token';
+    
+    const response = await axios.get(
+      `https://${shop}/admin/api/2024-01/metafields.json?namespace=asb_settings&key=schema_enabled`,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    const metafield = response.data.metafields.find(m => 
+      m.namespace === 'asb_settings' && m.key === 'schema_enabled'
+    );
+    
+    const isEnabled = metafield?.value === 'true';
+    
+    res.json({
+      schemaEnabled: isEnabled,
+      features: {
+        faqSchema: true,
+        timestampSchema: true,
+        productSchema: true,
+        articleSchema: true,
+        pageSchema: true,
+        collectionSchema: true
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching schema setting:', error);
+    res.json({
+      schemaEnabled: true, // Default to enabled for new installs
+      features: {
+        faqSchema: true,
+        timestampSchema: true,
+        productSchema: true,
+        articleSchema: true,
+        pageSchema: true,
+        collectionSchema: true
+      }
+    });
+  }
+});
+
+app.post('/api/settings/schema', simpleVerifyShop, async (req, res) => {
+  try {
+    const shop = req.query.shop || req.body.shop;
+    const { enabled } = req.body;
+    const accessToken = shopData.get(shop)?.accessToken || 'mock-token';
+    
+    const metafieldPayload = {
+      metafield: {
+        namespace: 'asb_settings',
+        key: 'schema_enabled',
+        value: enabled ? 'true' : 'false',
+        type: 'boolean'
+      }
+    };
+    
+    await axios.post(
+      `https://${shop}/admin/api/2024-01/metafields.json`,
+      metafieldPayload,
+      { headers: { 'X-Shopify-Access-Token': accessToken } }
+    );
+    
+    console.log(`[SCHEMA] JSON-LD schema ${enabled ? 'enabled' : 'disabled'} for shop: ${shop}`);
+    
+    res.json({
+      success: true,
+      schemaEnabled: enabled,
+      message: `JSON-LD schema ${enabled ? 'enabled' : 'disabled'} successfully`
+    });
+  } catch (error) {
+    console.error('Error updating schema setting:', error);
+    res.status(500).json({
+      error: 'Failed to update schema setting',
+      message: error.message
+    });
+  }
+});
+
 // API endpoint to get auto-optimization queue status
 app.get('/api/auto-optimize/status', simpleVerifyShop, async (req, res) => {
   try {

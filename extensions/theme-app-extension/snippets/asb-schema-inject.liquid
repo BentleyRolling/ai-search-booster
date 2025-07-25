@@ -1,0 +1,26 @@
+{% comment %}
+AI Search Booster - Universal Schema Injection
+Main entry point for all schema types - determines context and includes appropriate schema
+Checks global schema setting first, then individual content settings
+{% endcomment %}
+
+{% liquid
+  comment 'Check global schema setting'
+  assign global_schema_enabled = shop.metafields.asb_settings.schema_enabled
+  
+  comment 'If global setting is explicitly disabled, skip all schema'
+  if global_schema_enabled == 'false'
+    comment 'Schema globally disabled'
+  else
+    comment 'Detect content type and include appropriate schema'
+    if template contains 'product'
+      render 'asb-llm-schema'
+    elsif template contains 'article'
+      render 'asb-article-inject'
+    elsif template contains 'page'
+      render 'asb-page-schema'
+    elsif template contains 'collection'
+      render 'asb-collection-schema'
+    endif
+  endif
+%}

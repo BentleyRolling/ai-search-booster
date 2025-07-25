@@ -1,0 +1,64 @@
+{% comment %}
+AI Search Booster - Page Schema Injection Snippet
+Generates JSON-LD schema for optimized pages
+{% endcomment %}
+
+{% liquid
+  assign optimized_content = page.metafields.asb.optimized_content
+  assign faq_data = page.metafields.asb.faq_data
+  assign enable_schema = page.metafields.asb.enable_schema
+  assign published_timestamp = page.metafields.asb.published_timestamp
+%}
+
+{% if optimized_content and optimized_content != blank and enable_schema %}
+  {% assign parsed_content = optimized_content | parse_json %}
+  
+  <!-- AI Search Booster Page Schema Start -->
+  <div style="display: none">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "name": {{ parsed_content.title | default: page.title | json }},
+          "description": {{ parsed_content.optimizedDescription | default: page.content | strip_html | truncate: 160 | json }},
+          "text": {{ parsed_content.content | json }},
+          "datePublished": {{ page.created_at | date: '%Y-%m-%dT%H:%M:%SZ' | json }},
+          "dateModified": {{ published_timestamp | default: page.updated_at | date: '%Y-%m-%dT%H:%M:%SZ' | json }},
+          "publisher": {
+            "@type": "Organization",
+            "name": {{ shop.name | json }},
+            "url": {{ shop.url | json }}
+          },
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": {{ shop.url | append: page.url | json }}
+          },
+          "url": {{ shop.url | append: page.url | json }},
+          "wordCount": {{ parsed_content.content | strip_html | split: ' ' | size | json }},
+          "inLanguage": "{{ localization.language.iso_code | default: 'en' }}"
+        }
+        {% if parsed_content.faqs and parsed_content.faqs.size > 0 %}
+        ,{
+          "@type": "FAQPage",
+          "mainEntity": [
+            {% for faq in parsed_content.faqs limit: 10 %}
+            {
+              "@type": "Question",
+              "name": {{ faq.q | json }},
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": {{ faq.a | json }}
+              }
+            }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          ]
+        }
+        {% endif %}
+      ]
+    }
+    </script>
+  </div>
+  <!-- AI Search Booster Page Schema End -->
+{% endif %}

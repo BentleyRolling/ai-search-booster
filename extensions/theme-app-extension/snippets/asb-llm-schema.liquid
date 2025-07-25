@@ -15,16 +15,27 @@
 {% assign optimized_content = product.metafields.asb.optimized_content %}
 {% assign faq_data = product.metafields.asb.faq_data %}
 {% assign brand_data = shop.metafields.asb.brand_data %}
+{% assign published_timestamp = product.metafields.asb.published_timestamp %}
+
+{% if optimized_content %}
+  {% assign parsed_content = optimized_content | parse_json %}
+{% endif %}
 
 {% if enable_schema %}
-<script type="application/ld+json">
+<div style="display: none">
+  <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@graph": [
     {
       "@type": "Product",
-      "name": {{ product.title | json }},
-      "description": {% if optimized_content %}{{ optimized_content | json }}{% else %}{{ product.description | strip_html | json }}{% endif %},
+      "name": {% if parsed_content %}{{ parsed_content.title | json }}{% else %}{{ product.title | json }}{% endif %},
+      "description": {% if parsed_content %}{{ parsed_content.optimizedDescription | json }}{% else %}{{ product.description | strip_html | json }}{% endif %},
+      {% if parsed_content %}
+      "text": {{ parsed_content.content | json }},
+      {% endif %}
+      "dateCreated": {{ product.created_at | date: '%Y-%m-%dT%H:%M:%SZ' | json }},
+      "dateModified": {{ published_timestamp | default: product.updated_at | date: '%Y-%m-%dT%H:%M:%SZ' | json }},
       "brand": {
         "@type": "Brand",
         "name": {{ product.vendor | json }}
@@ -84,10 +95,10 @@
         {% for faq in faq_parsed.questions limit: 10 %}
         {
           "@type": "Question",
-          "name": {{ faq.question | json }},
+          "name": {{ faq.q | json }},
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": {{ faq.answer | json }}
+            "text": {{ faq.a | json }}
           }
         }{% unless forloop.last %},{% endunless %}
         {% endfor %}
@@ -136,7 +147,8 @@
     }
   ]
 }
-</script>
+  </script>
+</div>
 
 {% comment %}
   LLM Feed discovery link

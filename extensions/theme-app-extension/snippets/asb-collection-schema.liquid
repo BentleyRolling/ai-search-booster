@@ -1,0 +1,93 @@
+{% comment %}
+AI Search Booster - Collection Schema Injection Snippet
+Generates JSON-LD schema for optimized collections
+{% endcomment %}
+
+{% liquid
+  assign optimized_content = collection.metafields.asb.optimized_content
+  assign faq_data = collection.metafields.asb.faq_data
+  assign enable_schema = collection.metafields.asb.enable_schema
+  assign published_timestamp = collection.metafields.asb.published_timestamp
+%}
+
+{% if optimized_content and optimized_content != blank and enable_schema %}
+  {% assign parsed_content = optimized_content | parse_json %}
+  
+  <!-- AI Search Booster Collection Schema Start -->
+  <div style="display: none">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "CollectionPage",
+          "name": {{ parsed_content.title | default: collection.title | json }},
+          "description": {{ parsed_content.optimizedDescription | default: collection.description | strip_html | json }},
+          "text": {{ parsed_content.content | json }},
+          "datePublished": {{ collection.created_at | date: '%Y-%m-%dT%H:%M:%SZ' | json }},
+          "dateModified": {{ published_timestamp | default: collection.updated_at | date: '%Y-%m-%dT%H:%M:%SZ' | json }},
+          "publisher": {
+            "@type": "Organization",
+            "name": {{ shop.name | json }},
+            "url": {{ shop.url | json }}
+          },
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": {{ shop.url | append: collection.url | json }}
+          },
+          "url": {{ shop.url | append: collection.url | json }},
+          "numberOfItems": {{ collection.products_count | json }},
+          "inLanguage": "{{ localization.language.iso_code | default: 'en' }}",
+          "about": {
+            "@type": "Thing",
+            "name": {{ collection.title | json }},
+            "description": {{ parsed_content.llmDescription | default: collection.description | strip_html | json }}
+          }
+        },
+        {
+          "@type": "ItemList",
+          "numberOfItems": {{ collection.products_count | json }},
+          "itemListElement": [
+            {% for product in collection.products limit: 20 %}
+            {
+              "@type": "ListItem",
+              "position": {{ forloop.index | json }},
+              "item": {
+                "@type": "Product",
+                "name": {{ product.title | json }},
+                "url": {{ shop.url | append: product.url | json }},
+                "image": {% if product.featured_image %}{{ product.featured_image | image_url: width: 400 | json }}{% else %}null{% endif %},
+                "offers": {
+                  "@type": "Offer",
+                  "priceCurrency": {{ cart.currency.iso_code | json }},
+                  "price": {{ product.price | divided_by: 100.0 | json }},
+                  "availability": "{% if product.available %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
+                }
+              }
+            }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          ]
+        }
+        {% if parsed_content.faqs and parsed_content.faqs.size > 0 %}
+        ,{
+          "@type": "FAQPage",
+          "mainEntity": [
+            {% for faq in parsed_content.faqs limit: 10 %}
+            {
+              "@type": "Question",
+              "name": {{ faq.q | json }},
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": {{ faq.a | json }}
+              }
+            }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+          ]
+        }
+        {% endif %}
+      ]
+    }
+    </script>
+  </div>
+  <!-- AI Search Booster Collection Schema End -->
+{% endif %}
