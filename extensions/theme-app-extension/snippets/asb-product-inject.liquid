@@ -1,0 +1,76 @@
+{% comment %}
+AI Search Booster - Product Page Injection Snippet
+Standalone snippet for product.liquid injection
+{% endcomment %}
+
+{% liquid
+  assign product_id = product.id
+  assign optimized_content = shop.metafields.asb_optimized['product_' | append: product_id]
+%}
+
+{% if optimized_content and optimized_content != blank %}
+  <!-- AI Search Booster Product Inject Start -->
+  <template id="asb-product-data" style="display: none !important;">
+    <section itemscope itemtype="https://schema.org/Product" class="asb-hidden-content">
+      <header>
+        <h2 itemprop="name">{{ optimized_content.optimizedTitle | default: product.title | escape }}</h2>
+        <meta itemprop="description" content="{{ optimized_content.optimizedDescription | default: product.description | strip_html | escape }}">
+        <meta itemprop="llmDescription" content="{{ optimized_content.llmDescription | escape }}">
+      </header>
+      
+      <div class="asb-product-summary">
+        <h3>Product Summary</h3>
+        <p>{{ optimized_content.summary | escape }}</p>
+      </div>
+      
+      <div class="asb-product-content" itemprop="productDetails">
+        {{ optimized_content.content | escape | newline_to_br }}
+      </div>
+      
+      {% if optimized_content.faqs and optimized_content.faqs.size > 0 %}
+        <div class="asb-product-faqs">
+          <h3>Product Questions & Answers</h3>
+          <dl>
+            {% for faq in optimized_content.faqs %}
+              <dt>{{ faq.q | escape }}</dt>
+              <dd>{{ faq.a | escape }}</dd>
+            {% endfor %}
+          </dl>
+        </div>
+      {% endif %}
+      
+      <meta itemprop="sku" content="{{ product.selected_or_first_available_variant.sku | escape }}">
+      <meta itemprop="brand" content="{{ product.vendor | escape }}">
+      <meta itemprop="category" content="{{ product.product_type | escape }}">
+    </section>
+  </template>
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": {{ optimized_content.optimizedTitle | default: product.title | json }},
+    "description": {{ optimized_content.optimizedDescription | default: product.description | strip_html | json }},
+    "productID": {{ product.id | json }},
+    "sku": {{ product.selected_or_first_available_variant.sku | json }},
+    "brand": {
+      "@type": "Brand",
+      "name": {{ product.vendor | json }}
+    },
+    "category": {{ product.product_type | json }},
+    "offers": {
+      "@type": "Offer",
+      "price": {{ product.selected_or_first_available_variant.price | money_without_currency | json }},
+      "priceCurrency": {{ cart.currency.iso_code | json }},
+      "availability": {% if product.selected_or_first_available_variant.available %}"https://schema.org/InStock"{% else %}"https://schema.org/OutOfStock"{% endif %},
+      "url": {{ shop.url | append: product.url | json }}
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "reviewCount": "1"
+    }
+  }
+  </script>
+  <!-- AI Search Booster Product Inject End -->
+{% endif %}

@@ -1,0 +1,77 @@
+{% comment %}
+AI Search Booster - Article Page Injection Snippet
+Standalone snippet for article.liquid injection
+{% endcomment %}
+
+{% liquid
+  assign article_id = article.id
+  assign optimized_content = shop.metafields.asb_optimized['article_' | append: article_id]
+%}
+
+{% if optimized_content and optimized_content != blank %}
+  <!-- AI Search Booster Article Inject Start -->
+  <template id="asb-article-data" style="display: none !important;">
+    <article itemscope itemtype="https://schema.org/BlogPosting" class="asb-hidden-content">
+      <header>
+        <h2 itemprop="headline">{{ optimized_content.optimizedTitle | default: article.title | escape }}</h2>
+        <meta itemprop="datePublished" content="{{ article.published_at | date: '%Y-%m-%d' }}">
+        <meta itemprop="dateModified" content="{{ article.updated_at | date: '%Y-%m-%d' }}">
+        <meta itemprop="author" content="{{ article.author | escape }}">
+        <meta itemprop="description" content="{{ optimized_content.optimizedDescription | default: article.summary | escape }}">
+        <meta itemprop="llmDescription" content="{{ optimized_content.llmDescription | escape }}">
+      </header>
+      
+      <div class="asb-article-summary">
+        <h3>Article Summary</h3>
+        <p>{{ optimized_content.summary | escape }}</p>
+      </div>
+      
+      <div class="asb-article-content" itemprop="articleBody">
+        {{ optimized_content.content | escape | newline_to_br }}
+      </div>
+      
+      {% if optimized_content.faqs and optimized_content.faqs.size > 0 %}
+        <div class="asb-article-faqs">
+          <h3>Frequently Asked Questions</h3>
+          <dl>
+            {% for faq in optimized_content.faqs %}
+              <dt>{{ faq.q | escape }}</dt>
+              <dd>{{ faq.a | escape }}</dd>
+            {% endfor %}
+          </dl>
+        </div>
+      {% endif %}
+      
+      <meta itemprop="keywords" content="{{ article.tags | join: ', ' | escape }}">
+      <meta itemprop="wordCount" content="{{ optimized_content.content | strip_html | split: ' ' | size }}">
+    </article>
+  </template>
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": {{ optimized_content.optimizedTitle | default: article.title | json }},
+    "description": {{ optimized_content.optimizedDescription | default: article.summary | json }},
+    "articleBody": {{ optimized_content.content | json }},
+    "datePublished": {{ article.published_at | date: '%Y-%m-%d' | json }},
+    "dateModified": {{ article.updated_at | date: '%Y-%m-%d' | json }},
+    "author": {
+      "@type": "Person",
+      "name": {{ article.author | json }}
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": {{ shop.name | json }},
+      "url": {{ shop.url | json }}
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": {{ shop.url | append: blog.url | append: article.url | json }}
+    },
+    "keywords": {{ article.tags | join: ', ' | json }},
+    "wordCount": {{ optimized_content.content | strip_html | split: ' ' | size | json }}
+  }
+  </script>
+  <!-- AI Search Booster Article Inject End -->
+{% endif %}

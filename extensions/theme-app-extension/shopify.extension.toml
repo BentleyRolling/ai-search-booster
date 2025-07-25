@@ -1,2 +1,51 @@
-name = "AI Search Booster"
+api_version = "2024-01"
+
+[[extensions]]
 type = "theme"
+name = "AI Search Booster"
+
+[extensions.settings]
+name = "ai_search_booster_settings"
+label = "AI Search Booster Settings"
+
+[[extensions.settings.settings]]
+type = "checkbox"
+id = "enable_injection"
+label = "Enable AI Content Injection"
+default = true
+info = "Inject AI-optimized content for LLM visibility (invisible to customers)"
+
+[[extensions.settings.settings]]
+type = "checkbox"
+id = "enable_blog_optimization"
+label = "Optimize Blog Articles"
+default = true
+info = "Inject optimized blog content for AI search engines"
+
+[[extensions.settings.settings]]
+type = "checkbox"
+id = "enable_product_optimization"
+label = "Optimize Product Pages"
+default = true
+info = "Inject optimized product content for AI search engines"
+
+[[extensions.settings.settings]]
+type = "checkbox"
+id = "enable_collection_optimization"
+label = "Optimize Collection Pages"
+default = true
+info = "Inject optimized collection content for AI search engines"
+
+[[extensions.settings.settings]]
+type = "checkbox"
+id = "enable_page_optimization"
+label = "Optimize Pages"
+default = true
+info = "Inject optimized page content for AI search engines"
+
+[[extensions.settings.settings]]
+type = "checkbox"
+id = "enable_json_ld"
+label = "Include JSON-LD Schema"
+default = true
+info = "Add structured data for enhanced AI understanding"

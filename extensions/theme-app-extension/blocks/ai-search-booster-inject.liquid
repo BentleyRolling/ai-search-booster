@@ -1,0 +1,321 @@
+{% comment %}
+AI Search Booster - Theme App Extension Block
+Injects AI-optimized content invisible to customers but visible to LLM crawlers
+{% endcomment %}
+
+{% liquid
+  assign enable_injection = block.settings.enable_injection | default: true
+  assign enable_blog = block.settings.enable_blog_optimization | default: true
+  assign enable_product = block.settings.enable_product_optimization | default: true
+  assign enable_collection = block.settings.enable_collection_optimization | default: true
+  assign enable_page = block.settings.enable_page_optimization | default: true
+  assign enable_json_ld = block.settings.enable_json_ld | default: true
+%}
+
+{% if enable_injection %}
+  <!-- AI Search Booster Inject Start -->
+  <div id="ai-search-booster" style="display: none !important; visibility: hidden !important; position: absolute !important; left: -9999px !important; width: 0 !important; height: 0 !important;" aria-hidden="true" role="presentation">
+    
+    {% comment %} Blog Article Optimization {% endcomment %}
+    {% if template contains 'article' and enable_blog and article %}
+      {% assign article_id = article.id %}
+      {% assign optimized_content = shop.metafields.asb_optimized['article_' | append: article_id] %}
+      
+      {% if optimized_content and optimized_content != blank %}
+        <article itemscope itemtype="https://schema.org/BlogPosting">
+          <header>
+            <h2 itemprop="headline">{{ optimized_content.optimizedTitle | default: article.title | escape }}</h2>
+            <meta itemprop="datePublished" content="{{ article.published_at | date: '%Y-%m-%d' }}">
+            <meta itemprop="author" content="{{ article.author | escape }}">
+          </header>
+          
+          <section itemprop="description">
+            <p>{{ optimized_content.optimizedDescription | default: article.summary | escape }}</p>
+          </section>
+          
+          <section>
+            <h3>Content Summary</h3>
+            <p>{{ optimized_content.summary | escape }}</p>
+          </section>
+          
+          <section itemprop="articleBody">
+            {{ optimized_content.content | escape | newline_to_br }}
+          </section>
+          
+          {% if optimized_content.faqs and optimized_content.faqs.size > 0 %}
+            <section>
+              <h3>Frequently Asked Questions</h3>
+              <ul>
+                {% for faq in optimized_content.faqs %}
+                  <li>
+                    <strong>{{ faq.q | escape }}</strong>
+                    <p>{{ faq.a | escape }}</p>
+                  </li>
+                {% endfor %}
+              </ul>
+            </section>
+          {% endif %}
+          
+          <meta itemprop="llmDescription" content="{{ optimized_content.llmDescription | escape }}">
+        </article>
+        
+        {% if enable_json_ld %}
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            "headline": {{ optimized_content.optimizedTitle | default: article.title | json }},
+            "description": {{ optimized_content.optimizedDescription | default: article.summary | json }},
+            "articleBody": {{ optimized_content.content | json }},
+            "datePublished": {{ article.published_at | date: '%Y-%m-%d' | json }},
+            "dateModified": {{ article.updated_at | date: '%Y-%m-%d' | json }},
+            "author": {
+              "@type": "Person",
+              "name": {{ article.author | json }}
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": {{ shop.name | json }}
+            }
+          }
+          </script>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+
+    {% comment %} Product Optimization {% endcomment %}
+    {% if template contains 'product' and enable_product and product %}
+      {% assign product_id = product.id %}
+      {% assign optimized_content = shop.metafields.asb_optimized['product_' | append: product_id] %}
+      
+      {% if optimized_content and optimized_content != blank %}
+        <article itemscope itemtype="https://schema.org/Product">
+          <header>
+            <h2 itemprop="name">{{ optimized_content.optimizedTitle | default: product.title | escape }}</h2>
+          </header>
+          
+          <section itemprop="description">
+            <p>{{ optimized_content.optimizedDescription | default: product.description | strip_html | escape }}</p>
+          </section>
+          
+          <section>
+            <h3>Product Summary</h3>
+            <p>{{ optimized_content.summary | escape }}</p>
+          </section>
+          
+          <section>
+            {{ optimized_content.content | escape | newline_to_br }}
+          </section>
+          
+          {% if optimized_content.faqs and optimized_content.faqs.size > 0 %}
+            <section>
+              <h3>Product Questions & Answers</h3>
+              <ul>
+                {% for faq in optimized_content.faqs %}
+                  <li>
+                    <strong>{{ faq.q | escape }}</strong>
+                    <p>{{ faq.a | escape }}</p>
+                  </li>
+                {% endfor %}
+              </ul>
+            </section>
+          {% endif %}
+          
+          <meta itemprop="llmDescription" content="{{ optimized_content.llmDescription | escape }}">
+          <meta itemprop="sku" content="{{ product.selected_or_first_available_variant.sku | escape }}">
+          <meta itemprop="brand" content="{{ product.vendor | escape }}">
+        </article>
+        
+        {% if enable_json_ld %}
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": {{ optimized_content.optimizedTitle | default: product.title | json }},
+            "description": {{ optimized_content.optimizedDescription | default: product.description | strip_html | json }},
+            "brand": {
+              "@type": "Brand",
+              "name": {{ product.vendor | json }}
+            },
+            "sku": {{ product.selected_or_first_available_variant.sku | json }},
+            "offers": {
+              "@type": "Offer",
+              "price": {{ product.selected_or_first_available_variant.price | money_without_currency | json }},
+              "priceCurrency": {{ cart.currency.iso_code | json }},
+              "availability": "https://schema.org/InStock"
+            }
+          }
+          </script>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+
+    {% comment %} Collection Optimization {% endcomment %}
+    {% if template contains 'collection' and enable_collection and collection %}
+      {% assign collection_id = collection.id %}
+      {% assign optimized_content = shop.metafields.asb_optimized['collection_' | append: collection_id] %}
+      
+      {% if optimized_content and optimized_content != blank %}
+        <section itemscope itemtype="https://schema.org/CollectionPage">
+          <header>
+            <h2 itemprop="name">{{ optimized_content.optimizedTitle | default: collection.title | escape }}</h2>
+          </header>
+          
+          <section itemprop="description">
+            <p>{{ optimized_content.optimizedDescription | default: collection.description | strip_html | escape }}</p>
+          </section>
+          
+          <section>
+            <h3>Collection Summary</h3>
+            <p>{{ optimized_content.summary | escape }}</p>
+          </section>
+          
+          <section>
+            {{ optimized_content.content | escape | newline_to_br }}
+          </section>
+          
+          {% if optimized_content.faqs and optimized_content.faqs.size > 0 %}
+            <section>
+              <h3>Collection Information</h3>
+              <ul>
+                {% for faq in optimized_content.faqs %}
+                  <li>
+                    <strong>{{ faq.q | escape }}</strong>
+                    <p>{{ faq.a | escape }}</p>
+                  </li>
+                {% endfor %}
+              </ul>
+            </section>
+          {% endif %}
+          
+          <meta itemprop="llmDescription" content="{{ optimized_content.llmDescription | escape }}">
+        </section>
+        
+        {% if enable_json_ld %}
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": {{ optimized_content.optimizedTitle | default: collection.title | json }},
+            "description": {{ optimized_content.optimizedDescription | default: collection.description | strip_html | json }},
+            "numberOfItems": {{ collection.products_count | json }}
+          }
+          </script>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+
+    {% comment %} Page Optimization {% endcomment %}
+    {% if template contains 'page' and enable_page and page %}
+      {% assign page_id = page.id %}
+      {% assign optimized_content = shop.metafields.asb_optimized['page_' | append: page_id] %}
+      
+      {% if optimized_content and optimized_content != blank %}
+        <article itemscope itemtype="https://schema.org/WebPage">
+          <header>
+            <h2 itemprop="name">{{ optimized_content.optimizedTitle | default: page.title | escape }}</h2>
+          </header>
+          
+          <section itemprop="description">
+            <p>{{ optimized_content.optimizedDescription | default: page.summary | escape }}</p>
+          </section>
+          
+          <section>
+            <h3>Page Summary</h3>
+            <p>{{ optimized_content.summary | escape }}</p>
+          </section>
+          
+          <section itemprop="mainContentOfPage">
+            {{ optimized_content.content | escape | newline_to_br }}
+          </section>
+          
+          {% if optimized_content.faqs and optimized_content.faqs.size > 0 %}
+            <section>
+              <h3>Frequently Asked Questions</h3>
+              <ul>
+                {% for faq in optimized_content.faqs %}
+                  <li>
+                    <strong>{{ faq.q | escape }}</strong>
+                    <p>{{ faq.a | escape }}</p>
+                  </li>
+                {% endfor %}
+              </ul>
+            </section>
+          {% endif %}
+          
+          <meta itemprop="llmDescription" content="{{ optimized_content.llmDescription | escape }}">
+        </article>
+        
+        {% if enable_json_ld %}
+          <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": {{ optimized_content.optimizedTitle | default: page.title | json }},
+            "description": {{ optimized_content.optimizedDescription | default: page.summary | json }},
+            "mainContentOfPage": {{ optimized_content.content | json }}
+          }
+          </script>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+
+  </div>
+  <!-- AI Search Booster Inject End -->
+{% endif %}
+
+{% schema %}
+{
+  "name": "AI Search Booster",
+  "target": "body",
+  "available_if": "{{ app.id }}",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_injection",
+      "label": "Enable AI Content Injection",
+      "default": true,
+      "info": "Inject AI-optimized content for LLM visibility (invisible to customers)"
+    },
+    {
+      "type": "header",
+      "content": "Content Types"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_blog_optimization",
+      "label": "Optimize Blog Articles",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_product_optimization", 
+      "label": "Optimize Product Pages",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_collection_optimization",
+      "label": "Optimize Collection Pages", 
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_page_optimization",
+      "label": "Optimize Pages",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Advanced Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_json_ld",
+      "label": "Include JSON-LD Schema",
+      "default": true,
+      "info": "Add structured data for enhanced AI understanding"
+    }
+  ]
+}
+{% endschema %}

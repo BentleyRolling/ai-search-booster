@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QuotaToast from '../components/QuotaToast';
+import AppBridgeActivation from '../components/AppBridgeActivation';
 import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft, Loader, Play, Square } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
@@ -2145,6 +2146,9 @@ const Dashboard = () => {
           ))}
         </div>
       )}
+
+      {/* Theme App Extension Activation */}
+      <AppBridgeActivation shopDomain={shop} apiKey={process.env.SHOPIFY_API_KEY} />
 
       {/* Citation Notifications */}
       {citations.length > 0 && (
