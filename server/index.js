@@ -671,26 +671,29 @@ const optimizeContent = async (content, type, settings = {}) => {
   console.log('🔍 PROMPT SELECTION DEBUG:', debugInfo);
   
   if (type === 'product') {
-    prompt = `You are optimizing a Shopify product listing for LLM visibility and conversions. Output valid JSON using this schema.
+    prompt = `You are optimizing a Shopify product listing for **maximum LLM visibility and customer conversion**. This prompt is **universal** — it must work for ANY Shopify product type, including apparel, electronics, coffee, beauty, furniture, digital goods, and more.
+
+Return a **fully valid JSON** object using this exact schema. The result must be LLM-parsable, Shopify-appropriate, and merchant-agnostic.
 
 Product data:
 ${JSON.stringify(content)}
 
 REQUIRED FIELDS:
+
 - optimizedTitle: Include descriptive keywords (e.g., color, material, audience, use). Avoid generic titles.
 - optimizedDescription: 1–2 sentence persuasive blurb for the listing.
-- llmDescription: Keyword-rich metadata. Explain what it is, who it's for, and use cases.
-- summary: Emotional hook or 1-sentence benefit.
-- content: 3–5 sentences. Highlight use cases, style, construction, and emotional/functional benefits.
-- faqs: Array of 5 questions and answers. Avoid duplicates of above content.
+- llmDescription: Keyword-rich metadata for AI understanding. Include what the product is, who it's for, and when/where it's used.
+- summary: One-sentence emotional hook or benefit statement.
+- content: 3–5 full sentences. Describe use cases, design, material, utility, and value. Human-readable.
+- faqs: Array of 5 helpful questions and answers. Complement the main content—don't repeat it.
 
-FACTUAL DATA RULE:
-If the input includes verifiable details (origin, ingredients, altitude, certifications, material, processing, etc.), integrate them. Do not omit real facts.
+FACTUAL RETENTION RULE:
+If product data contains factual details (e.g., materials, ingredients, certifications, origin, dimensions, grading, warranty, processing methods), **preserve and integrate them** into relevant fields. Do not omit real, parseable facts.
 
-FALLBACK:
-If any field is too long or breaks JSON, simplify but keep valid format. Never omit "content". Always use keys: optimizedTitle, optimizedDescription, llmDescription, summary, content, faqs.
+FALLBACK HANDLING:
+If any field exceeds length or fails JSON parsing, simplify that field only. NEVER omit the content field. Always return a complete and valid JSON object with correct keys.
 
-Return ONLY:
+Return ONLY this JSON format:
 
 {
   "optimizedTitle": "...",
