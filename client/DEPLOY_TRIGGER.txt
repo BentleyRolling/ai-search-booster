@@ -1,1 +1,1 @@
-DEPLOY_FRONTEND_20250725_fix_billing_integration_with_shopify_api
+DEPLOY_FRONTEND_20250725_fix_billing_auth_with_authenticated_fetch

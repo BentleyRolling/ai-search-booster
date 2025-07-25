@@ -4083,6 +4083,7 @@ const Dashboard = () => {
         isVisible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         currentTier={testTier}
+        authFetch={authFetch}
       />
         </div>
       </main>

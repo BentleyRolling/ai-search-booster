@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Crown, Zap, TrendingUp, CheckCircle, Sparkles, Infinity } from 'lucide-react';
 
-const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
+const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free', authFetch }) => {
   if (!isVisible) return null;
 
   // Get API base URL
@@ -59,6 +59,15 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
 
   const handleSelectPlan = async (planName) => {
     try {
+      // Check if authFetch is available
+      if (!authFetch) {
+        console.error('Authentication not available');
+        // Fallback to partners page if auth not ready
+        window.open('https://partners.shopify.com/current/app_charges', '_blank');
+        onClose();
+        return;
+      }
+
       // Get shop parameter from URL
       const urlParams = new URLSearchParams(window.location.search);
       const shop = urlParams.get('shop');
@@ -68,8 +77,10 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
         return;
       }
 
-      // Call billing API to create Shopify subscription
-      const response = await fetch(`${API_BASE}/api/billing/subscribe`, {
+      console.log(`[BILLING] Attempting to subscribe to plan: ${planName} for shop: ${shop}`);
+      
+      // Call billing API to create Shopify subscription using authenticated fetch
+      const response = await authFetch(`${API_BASE}/api/billing/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,7 +91,9 @@ const UpgradeModal = ({ isVisible, onClose, currentTier = 'Free' }) => {
         })
       });
 
+      console.log(`[BILLING] Response status: ${response.status}`);
       const data = await response.json();
+      console.log(`[BILLING] Response data:`, data);
       
       if (response.ok) {
         if (data.confirmationUrl) {
