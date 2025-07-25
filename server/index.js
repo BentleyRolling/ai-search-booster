@@ -4439,8 +4439,17 @@ app.post('/api/billing/subscribe', simpleVerifyShop, async (req, res) => {
       });
       
     } catch (shopifyError) {
-      console.error('[BILLING] Shopify API error:', shopifyError.response?.data || shopifyError.message);
-      res.status(500).json({ error: 'Failed to create subscription with Shopify' });
+      console.error('[BILLING] Shopify API error details:');
+      console.error('- Status:', shopifyError.response?.status);
+      console.error('- Status Text:', shopifyError.response?.statusText);
+      console.error('- Response Data:', JSON.stringify(shopifyError.response?.data, null, 2));
+      console.error('- Request URL:', `https://${shop}/admin/api/2024-01/recurring_application_charges.json`);
+      console.error('- Error Message:', shopifyError.message);
+      res.status(500).json({ 
+        error: 'Failed to create subscription with Shopify',
+        details: shopifyError.response?.data || shopifyError.message,
+        status: shopifyError.response?.status
+      });
     }
     
   } catch (error) {
