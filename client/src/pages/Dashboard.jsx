@@ -2005,7 +2005,10 @@ const Dashboard = () => {
               className={`${sidebarCollapsed ? 'w-8 h-8' : 'w-24 h-24'} object-contain transition-all duration-300`}
             />
             {!sidebarCollapsed && (
-              <p className="text-text-muted text-sm">Make your store AI‑discoverable</p>
+              <p className="text-text-muted text-sm">
+                <span className="block">Optimize for ChatGPT,</span>
+                <span className="block">Gemini, Claude & More!</span>
+              </p>
             )}
           </div>
         </div>
@@ -2141,7 +2144,10 @@ const Dashboard = () => {
                     alt="AI Search Booster" 
                     className="w-24 h-24 object-contain"
                   />
-                  <p className="text-text-muted text-sm">Make your store AI‑discoverable</p>
+                  <p className="text-text-muted text-sm">
+                <span className="block">Optimize for ChatGPT,</span>
+                <span className="block">Gemini, Claude & More!</span>
+              </p>
                 </div>
               </div>
 
