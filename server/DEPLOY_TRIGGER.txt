@@ -1,1 +1,1 @@
-DEPLOY_BACKEND_20250726_security_fixes_complete
+DEPLOY_BACKEND_20250726_boost_ai_discovery_tab
