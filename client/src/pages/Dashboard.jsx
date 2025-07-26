@@ -2077,7 +2077,7 @@ const Dashboard = () => {
           
           {/* Support Section Header */}
           {!sidebarCollapsed && (
-            <div className="px-3 pb-2">
+            <div className="px-3 pb-2 pt-4">
               <h3 className="text-white text-sm font-semibold uppercase tracking-wide">Support</h3>
             </div>
           )}
