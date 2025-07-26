@@ -2030,7 +2030,7 @@ const Dashboard = () => {
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {/* Optimization Section Header */}
           {!sidebarCollapsed && (
             <div className="px-3 pb-2">
@@ -2049,7 +2049,7 @@ const Dashboard = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between p-3'} rounded-xl text-left transition-all duration-200 ease-out ${
+              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'justify-between py-2 px-3'} rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === tab.id
                   ? 'bg-[#2a2a2a] text-white font-medium shadow-lg'
                   : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
@@ -2091,7 +2091,7 @@ const Dashboard = () => {
             <button
               key={helpTab.id}
               onClick={() => setActiveTab(helpTab.id)}
-              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 p-3'} rounded-xl text-left transition-all duration-200 ease-out ${
+              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 py-2 px-3'} rounded-xl text-left transition-all duration-200 ease-out ${
                 activeTab === helpTab.id
                   ? 'bg-[#2a2a2a] text-white font-medium shadow-lg'
                   : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
@@ -2108,7 +2108,7 @@ const Dashboard = () => {
         <div className="p-4">
           <button
             onClick={() => setActiveTab('settings')}
-            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 p-3'} rounded-xl text-left transition-all duration-200 ease-out ${
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center p-2' : 'space-x-3 py-2 px-3'} rounded-xl text-left transition-all duration-200 ease-out ${
               activeTab === 'settings'
                 ? 'bg-[#2a2a2a] text-white font-medium shadow-lg'
                 : 'text-text-secondary hover:bg-[#2a2a2a] hover:text-text-primary'
