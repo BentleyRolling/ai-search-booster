@@ -2759,7 +2759,6 @@ const Dashboard = () => {
                           onPublish={publishDraft}
                           onRollback={rollback}
                           title={article.title}
-                          subtitle={`${article.blogTitle} • ${new Date(article.created_at).toLocaleDateString()}`}
                         />
                       ))}
                     </div>
@@ -2878,7 +2877,6 @@ const Dashboard = () => {
                           onPublish={publishDraft}
                           onRollback={rollback}
                           title={page.title}
-                          subtitle={`${page.handle} • ${new Date(page.updated_at).toLocaleDateString()}`}
                         />
                       ))}
                     </div>
@@ -3001,7 +2999,6 @@ const Dashboard = () => {
                           onPublish={publishDraft}
                           onRollback={rollback}
                           title={category.title}
-                          subtitle={`${category.handle}${category.description ? ` • ${category.description.substring(0, 40)}...` : ''}`}
                         />
                       ))}
                     </div>
