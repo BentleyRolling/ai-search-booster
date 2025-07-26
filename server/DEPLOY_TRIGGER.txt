@@ -1,1 +1,1 @@
-DEPLOY_BACKEND_20250726_smaller_upgrade_button
+DEPLOY_BACKEND_20250726_sidebar_text_safe
