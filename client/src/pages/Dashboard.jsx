@@ -3,6 +3,7 @@ import QuotaToast from '../components/QuotaToast';
 import AppBridgeActivation from '../components/AppBridgeActivation';
 import AutoOptimizeToggle from '../components/AutoOptimizeToggle';
 import UpgradeModal from '../components/UpgradeModal';
+import AdminDebug from './AdminDebug';
 import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft, Loader, Play, Square } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
@@ -58,6 +59,7 @@ const Dashboard = () => {
   const [testTier, setTestTier] = useState('Free');
   const [testTierLoading, setTestTierLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showAdminDebug, setShowAdminDebug] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [draftContent, setDraftContent] = useState(new Map());
   const [showDraftModal, setShowDraftModal] = useState(false);
@@ -3400,194 +3402,22 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              {/* Testing Controls */}
+              {/* Debug Access - Hidden */}
               <div className="mt-6 pt-6 border-t border-gray-600">
-                <h4 className="text-md font-semibold text-white mb-4">Testing & Development</h4>
-                <div className="space-y-3">
-                  {/* Tier Toggle for Testing */}
-                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <AlertCircle className="w-4 h-4 text-yellow-500" />
-                        <span className="text-sm font-medium text-yellow-400">Test Tier Override</span>
-                        <span className="text-xs bg-yellow-500 text-black px-2 py-1 rounded-full font-bold">
-                          TESTING ONLY
-                        </span>
-                      </div>
-                      {testTierLoading && (
-                        <Loader className="w-4 h-4 text-yellow-500 animate-spin" />
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center space-x-4 mb-3">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-300">Current Test Tier:</span>
-                        <span className={`text-sm font-medium px-2 py-1 rounded ${
-                          testTier === 'Free' ? 'bg-gray-600 text-gray-200' :
-                          testTier === 'Starter' ? 'bg-blue-600 text-white' :
-                          testTier === 'Pro' ? 'bg-green-600 text-white' :
-                          'bg-purple-600 text-white'
-                        }`}>
-                          {testTier}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        ({tierUsage?.currentTier === testTier ? 'synced' : 'updating...'})
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 mb-3">
-                      {['Free', 'Starter', 'Pro', 'Enterprise'].map((tier) => (
-                        <button
-                          key={tier}
-                          onClick={() => changeTestTier(tier)}
-                          disabled={testTierLoading || testTier === tier}
-                          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                            testTier === tier
-                              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                              : 'bg-gray-700 text-white hover:bg-gray-600'
-                          }`}
-                        >
-                          {tier}
-                        </button>
-                      ))}
-                    </div>
-                    
-                    <div className="text-xs text-yellow-300 space-y-1 mb-3">
-                      <div>• Switch between Free/Starter/Pro/Enterprise to test auto-optimization behavior</div>
-                      <div>• Auto-optimization toggle will update based on selected tier</div>
-                      <div>• This is for testing only - remove before production</div>
-                    </div>
-                    
-                    <div className="bg-red-500/10 border border-red-500/30 rounded p-2 text-xs text-red-300">
-                      <div className="font-semibold mb-1">🛡️ SAFETY LIMITS ACTIVE:</div>
-                      <div>• Max 10 optimizations per hour</div>
-                      <div>• Max 50 optimizations per day</div>
-                      <div>• 2-hour test session timeout</div>
-                      <div>• Auto-disabled in production</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <button
-                      onClick={() => {
-                        try {
-                          resetConsent();
-                        } catch (error) {
-                          console.error('Reset consent error:', error);
-                        }
-                      }}
-                      className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      <span>Reset Consent Modal</span>
-                    </button>
-                    <p className="text-sm text-gray-300">
-                      Reset consent to test the first-time launch modal again
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <button
-                      onClick={() => {
-                        try {
-                          viewConsentRecords();
-                        } catch (error) {
-                          console.error('View consent records error:', error);
-                        }
-                      }}
-                      className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span>View Legal Records</span>
-                    </button>
-                    <p className="text-sm text-gray-300">
-                      Display consent records for legal verification (check browser console)
-                    </p>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-md font-semibold text-white">Production Settings</h4>
+                  <button
+                    onClick={() => setShowAdminDebug(true)}
+                    className="text-xs text-gray-500 hover:text-gray-400 transition-colors"
+                    title="Admin Debug Access"
+                  >
+                    debug
+                  </button>
                 </div>
+                <p className="text-sm text-gray-400 mt-2">
+                  All settings optimized for production use. Testing and debug controls available to administrators.
+                </p>
               </div>
-              
-              {/* Citation Monitoring Controls */}
-              {typeof isMonitoring !== 'undefined' && (
-                <div className="mt-6 pt-6 border-t border-gray-600">
-                  <h4 className="text-md font-semibold text-white mb-4">Citation Monitoring</h4>
-                  
-                  {/* Debug Info */}
-                  <div className="mb-4 p-3 bg-gray-800 rounded text-xs text-gray-300">
-                    <strong>Debug:</strong> shop={shop ? 'loaded' : 'missing'}, authFetch={authFetch ? 'ready' : 'missing'}, citationLoading={citationLoading ? citationLoading.toString() : 'false'}, isMonitoring={isMonitoring ? isMonitoring.toString() : 'false'}, citationError={citationError || 'none'}
-                  </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <Monitor className={`w-5 h-5 ${isMonitoring ? 'text-green-400' : 'text-gray-400'}`} />
-                      <span className={`text-sm ${isMonitoring ? 'text-green-400' : 'text-gray-400'}`}>
-                        Status: {isMonitoring ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                    
-                    {!isMonitoring && startMonitoring ? (
-                      <button
-                        onClick={async () => {
-                          try {
-                            console.log('Start monitoring clicked');
-                            const success = await startMonitoring({ 
-                              interval: 'daily', 
-                              keywords: settings?.keywords ? settings.keywords.split(',').map(k => k.trim()).filter(k => k) : []
-                            });
-                            if (success) {
-                              console.log('Start monitoring success');
-                            } else {
-                              console.log('Start monitoring failed');
-                            }
-                          } catch (error) {
-                            console.error('Start monitoring error:', error);
-                          }
-                        }}
-                        disabled={citationLoading || !shop || !authFetch}
-                        className="px-4 py-2 bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                      >
-                        {citationLoading ? (
-                          <Loader className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Play className="w-4 h-4" />
-                        )}
-                        <span>{citationLoading ? 'Starting...' : 'Start Monitoring'}</span>
-                      </button>
-                    ) : isMonitoring && stopMonitoring ? (
-                      <button
-                        onClick={async () => {
-                          try {
-                            console.log('Stop monitoring clicked');
-                            const success = await stopMonitoring();
-                            if (success) {
-                              console.log('Stop monitoring success');
-                            } else {
-                              console.log('Stop monitoring failed');
-                            }
-                          } catch (error) {
-                            console.error('Stop monitoring error:', error);
-                          }
-                        }}
-                        disabled={citationLoading}
-                        className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-500 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-                      >
-                        {citationLoading ? (
-                          <Loader className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Square className="w-4 h-4" />
-                        )}
-                        <span>{citationLoading ? 'Stopping...' : 'Stop Monitoring'}</span>
-                      </button>
-                    ) : null}
-                    
-                    {citationError && (
-                      <div className="text-red-400 text-sm flex items-center space-x-1">
-                        <AlertCircle className="w-4 h-4" />
-                        <span>{citationError}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -4085,6 +3915,27 @@ const Dashboard = () => {
         currentTier={testTier}
         authFetch={authFetch}
         updateTier={setTestTier}
+      />
+
+      {/* Admin Debug Modal */}
+      <AdminDebug
+        isOpen={showAdminDebug}
+        onClose={() => setShowAdminDebug(false)}
+        authFetch={authFetch}
+        shop={shop}
+        testTier={testTier}
+        setTestTier={setTestTier}
+        testTierLoading={testTierLoading}
+        tierUsage={tierUsage}
+        resetConsent={resetConsent}
+        viewConsentRecords={viewConsentRecords}
+        isMonitoring={isMonitoring}
+        startMonitoring={startMonitoring}
+        stopMonitoring={stopMonitoring}
+        citationLoading={citationLoading}
+        citationError={citationError}
+        settings={settings}
+        changeTestTier={changeTestTier}
       />
         </div>
       </main>
