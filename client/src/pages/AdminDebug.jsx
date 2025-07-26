@@ -422,6 +422,7 @@ const AdminDebug = ({
             </div>
           )}
         </div>
+        </div>
       </div>
     </div>
   );
