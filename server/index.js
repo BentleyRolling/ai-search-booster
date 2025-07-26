@@ -35,8 +35,9 @@ const corsOptions = {
       // Shopify admin domains
       /^https:\/\/.*\.myshopify\.com$/,
       /^https:\/\/admin\.shopify\.com$/,
-      // Your app domain
+      // Your app domains
       /^https:\/\/ai-search-booster-backend\.onrender\.com$/,
+      /^https:\/\/ai-search-booster-frontend\.onrender\.com$/,
       // Development (only if not production)
       ...(process.env.NODE_ENV !== 'production' ? [
         'http://localhost:3000',
