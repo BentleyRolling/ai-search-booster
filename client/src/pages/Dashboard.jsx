@@ -3,7 +3,7 @@ import QuotaToast from '../components/QuotaToast';
 import AppBridgeActivation from '../components/AppBridgeActivation';
 import AutoOptimizeToggle from '../components/AutoOptimizeToggle';
 import UpgradeModal from '../components/UpgradeModal';
-import AdminDebug from './AdminDebug';
+import SecureAdminDebug from './SecureAdminDebug';
 import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft, Loader, Play, Square } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
@@ -59,7 +59,7 @@ const Dashboard = () => {
   const [testTier, setTestTier] = useState('Free');
   const [testTierLoading, setTestTierLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showAdminDebug, setShowAdminDebug] = useState(false);
+  const [showSecureAdmin, setShowSecureAdmin] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [draftContent, setDraftContent] = useState(new Map());
   const [showDraftModal, setShowDraftModal] = useState(false);
@@ -3390,20 +3390,20 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              {/* Debug Access - Hidden */}
+              {/* Secure Admin Access */}
               <div className="mt-6 pt-6 border-t border-gray-600">
                 <div className="flex items-center justify-between">
                   <h4 className="text-md font-semibold text-white">Production Settings</h4>
                   <button
-                    onClick={() => setShowAdminDebug(true)}
+                    onClick={() => setShowSecureAdmin(true)}
                     className="text-xs text-gray-500 hover:text-gray-400 transition-colors"
-                    title="Admin Debug Access"
+                    title="Secure Admin Access"
                   >
-                    debug
+                    admin
                   </button>
                 </div>
                 <p className="text-sm text-gray-400 mt-2">
-                  All settings optimized for production use. Testing and debug controls available to administrators.
+                  All settings optimized for production use. Secure admin controls available with authentication.
                 </p>
               </div>
             </div>
@@ -3905,26 +3905,14 @@ const Dashboard = () => {
         updateTier={setTestTier}
       />
 
-      {/* Admin Debug Modal */}
-      <AdminDebug
-        isOpen={showAdminDebug}
-        onClose={() => setShowAdminDebug(false)}
+      {/* Secure Admin Debug Modal */}
+      <SecureAdminDebug
+        isOpen={showSecureAdmin}
+        onClose={() => setShowSecureAdmin(false)}
         authFetch={authFetch}
         shop={shop}
-        testTier={testTier}
-        setTestTier={setTestTier}
-        testTierLoading={testTierLoading}
-        tierUsage={tierUsage}
-        resetConsent={resetConsent}
-        viewConsentRecords={viewConsentRecords}
-        isMonitoring={isMonitoring}
-        startMonitoring={startMonitoring}
-        stopMonitoring={stopMonitoring}
-        citationLoading={citationLoading}
-        citationError={citationError}
-        settings={settings}
-        changeTestTier={changeTestTier}
       />
+
         </div>
       </main>
     </div>

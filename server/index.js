@@ -4,6 +4,8 @@ import axios from 'axios';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import { jsonrepair } from 'jsonrepair';
 import { convert as htmlToText } from 'html-to-text';
 import { initCitationJobs } from './jobs/citationScheduler.js';
@@ -20,12 +22,44 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - Permissive CORS for embedded iframe (TEMPORARY until proxy registered)
+// Secure CORS configuration for production
 const corsOptions = {
   origin: (origin, callback) => {
     console.log('[ASB-CORS] Origin check:', origin);
-    // Allow all origins for now - will revert to restricted list once proxy works
-    callback(null, true);
+    
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Allowed origins for production
+    const allowedOrigins = [
+      // Shopify admin domains
+      /^https:\/\/.*\.myshopify\.com$/,
+      /^https:\/\/admin\.shopify\.com$/,
+      // Your app domain
+      /^https:\/\/ai-search-booster-backend\.onrender\.com$/,
+      // Development (only if not production)
+      ...(process.env.NODE_ENV !== 'production' ? [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3000'
+      ] : [])
+    ];
+    
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return origin === allowed;
+      } else if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.error('[ASB-CORS] Blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -207,8 +241,8 @@ function hasOptimizationQuota(shop) {
 // Initialize citation monitoring routes
 app.use('/api/monitoring', initializeCitationRoutes(shopData));
 
-// Environment variables
-const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY || '4509cf5ef854ceac54c93cceda14987d';
+// Environment variables - NO FALLBACKS FOR SECURITY
+const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY;
 const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -217,6 +251,45 @@ const REDIRECT_URI = process.env.REDIRECT_URI || 'https://ai-search-booster-back
 const VERSIONED_OPTIMIZATION = process.env.VERSIONED_OPTIMIZATION === 'true';
 const MOCK_MODE = process.env.MOCK_MODE === 'true';
 
+// === SECURE ADMIN SYSTEM CONFIGURATION ===
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || crypto.randomBytes(64).toString('hex');
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH; // bcrypt hash of admin password
+const ADMIN_SESSION_EXPIRE = process.env.ADMIN_SESSION_EXPIRE || '2h';
+
+// Validate critical environment variables
+const requiredEnvVars = [
+  'SHOPIFY_API_KEY',
+  'SHOPIFY_API_SECRET',
+  'OPENAI_API_KEY'
+];
+
+if (process.env.NODE_ENV === 'production') {
+  requiredEnvVars.push('ADMIN_PASSWORD_HASH');
+}
+
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingVars.length > 0) {
+  console.error('CRITICAL: Missing required environment variables:', missingVars.join(', '));
+  console.error('Application cannot start safely without these variables.');
+  process.exit(1);
+}
+
+// Admin session storage (in production, use Redis)
+const adminSessions = new Map();
+
+// Admin audit logging
+const logAdminAction = (action, userId, details = {}) => {
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    action,
+    userId,
+    details,
+    ip: details.ip || 'unknown'
+  };
+  console.log('[ADMIN-AUDIT]', JSON.stringify(logEntry));
+  // In production: save to audit database
+};
+
 // Rate limiting for optimization endpoints
 const optimizationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -224,6 +297,88 @@ const optimizationLimiter = rateLimit({
   message: 'Too many optimization requests, please try again later.',
   keyGenerator: (req) => req.shop || req.ip
 });
+
+// Admin authentication rate limiting
+const adminAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 admin login attempts per windowMs
+  message: 'Too many admin login attempts, please try again later.',
+  keyGenerator: (req) => req.ip
+});
+
+// === SECURE ADMIN AUTHENTICATION MIDDLEWARE ===
+
+// Verify admin JWT token
+const verifyAdminToken = (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Admin authentication required' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, ADMIN_JWT_SECRET);
+    req.adminUser = decoded;
+    next();
+  } catch (error) {
+    logAdminAction('AUTH_FAILED', 'unknown', { 
+      error: error.message, 
+      ip: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+    return res.status(401).json({ error: 'Invalid admin token' });
+  }
+};
+
+// Generate secure admin session
+const generateAdminSession = (userId) => {
+  const sessionId = crypto.randomBytes(32).toString('hex');
+  const token = jwt.sign(
+    { userId, sessionId, role: 'admin' },
+    ADMIN_JWT_SECRET,
+    { expiresIn: ADMIN_SESSION_EXPIRE }
+  );
+  
+  adminSessions.set(sessionId, {
+    userId,
+    createdAt: new Date(),
+    lastAccess: new Date(),
+    token
+  });
+  
+  return { token, sessionId };
+};
+
+// === WEBHOOK SECURITY MIDDLEWARE ===
+
+// Verify webhook HMAC signature
+const verifyWebhookHmac = (req, res, next) => {
+  const hmac = req.get('X-Shopify-Hmac-Sha256');
+  const rawBody = req.body;
+  
+  if (!hmac) {
+    console.error('[WEBHOOK-SECURITY] Missing HMAC header');
+    return res.status(401).json({ error: 'Missing HMAC signature' });
+  }
+  
+  if (!SHOPIFY_API_SECRET) {
+    console.error('[WEBHOOK-SECURITY] SHOPIFY_API_SECRET not configured');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+  
+  const calculatedHmac = crypto
+    .createHmac('sha256', SHOPIFY_API_SECRET)
+    .update(rawBody)
+    .digest('base64');
+  
+  if (calculatedHmac !== hmac) {
+    console.error('[WEBHOOK-SECURITY] HMAC verification failed');
+    return res.status(401).json({ error: 'HMAC verification failed' });
+  }
+  
+  console.log('[WEBHOOK-SECURITY] HMAC verification successful');
+  next();
+};
 
 // Middleware to handle Shopify app proxy requests
 app.use('/apps/ai-search-booster', (req, res, next) => {
@@ -297,6 +452,201 @@ app.get('/', (req, res) => {
   });
 });
 
+// === SECURE ADMIN API ROUTES ===
+
+// Admin authentication endpoint
+app.post('/api/admin/auth', adminAuthLimiter, async (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Password required' });
+    }
+    
+    // For development, allow environment fallback
+    let isValidPassword = false;
+    
+    if (ADMIN_PASSWORD_HASH) {
+      isValidPassword = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
+    } else if (process.env.NODE_ENV !== 'production') {
+      // Development fallback - will be removed in production
+      const devPassword = process.env.ADMIN_DEV_PASSWORD || 'dev_admin_2025';
+      isValidPassword = password === devPassword;
+    }
+    
+    if (!isValidPassword) {
+      logAdminAction('LOGIN_FAILED', 'unknown', { 
+        ip: req.ip,
+        userAgent: req.headers['user-agent']
+      });
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    const userId = 'admin';
+    const { token, sessionId } = generateAdminSession(userId);
+    
+    logAdminAction('LOGIN_SUCCESS', userId, { 
+      ip: req.ip,
+      sessionId,
+      userAgent: req.headers['user-agent']
+    });
+    
+    res.json({ 
+      token, 
+      expiresIn: ADMIN_SESSION_EXPIRE,
+      message: 'Authentication successful' 
+    });
+    
+  } catch (error) {
+    console.error('Admin auth error:', error);
+    res.status(500).json({ error: 'Authentication failed' });
+  }
+});
+
+// Admin logout endpoint
+app.post('/api/admin/logout', verifyAdminToken, (req, res) => {
+  const sessionId = req.adminUser.sessionId;
+  adminSessions.delete(sessionId);
+  
+  logAdminAction('LOGOUT', req.adminUser.userId, { 
+    sessionId,
+    ip: req.ip 
+  });
+  
+  res.json({ message: 'Logged out successfully' });
+});
+
+// Admin status endpoint
+app.get('/api/admin/status', verifyAdminToken, (req, res) => {
+  const session = adminSessions.get(req.adminUser.sessionId);
+  session.lastAccess = new Date();
+  
+  res.json({
+    authenticated: true,
+    userId: req.adminUser.userId,
+    sessionCreated: session.createdAt,
+    lastAccess: session.lastAccess
+  });
+});
+
+// === SECURE ADMIN FUNCTIONALITY ROUTES ===
+
+// Schema injection control
+app.get('/api/admin/schema/:shop', verifyAdminToken, async (req, res) => {
+  try {
+    const { shop } = req.params;
+    
+    logAdminAction('SCHEMA_STATUS_CHECK', req.adminUser.userId, { 
+      shop,
+      ip: req.ip 
+    });
+    
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo?.accessToken) {
+      return res.status(404).json({ error: 'Shop not found or not authenticated' });
+    }
+    
+    const response = await axios.get(
+      `https://${shop}/admin/api/2024-01/metafields.json?namespace=asb_settings&key=schema_enabled`,
+      { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+    );
+    
+    const schemaEnabled = response.data.metafields?.length > 0 ? 
+      response.data.metafields[0].value === 'true' : false;
+    
+    res.json({ schemaEnabled });
+    
+  } catch (error) {
+    console.error('Schema status check error:', error);
+    res.status(500).json({ error: 'Failed to check schema status' });
+  }
+});
+
+app.post('/api/admin/schema/:shop', verifyAdminToken, async (req, res) => {
+  try {
+    const { shop } = req.params;
+    const { enabled } = req.body;
+    
+    logAdminAction('SCHEMA_TOGGLE', req.adminUser.userId, { 
+      shop,
+      enabled,
+      ip: req.ip 
+    });
+    
+    const shopInfo = shopData.get(shop);
+    if (!shopInfo?.accessToken) {
+      return res.status(404).json({ error: 'Shop not found or not authenticated' });
+    }
+    
+    const metafieldData = {
+      metafield: {
+        namespace: 'asb_settings',
+        key: 'schema_enabled',
+        value: enabled.toString(),
+        type: 'single_line_text_field'
+      }
+    };
+    
+    await axios.post(
+      `https://${shop}/admin/api/2024-01/metafields.json`,
+      metafieldData,
+      { headers: { 'X-Shopify-Access-Token': shopInfo.accessToken } }
+    );
+    
+    res.json({ success: true, enabled });
+    
+  } catch (error) {
+    console.error('Schema toggle error:', error);
+    res.status(500).json({ error: 'Failed to update schema setting' });
+  }
+});
+
+// Test tier override (secure replacement for the previous system)
+app.post('/api/admin/test-tier/:shop', verifyAdminToken, async (req, res) => {
+  try {
+    const { shop } = req.params;
+    const { tier } = req.body;
+    
+    const validTiers = ['Free', 'Starter', 'Pro', 'Enterprise'];
+    if (!validTiers.includes(tier)) {
+      return res.status(400).json({ error: 'Invalid tier' });
+    }
+    
+    logAdminAction('TEST_TIER_OVERRIDE', req.adminUser.userId, { 
+      shop,
+      tier,
+      ip: req.ip 
+    });
+    
+    // Store test tier override (in production, use database)
+    const shopInfo = shopData.get(shop) || {};
+    shopInfo.testTierOverride = {
+      tier,
+      setAt: new Date().toISOString(),
+      setBy: req.adminUser.userId
+    };
+    shopData.set(shop, shopInfo);
+    
+    res.json({ success: true, tier });
+    
+  } catch (error) {
+    console.error('Test tier override error:', error);
+    res.status(500).json({ error: 'Failed to set test tier' });
+  }
+});
+
+// Admin system health check
+app.get('/api/admin/health', verifyAdminToken, (req, res) => {
+  logAdminAction('HEALTH_CHECK', req.adminUser.userId, { ip: req.ip });
+  
+  res.json({
+    adminSystem: 'operational',
+    activeSessions: adminSessions.size,
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // OAuth endpoints (keeping your working implementation)
 app.get('/auth/status', (req, res) => {
   const shop = req.query.shop;
@@ -316,19 +666,7 @@ app.get('/auth/status', (req, res) => {
   });
 });
 
-// Debug endpoint to clear shop session
-app.get('/auth/clear', (req, res) => {
-  const shop = req.query.shop;
-  if (!shop) {
-    return res.status(400).json({ error: 'Missing shop parameter' });
-  }
-  
-  shopData.delete(shop);
-  res.json({ 
-    message: `Cleared session data for ${shop}`,
-    timestamp: new Date().toISOString()
-  });
-});
+// DEBUG ENDPOINT REMOVED FOR PRODUCTION SECURITY
 
 app.get('/auth', (req, res) => {
   const { shop } = req.query;
@@ -367,43 +705,46 @@ app.get('/auth/callback', async (req, res) => {
     return res.status(403).json({ error: 'Invalid nonce' });
   }
   
-  // Skip HMAC verification for now to test the flow
+  // MANDATORY HMAC verification - ALWAYS ENFORCED
   if (!SHOPIFY_API_SECRET) {
-    console.warn('SHOPIFY_API_SECRET not configured - skipping HMAC verification');
-  } else {
-    // HMAC verification
-    const rawQueryString = req.url.split('?')[1];
-    if (!rawQueryString) {
-      return res.status(400).json({ error: 'No query string found' });
-    }
+    console.error('CRITICAL: SHOPIFY_API_SECRET not configured - cannot verify HMAC');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  // HMAC verification
+  const rawQueryString = req.url.split('?')[1];
+  if (!rawQueryString) {
+    return res.status(400).json({ error: 'No query string found' });
+  }
+  
+  const pairs = rawQueryString.split('&');
+  const params = [];
+  
+  for (const pair of pairs) {
+    const equalIndex = pair.indexOf('=');
+    if (equalIndex === -1) continue;
     
-    const pairs = rawQueryString.split('&');
-    const params = [];
+    const key = pair.substring(0, equalIndex);
     
-    for (const pair of pairs) {
-      const equalIndex = pair.indexOf('=');
-      if (equalIndex === -1) continue;
-      
-      const key = pair.substring(0, equalIndex);
-      
-      if (key !== 'hmac' && key !== 'signature') {
-        params.push({ key, original: pair });
-      }
-    }
-    
-    params.sort((a, b) => a.key.localeCompare(b.key));
-    const message = params.map(p => p.original).join('&');
-    
-    const calculatedHmac = crypto
-      .createHmac('sha256', SHOPIFY_API_SECRET)
-      .update(message)
-      .digest('hex');
-    
-    if (calculatedHmac !== hmac) {
-      console.error('HMAC verification failed:', { calculatedHmac, hmac });
-      return res.status(403).json({ error: 'HMAC verification failed' });
+    if (key !== 'hmac' && key !== 'signature') {
+      params.push({ key, original: pair });
     }
   }
+  
+  params.sort((a, b) => a.key.localeCompare(b.key));
+  const message = params.map(p => p.original).join('&');
+  
+  const calculatedHmac = crypto
+    .createHmac('sha256', SHOPIFY_API_SECRET)
+    .update(message)
+    .digest('hex');
+  
+  if (calculatedHmac !== hmac) {
+    console.error('HMAC verification failed:', { calculatedHmac, hmac });
+    return res.status(403).json({ error: 'HMAC verification failed' });
+  }
+  
+  console.log('HMAC verification successful');
   
   try {
     console.log('Exchanging code for access token...');
@@ -1398,47 +1739,7 @@ const simpleVerifyShop = (req, res, next) => {
   next();
 };
 
-// API: Debug endpoint to test prompt selection
-app.post('/api/debug/prompt-selection', async (req, res) => {
-  try {
-    const { content, type, settings } = req.body;
-    
-    const debugInfo = {
-      type: type,
-      typeOf: typeof type,
-      exactMatch: type === 'collection',
-      stringValue: String(type),
-      trimmed: String(type).trim(),
-      inputType: req.body.type,
-      bodyKeys: Object.keys(req.body)
-    };
-    
-    console.log('🔍 DEBUG ENDPOINT - PROMPT SELECTION:', debugInfo);
-    
-    // Test the condition directly
-    let promptType = 'unknown';
-    if (type === 'product') {
-      promptType = 'product';
-    } else if (type === 'collection') {
-      promptType = 'collection';
-      console.log('🚨🚨🚨 COLLECTION CONDITION MATCHED IN DEBUG! 🚨🚨🚨');
-    } else if (type === 'page') {
-      promptType = 'page';
-    } else {
-      promptType = 'article/fallback';
-    }
-    
-    res.json({
-      debug: debugInfo,
-      promptType: promptType,
-      message: 'Debug information captured'
-    });
-    
-  } catch (error) {
-    console.error('Debug endpoint error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+// DEBUG ENDPOINT REMOVED FOR PRODUCTION SECURITY
 
 // API: Preview optimization
 app.post('/api/optimize/preview', simpleVerifyShop, async (req, res) => {
@@ -2164,71 +2465,12 @@ app.post('/api/publish/article/:id', simpleVerifyShop, async (req, res) => {
   }
 });
 
-// TEMPORARY: Debug endpoint to get access token for E2E testing
-app.get('/api/debug/token', simpleVerifyShop, async (req, res) => {
-  try {
-    const { shop } = req;
-    const shopInfo = shopData.get(shop);
-    console.log('[DEBUG-TOKEN] Shop:', shop);
-    console.log('[DEBUG-TOKEN] ShopInfo:', shopInfo);
-    console.log('[DEBUG-TOKEN] All shopData keys:', Array.from(shopData.keys()));
-    
-    if (!shopInfo || !shopInfo.accessToken) {
-      return res.status(401).json({ 
-        error: 'No access token found',
-        shop,
-        shopInfoExists: !!shopInfo,
-        accessTokenExists: shopInfo?.accessToken ? 'yes' : 'no',
-        allShops: Array.from(shopData.keys())
-      });
-    }
-    res.json({ token: shopInfo.accessToken });
-  } catch (error) {
-    console.error('[DEBUG-TOKEN] Error:', error);
-    res.status(500).json({ error: 'Failed to get token', details: error.message });
-  }
-});
+// DEBUG ENDPOINT REMOVED FOR PRODUCTION SECURITY
 
-// TEMPORARY: Debug endpoint to check shop data
-app.get('/api/debug/shopdata', (req, res) => {
-  const shop = req.query.shop;
-  if (!shop) {
-    return res.json({
-      allShops: Array.from(shopData.keys()),
-      totalShops: shopData.size
-    });
-  }
-  
-  const shopInfo = shopData.get(shop);
-  res.json({
-    shop,
-    shopInfo: shopInfo ? {
-      hasAccessToken: !!shopInfo.accessToken,
-      accessToken: shopInfo.accessToken === 'mock-token' ? 'mock-token' : 'real-token',
-      installedAt: shopInfo.installedAt,
-      proxyRegistered: shopInfo.proxyRegistered,
-      nonce: shopInfo.nonce
-    } : null,
-    allShops: Array.from(shopData.keys())
-  });
-});
+// DEBUG ENDPOINT REMOVED FOR PRODUCTION SECURITY
 
 // TEMPORARY: Debug endpoint to clear shop data and force re-auth
-app.post('/api/debug/clear-shop/:shop', (req, res) => {
-  const { shop } = req.params;
-  if (!shop) {
-    return res.status(400).json({ error: 'Missing shop parameter' });
-  }
-  
-  const hadData = shopData.has(shop);
-  shopData.delete(shop);
-  
-  res.json({
-    message: `Shop data cleared for ${shop}`,
-    hadData,
-    authUrl: `${req.protocol}://${req.get('host')}/auth?shop=${shop}`
-  });
-});
+// DEBUG ENDPOINT REMOVED FOR PRODUCTION SECURITY
 
 // API: Get draft content for preview
 app.get('/api/draft/:type/:id', simpleVerifyShop, async (req, res) => {
@@ -6144,7 +6386,7 @@ app.get('/health', (req, res) => {
 });
 
 // GDPR Compliance Webhooks
-app.post('/webhooks/customers/data_request', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/customers/data_request', express.raw({ type: 'application/json' }), verifyWebhookHmac, (req, res) => {
   console.log('[COMPLIANCE] Customer data request received');
   
   // For AI Search Booster: We don't store personal customer data
@@ -6159,7 +6401,7 @@ app.post('/webhooks/customers/data_request', express.raw({ type: 'application/js
   res.status(200).json(response);
 });
 
-app.post('/webhooks/customers/redact', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/customers/redact', express.raw({ type: 'application/json' }), verifyWebhookHmac, (req, res) => {
   console.log('[COMPLIANCE] Customer redaction request received');
   
   // For AI Search Booster: We don't store personal customer data to redact
@@ -6172,7 +6414,7 @@ app.post('/webhooks/customers/redact', express.raw({ type: 'application/json' })
   res.status(200).json(response);
 });
 
-app.post('/webhooks/shop/redact', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/webhooks/shop/redact', express.raw({ type: 'application/json' }), verifyWebhookHmac, (req, res) => {
   console.log('[COMPLIANCE] Shop redaction request received');
   
   try {
@@ -6473,7 +6715,7 @@ const executeAutoOptimization = async (task) => {
 setInterval(processAutoOptimizationQueue, 30000);
 
 // Webhook handler for products/create
-app.post('/webhooks/products/create', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/webhooks/products/create', express.raw({ type: 'application/json' }), verifyWebhookHmac, async (req, res) => {
   try {
     const shop = req.headers['x-shopify-shop-domain'];
     const accessToken = shopData.get(shop)?.accessToken;
@@ -6509,7 +6751,7 @@ app.post('/webhooks/products/create', express.raw({ type: 'application/json' }),
 });
 
 // Webhook handler for products/update
-app.post('/webhooks/products/update', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/webhooks/products/update', express.raw({ type: 'application/json' }), verifyWebhookHmac, async (req, res) => {
   try {
     const shop = req.headers['x-shopify-shop-domain'];
     const accessToken = shopData.get(shop)?.accessToken;
