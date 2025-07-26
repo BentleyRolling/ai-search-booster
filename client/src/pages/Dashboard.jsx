@@ -3925,10 +3925,18 @@ const Dashboard = () => {
                             <TrendingUp className="w-5 h-5 mr-2 text-gray-300" />
                             Quality Assessment
                           </h4>
-                          <div className={`grid gap-4 ${
-                            showAdvancedDebugUI && selectedDraft.data.draft.content?.riskScore !== undefined
-                              ? 'grid-cols-1 sm:grid-cols-3' 
-                              : 'grid-cols-1 sm:grid-cols-2'
+                          <div className={`grid gap-6 ${
+                            // Calculate grid columns based on what's visible
+                            (() => {
+                              const hasRiskScore = showAdvancedDebugUI && selectedDraft.data.draft.content?.riskScore !== undefined;
+                              const hasVisibilityScore = selectedDraft.data.draft.content?.visibilityScore !== undefined;
+                              const hasRolledBack = selectedDraft.data.draft.content?.rolledBack;
+                              const visibleItems = [hasRiskScore, hasVisibilityScore, hasRolledBack].filter(Boolean).length;
+                              
+                              if (visibleItems === 1) return 'grid-cols-1 place-items-center';
+                              if (visibleItems === 2) return 'grid-cols-1 sm:grid-cols-2';
+                              return 'grid-cols-1 sm:grid-cols-3';
+                            })()
                           }`}>
                             {showAdvancedDebugUI && selectedDraft.data.draft.content?.riskScore !== undefined && (
                               <div className="text-center">
@@ -3949,17 +3957,17 @@ const Dashboard = () => {
                               </div>
                             )}
                             {selectedDraft.data.draft.content?.visibilityScore !== undefined && (
-                              <div className="text-center">
-                                <span className="text-gray-300 text-xs font-medium block mb-2">Visibility Score</span>
-                                <div className={`text-2xl font-bold mb-1 ${
+                              <div className="text-center max-w-xs mx-auto">
+                                <span className="text-gray-300 text-sm font-medium block mb-3">AI Visibility Score</span>
+                                <div className={`text-5xl font-bold mb-3 ${
                                   selectedDraft.data.draft.content.visibilityScore >= 80 ? 'text-green-600' :
                                   selectedDraft.data.draft.content.visibilityScore >= 60 ? 'text-yellow-600' : 'text-red-600'
                                 }`}>
                                   {selectedDraft.data.draft.content.visibilityScore}
                                 </div>
-                                <span className={`text-xs inline-flex items-center ${
-                                  selectedDraft.data.draft.content.visibilityScore >= 80 ? 'text-green-500' :
-                                  selectedDraft.data.draft.content.visibilityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                                <span className={`text-sm inline-flex items-center justify-center font-medium px-3 py-1 rounded-full ${
+                                  selectedDraft.data.draft.content.visibilityScore >= 80 ? 'text-green-400 bg-green-900/30' :
+                                  selectedDraft.data.draft.content.visibilityScore >= 60 ? 'text-yellow-400 bg-yellow-900/30' : 'text-red-400 bg-red-900/30'
                                 }`}>
                                   {selectedDraft.data.draft.content.visibilityScore >= 80 ? '✅ Excellent' :
                                    selectedDraft.data.draft.content.visibilityScore >= 60 ? '⚠️ Good' : '❌ Needs Work'}
