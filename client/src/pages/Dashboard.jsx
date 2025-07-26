@@ -2073,7 +2073,7 @@ const Dashboard = () => {
           ))}
           
           {/* Spacer */}
-          <div className="my-4"></div>
+          <div className="my-6"></div>
           
           {/* Support Section Header */}
           {!sidebarCollapsed && (
