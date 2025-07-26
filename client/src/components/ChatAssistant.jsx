@@ -31,22 +31,55 @@ const ChatAssistant = () => {
     }
   }, [isOpen]);
 
-  // Simple fuzzy matching function
-  const fuzzyMatch = (query, text) => {
-    const queryWords = query.toLowerCase().split(' ').filter(word => word.length > 2);
-    const textLower = text.toLowerCase();
+  // Advanced string similarity function using Levenshtein-like distance
+  const calculateSimilarity = (str1, str2) => {
+    const s1 = str1.toLowerCase();
+    const s2 = str2.toLowerCase();
     
-    let score = 0;
-    queryWords.forEach(word => {
-      if (textLower.includes(word)) {
-        score += word.length;
-      }
-    });
+    if (s1 === s2) return 1.0;
     
-    return score;
+    const len1 = s1.length;
+    const len2 = s2.length;
+    
+    if (len1 === 0) return len2 === 0 ? 1.0 : 0.0;
+    if (len2 === 0) return 0.0;
+    
+    // Use character overlap as a fast similarity metric
+    const set1 = new Set(s1.split(''));
+    const set2 = new Set(s2.split(''));
+    const intersection = new Set([...set1].filter(x => set2.has(x)));
+    const union = new Set([...set1, ...set2]);
+    
+    return intersection.size / union.size;
   };
 
-  // Enhanced search function
+  // Enhanced fuzzy matching with word-level scoring
+  const fuzzyMatch = (query, text) => {
+    const queryWords = query.toLowerCase().split(' ').filter(word => word.length > 2);
+    const textWords = text.toLowerCase().split(' ');
+    
+    let totalScore = 0;
+    let maxPossibleScore = queryWords.length;
+    
+    queryWords.forEach(queryWord => {
+      let bestWordScore = 0;
+      
+      textWords.forEach(textWord => {
+        if (textWord.includes(queryWord) || queryWord.includes(textWord)) {
+          bestWordScore = Math.max(bestWordScore, 1.0);
+        } else {
+          const similarity = calculateSimilarity(queryWord, textWord);
+          bestWordScore = Math.max(bestWordScore, similarity);
+        }
+      });
+      
+      totalScore += bestWordScore;
+    });
+    
+    return maxPossibleScore > 0 ? totalScore / maxPossibleScore : 0;
+  };
+
+  // Advanced search function with confidence scoring
   const findBestAnswer = (userInput) => {
     const query = userInput.toLowerCase().trim();
     
@@ -55,27 +88,49 @@ const ChatAssistant = () => {
     }
 
     let bestMatch = null;
-    let bestScore = 0;
+    let bestConfidence = 0;
+    const confidenceThreshold = 0.3; // Minimum confidence required
 
     faqAssistantData.forEach(faq => {
-      // Check exact matches in question
-      let score = fuzzyMatch(query, faq.q);
+      let confidence = 0;
       
-      // Check keywords
+      // 1. Exact question match gets highest priority
+      const questionSimilarity = fuzzyMatch(query, faq.q);
+      confidence += questionSimilarity * 0.6; // 60% weight for question match
+      
+      // 2. Keyword matching
+      let keywordScore = 0;
       faq.keywords.forEach(keyword => {
-        if (query.includes(keyword.toLowerCase())) {
-          score += keyword.length * 2; // Keywords get higher weight
+        const keywordSimilarity = calculateSimilarity(query, keyword);
+        if (keywordSimilarity > 0.7 || query.includes(keyword.toLowerCase())) {
+          keywordScore += 1;
         }
       });
+      confidence += (keywordScore / faq.keywords.length) * 0.3; // 30% weight for keywords
+      
+      // 3. Answer content similarity (lower weight)
+      const answerSimilarity = fuzzyMatch(query, faq.a);
+      confidence += answerSimilarity * 0.1; // 10% weight for answer match
+      
+      // 4. Bonus for shorter questions (more specific)
+      const lengthBonus = Math.max(0, (50 - faq.q.length) / 100);
+      confidence += lengthBonus * 0.05;
+      
+      // 5. Check for exact phrase matches
+      if (faq.q.toLowerCase().includes(query) || query.includes(faq.q.toLowerCase())) {
+        confidence += 0.2; // Significant bonus for phrase inclusion
+      }
 
-      // Check partial matches in answer
-      score += fuzzyMatch(query, faq.a) * 0.5;
-
-      if (score > bestScore && score > 3) { // Minimum threshold
-        bestScore = score;
+      if (confidence > bestConfidence && confidence > confidenceThreshold) {
+        bestConfidence = confidence;
         bestMatch = faq;
       }
     });
+
+    // Log confidence for debugging (remove in production)
+    if (bestMatch) {
+      console.log(`Best match: "${bestMatch.q}" with confidence: ${bestConfidence.toFixed(2)}`);
+    }
 
     return bestMatch ? bestMatch.a : defaultResponse;
   };
