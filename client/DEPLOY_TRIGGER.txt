@@ -1,1 +1,1 @@
-DEPLOY_FRONTEND_20250726_boost_ai_discovery_tab
+DEPLOY_FRONTEND_20250726_remove_site_coverage
