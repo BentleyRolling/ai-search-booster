@@ -2475,7 +2475,7 @@ const Dashboard = () => {
                   {(tierUsage?.currentTier === 'Free' || !tierUsage?.currentTier) ? (
                     <button
                       onClick={() => setShowUpgradeModal(true)}
-                      className="px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500 mx-auto"
+                      className="px-2 py-1 rounded-lg text-xs font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500 mx-auto"
                     >
                       <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
                     </button>

@@ -1,1 +1,1 @@
-DEPLOY_FRONTEND_20250726_move_upgrade_button
+DEPLOY_FRONTEND_20250726_smaller_upgrade_button
