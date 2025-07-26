@@ -2399,7 +2399,7 @@ const Dashboard = () => {
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Products</h3>
                   <p className="text-4xl font-bold text-text-primary mb-6">{products?.length || 0}</p>
-                  <Package className="w-10 h-10 text-text-muted mx-auto" />
+                  <Package className="w-8 h-8 text-text-muted mx-auto" />
                 </div>
               </div>
               
@@ -2407,7 +2407,7 @@ const Dashboard = () => {
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Products</h3>
                   <p className="text-4xl font-bold text-accent-primary mb-6">{products?.filter(p => p.optimized)?.length || 0}</p>
-                  <CheckCircle className="w-10 h-10 text-accent-primary mx-auto" />
+                  <CheckCircle className="w-8 h-8 text-accent-primary mx-auto" />
                 </div>
               </div>
             </>
@@ -2419,7 +2419,7 @@ const Dashboard = () => {
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Articles</h3>
                   <p className="text-4xl font-bold text-text-primary mb-6">{articles?.length || 0}</p>
-                  <FileText className="w-10 h-10 text-text-muted mx-auto" />
+                  <FileText className="w-8 h-8 text-text-muted mx-auto" />
                 </div>
               </div>
               
@@ -2427,7 +2427,7 @@ const Dashboard = () => {
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Articles</h3>
                   <p className="text-4xl font-bold text-accent-primary mb-6">{articles?.filter(a => a.optimized)?.length || 0}</p>
-                  <CheckCircle className="w-10 h-10 text-accent-primary mx-auto" />
+                  <CheckCircle className="w-8 h-8 text-accent-primary mx-auto" />
                 </div>
               </div>
             </>
@@ -2439,7 +2439,7 @@ const Dashboard = () => {
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Pages</h3>
                   <p className="text-4xl font-bold text-text-primary mb-6">{pages?.length || 0}</p>
-                  <Globe className="w-10 h-10 text-text-muted mx-auto" />
+                  <Globe className="w-8 h-8 text-text-muted mx-auto" />
                 </div>
               </div>
               
@@ -2447,7 +2447,7 @@ const Dashboard = () => {
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Pages</h3>
                   <p className="text-4xl font-bold text-accent-primary mb-6">{pages?.filter(p => p.optimized)?.length || 0}</p>
-                  <CheckCircle className="w-10 h-10 text-accent-primary mx-auto" />
+                  <CheckCircle className="w-8 h-8 text-accent-primary mx-auto" />
                 </div>
               </div>
             </>
@@ -2459,7 +2459,7 @@ const Dashboard = () => {
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Total Collections</h3>
                   <p className="text-4xl font-bold text-text-primary mb-6">{collections?.length || 0}</p>
-                  <Package className="w-10 h-10 text-text-muted mx-auto" />
+                  <Package className="w-8 h-8 text-text-muted mx-auto" />
                 </div>
               </div>
               
@@ -2467,7 +2467,7 @@ const Dashboard = () => {
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-text-muted mb-4">Optimized Collections</h3>
                   <p className="text-4xl font-bold text-accent-primary mb-6">{collections?.filter(c => c.optimized)?.length || 0}</p>
-                  <CheckCircle className="w-10 h-10 text-accent-primary mx-auto" />
+                  <CheckCircle className="w-8 h-8 text-accent-primary mx-auto" />
                 </div>
               </div>
             </>
