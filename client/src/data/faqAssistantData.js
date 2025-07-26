@@ -462,4 +462,4 @@ export const faqAssistantData = [
   }
 ];
 
-export const defaultResponse = "I'm not sure how to answer that yet, but we're working on it. You can always check the FAQ tab or reach out to support at AskMaxEvo@gmail.com for personalized help!";
+export const defaultResponse = "I'm not sure how to answer that yet, but we're working on it. Please contact us at AskMaxEvo@gmail.com and we'll get back to you ASAP with a personalized answer!";

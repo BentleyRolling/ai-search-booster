@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, Bot, User } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { faqAssistantData, defaultResponse } from '../data/faqAssistantData';
 
 const ChatAssistant = () => {
@@ -14,6 +14,7 @@ const ChatAssistant = () => {
   ]);
   const [inputText, setInputText] = useState('');
   const [suggestions, setSuggestions] = useState([]);
+  const [feedback, setFeedback] = useState({});
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -84,6 +85,8 @@ const ChatAssistant = () => {
     const query = userInput.toLowerCase().trim();
     
     if (query.length < 3) {
+      // Log very short queries
+      logUnknownQuestion(userInput, null, 0);
       return defaultResponse;
     }
 
@@ -130,9 +133,16 @@ const ChatAssistant = () => {
     // Log confidence for debugging (remove in production)
     if (bestMatch) {
       console.log(`Best match: "${bestMatch.q}" with confidence: ${bestConfidence.toFixed(2)}`);
+    } else {
+      // Log unknown questions for review
+      logUnknownQuestion(userInput, bestMatch, bestConfidence);
     }
 
-    return bestMatch ? bestMatch.a : defaultResponse;
+    return { 
+      answer: bestMatch ? bestMatch.a : defaultResponse, 
+      confidence: bestConfidence,
+      matchedQuestion: bestMatch?.q || null
+    };
   };
 
   // Get suggestions as user types
@@ -156,6 +166,45 @@ const ChatAssistant = () => {
     setSuggestions(getSuggestions(value));
   };
 
+  // Log unknown questions to backend
+  const logUnknownQuestion = async (question, bestMatch, confidence) => {
+    try {
+      await fetch('/api/chatbot/unknown-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question,
+          bestMatch: bestMatch?.q || null,
+          confidence,
+          timestamp: new Date().toISOString()
+        })
+      });
+    } catch (error) {
+      console.log('Failed to log unknown question:', error);
+    }
+  };
+
+  // Handle user feedback
+  const handleFeedback = async (messageId, isHelpful, userQuestion, botAnswer) => {
+    try {
+      await fetch('/api/chatbot/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId,
+          question: userQuestion,
+          answer: botAnswer,
+          isHelpful,
+          timestamp: new Date().toISOString()
+        })
+      });
+      
+      setFeedback(prev => ({ ...prev, [messageId]: isHelpful }));
+    } catch (error) {
+      console.log('Failed to submit feedback:', error);
+    }
+  };
+
   const handleSendMessage = (messageText = inputText) => {
     if (!messageText.trim()) return;
 
@@ -168,11 +217,14 @@ const ChatAssistant = () => {
     };
 
     // Get bot response
+    const result = findBestAnswer(messageText);
     const botResponse = {
       id: Date.now() + 1,
-      text: findBestAnswer(messageText),
+      text: result.answer,
       isBot: true,
-      timestamp: new Date()
+      timestamp: new Date(),
+      userQuestion: messageText,
+      confidence: result.confidence
     };
 
     setMessages(prev => [...prev, userMessage, botResponse]);
@@ -265,6 +317,34 @@ const ChatAssistant = () => {
                     <p className="text-xs mt-1 opacity-60">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
+                    {/* Feedback buttons for bot messages */}
+                    {message.isBot && message.id !== 1 && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <p className="text-xs text-gray-400">Was this helpful?</p>
+                        <button
+                          onClick={() => handleFeedback(message.id, true, message.userQuestion, message.text)}
+                          className={`p-1 rounded transition-colors ${
+                            feedback[message.id] === true 
+                              ? 'bg-green-600 text-white' 
+                              : 'hover:bg-gray-600 text-gray-300'
+                          }`}
+                          disabled={feedback[message.id] !== undefined}
+                        >
+                          <ThumbsUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleFeedback(message.id, false, message.userQuestion, message.text)}
+                          className={`p-1 rounded transition-colors ${
+                            feedback[message.id] === false 
+                              ? 'bg-red-600 text-white' 
+                              : 'hover:bg-gray-600 text-gray-300'
+                          }`}
+                          disabled={feedback[message.id] !== undefined}
+                        >
+                          <ThumbsDown className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

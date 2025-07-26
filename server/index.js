@@ -242,6 +242,10 @@ function hasOptimizationQuota(shop) {
 // Initialize citation monitoring routes
 app.use('/api/monitoring', initializeCitationRoutes(shopData));
 
+// Chatbot routes
+import chatbotRoutes from './routes/chatbot.js';
+app.use('/api/chatbot', chatbotRoutes);
+
 // Environment variables - NO FALLBACKS FOR SECURITY
 const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY;
 const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET;
