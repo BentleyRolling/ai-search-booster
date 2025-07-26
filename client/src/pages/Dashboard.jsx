@@ -400,8 +400,9 @@ const Dashboard = () => {
               </span>
             )}
             {item.hasDraft && !item.rollbackTriggered && !item.optimized && (
-              <span className="inline-flex items-center px-3 py-1.5 bg-amber-900/30 text-amber-300 text-xs rounded-full font-medium border border-amber-700/50 hover:bg-amber-900/50 transition-all duration-200">
-                📝 Draft Ready
+              <span className="inline-flex items-center px-3 py-1.5 bg-white/10 text-white text-xs rounded-full font-medium border border-white/20 hover:bg-white/20 transition-all duration-200">
+                <FileText className="w-3 h-3 mr-1" />
+                Draft Ready
               </span>
             )}
             
