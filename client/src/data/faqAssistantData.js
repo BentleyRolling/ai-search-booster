@@ -1,313 +1,464 @@
-// AI Search Booster - In-App Assistant Q&A Dataset (Simplified, Non-Technical v1.2)
-// Format: JSON-ready | Tone: friendly, clear, helpful | Comprehensive coverage
+// AI Search Booster - In-App Assistant Q&A Dataset (Comprehensive v2.0)
+// Format: JSON-ready | Tone: friendly, clear, helpful | Complete system coverage
 
 export const faqAssistantData = [
-  // 📦 General App Overview
+  // 🔢 Pricing & Plans (Enhanced)
   {
     "id": 1,
-    "category": "General App Overview",
-    "q": "What does AI Search Booster actually do?",
-    "a": "AI Search Booster makes your Shopify store easier for AI tools like ChatGPT, Claude, Gemini, and Perplexity to find and understand. It adds special code and rewritten content that helps these AI systems include your products and pages in their answers.",
-    "keywords": ["what", "does", "do", "purpose", "function", "ai search booster", "makes", "easier"]
+    "category": "Pricing & Plans",
+    "q": "What are the different plan options?",
+    "a": "We offer three plans: Starter ($9/month for 250 optimizations), Pro ($29/month for 1,000 optimizations), and Enterprise (custom pricing for unlimited usage and dedicated support).",
+    "keywords": ["plan", "options", "starter", "pro", "enterprise", "pricing", "9", "29", "250", "1000"]
   },
   {
     "id": 2,
-    "category": "General App Overview",
-    "q": "How is this different from a normal SEO app?",
-    "a": "Most SEO apps help with Google rankings. AI Search Booster is made for newer AI tools like ChatGPT and Claude. These tools don't look at your site the same way Google does, so we format your content specifically for how they read websites.",
-    "keywords": ["seo", "different", "difference", "compare", "comparison", "google", "normal", "newer"]
+    "category": "Pricing & Plans",
+    "q": "What do I get with the paid plan?",
+    "a": "You get a higher number of optimizations per month, auto-optimization features, priority email support, and full access to all enhancement tools.",
+    "keywords": ["paid", "plan", "get", "optimizations", "auto-optimization", "priority", "support", "tools"]
   },
   {
     "id": 3,
-    "category": "General App Overview", 
-    "q": "Will this help me show up in ChatGPT answers?",
-    "a": "Yes! We optimize your store content so it makes more sense to ChatGPT, Claude, Gemini, and similar AI tools. This increases the chances your products or articles appear when people ask questions.",
-    "keywords": ["chatgpt", "show up", "appear", "answers", "claude", "ai models", "increases", "chances"]
+    "category": "Pricing & Plans",
+    "q": "How many optimizations do I get per tier?",
+    "a": "Starter = 250/month, Pro = 1,000/month, Enterprise = unlimited. Each published optimization counts toward your monthly usage.",
+    "keywords": ["optimizations", "tier", "starter", "pro", "enterprise", "250", "1000", "unlimited", "monthly", "usage"]
   },
   {
     "id": 4,
-    "category": "General App Overview",
-    "q": "What do AI tools like Claude or Gemini actually see on my site?",
-    "a": "They read the code behind your site. AI Search Booster adds invisible content that explains your products more clearly to those tools.",
-    "keywords": ["claude", "gemini", "see", "site", "code", "invisible", "explains", "clearly"]
+    "category": "Pricing & Plans",
+    "q": "Can I try it before paying?",
+    "a": "You can preview optimizations for free. Some stores may also qualify for a limited-time free trial—reach out to our team to check.",
+    "keywords": ["try", "before", "paying", "preview", "free", "trial", "qualify", "reach out"]
   },
   {
     "id": 5,
-    "category": "General App Overview",
-    "q": "Does this help with regular SEO too?",
-    "a": "It can! While we focus on AI visibility, the structured content can also benefit your rankings on Google.",
-    "keywords": ["regular", "seo", "help", "google", "rankings", "structured", "content", "benefit"]
+    "category": "Pricing & Plans",
+    "q": "Can I switch or cancel my plan anytime?",
+    "a": "Yes. You can upgrade, downgrade, or cancel your subscription at any time from your dashboard. No long-term contracts.",
+    "keywords": ["switch", "cancel", "plan", "anytime", "upgrade", "downgrade", "subscription", "dashboard", "contracts"]
   },
-
-  // 🧠 Optimization Features
   {
     "id": 6,
-    "category": "Optimization Features",
-    "q": "What content types can I optimize?",
-    "a": "You can optimize Products, Blog Articles, Pages, and Collections from your Shopify store.",
-    "keywords": ["content", "types", "optimize", "products", "blog", "pages", "collections", "shopify"]
+    "category": "Pricing & Plans",
+    "q": "Where do I upgrade my plan?",
+    "a": "Click the 'Upgrade Plan' button in the Monthly Optimization Usage box at the top of your dashboard, or click on your current tier badge.",
+    "keywords": ["upgrade", "plan", "button", "monthly", "optimization", "usage", "dashboard", "tier", "badge"]
   },
   {
     "id": 7,
-    "category": "Optimization Features",
-    "q": "What does LLM Optimized mean?",
-    "a": "It means your content is enhanced for AI tools like ChatGPT and Claude. We make it easier for those AIs to read, understand, and possibly include your content in their results.",
-    "keywords": ["llm", "optimized", "enhanced", "ai tools", "chatgpt", "claude", "easier", "understand"]
+    "category": "Pricing & Plans",
+    "q": "What happens when I hit my monthly limit?",
+    "a": "You'll see a quota exceeded message and the optimize buttons will be disabled. You can either upgrade your plan or wait until next month when your quota resets.",
+    "keywords": ["monthly", "limit", "quota", "exceeded", "optimize", "buttons", "disabled", "upgrade", "resets"]
   },
+
+  // ⚙️ Features & Functionality (Enhanced)
   {
     "id": 8,
-    "category": "Optimization Features",
-    "q": "Where does the optimized content go?",
-    "a": "It gets added behind the scenes to your store. Your customers won't see it, but AI tools and search engines can.",
-    "keywords": ["where", "behind scenes", "store", "customers", "won't see", "ai tools", "search engines"]
+    "category": "Features & Functionality",
+    "q": "What does AI Search Booster actually do?",
+    "a": "It rewrites and enhances your product, blog, and page content to help AI tools like ChatGPT, Claude, and Gemini understand it better. This increases your chances of being included in their answers.",
+    "keywords": ["ai search booster", "do", "rewrites", "enhances", "content", "chatgpt", "claude", "gemini", "understand", "included"]
   },
   {
     "id": 9,
-    "category": "Optimization Features",
-    "q": "Can I preview content before publishing?",
-    "a": "Yes! You can preview the optimized version before deciding whether to publish it live.",
-    "keywords": ["preview", "before", "publishing", "optimized", "version", "publish", "live"]
+    "category": "Features & Functionality",
+    "q": "How does it help with AI tools like ChatGPT or Gemini?",
+    "a": "We inject invisible data that makes your content easier for AI tools to read and recognize. This boosts visibility in AI-generated answers.",
+    "keywords": ["help", "ai tools", "chatgpt", "gemini", "inject", "invisible", "data", "easier", "read", "visibility"]
   },
   {
     "id": 10,
-    "category": "Optimization Features",
-    "q": "What happens if I don't like the optimized version?",
-    "a": "No problem. You can undo any optimization with a single click and go back to your original content.",
-    "keywords": ["don't like", "undo", "optimization", "single click", "original", "content"]
+    "category": "Features & Functionality",
+    "q": "Will my site look different after optimization?",
+    "a": "No. Optimized content is hidden in your site code. It improves how AI sees your store but doesn't change how it looks to visitors.",
+    "keywords": ["site", "look", "different", "optimization", "hidden", "code", "improves", "visitors", "change"]
   },
   {
     "id": 11,
-    "category": "Optimization Features",
-    "q": "Will my theme break or change visually?",
-    "a": "No. The app is built to work with Online Store 2.0 and your content changes are invisible to your customers.",
-    "keywords": ["theme", "break", "change", "visually", "online store", "invisible", "customers"]
+    "category": "Features & Functionality",
+    "q": "What content types can I optimize?",
+    "a": "You can optimize Products, Blog Articles, Pages, and Collections from your Shopify store.",
+    "keywords": ["content", "types", "optimize", "products", "blog", "articles", "pages", "collections", "shopify"]
   },
   {
     "id": 12,
-    "category": "Optimization Features",
-    "q": "Do I need to re-optimize after updating a product?",
-    "a": "It's recommended. If your product content changes, re-optimizing keeps the AI content fresh.",
-    "keywords": ["re-optimize", "updating", "product", "content", "changes", "fresh", "recommended"]
+    "category": "Features & Functionality",
+    "q": "What happens when I publish optimized content?",
+    "a": "We add invisible code and AI-ready text to your store to improve discoverability. It doesn't change your visible theme or layout.",
+    "keywords": ["publish", "optimized", "content", "invisible", "code", "ai-ready", "text", "discoverability", "theme", "layout"]
   },
-
-  // ⚡ Auto-Optimization
   {
     "id": 13,
-    "category": "Auto-Optimization",
-    "q": "What is Auto-Optimize?",
-    "a": "Auto-Optimize saves time by automatically optimizing new products, blogs, or pages as soon as you publish them. You don't have to do anything manually.",
-    "keywords": ["auto", "optimize", "automatic", "saves time", "new", "publish", "manually"]
+    "category": "Features & Functionality",
+    "q": "What does LLM optimized mean?",
+    "a": "It means the content is tailored specifically for AI tools (Large Language Models) like ChatGPT, Claude, and Gemini so they can better understand and feature it.",
+    "keywords": ["llm", "optimized", "mean", "tailored", "ai tools", "large language models", "chatgpt", "claude", "gemini"]
   },
+
+  // 🧠 Auto-Optimize & Rollback
   {
     "id": 14,
-    "category": "Auto-Optimization",
-    "q": "Do I need a paid plan to use Auto-Optimize?",
-    "a": "Yes, it's included in the Starter, Pro, and Enterprise plans.",
-    "keywords": ["paid", "plan", "auto", "optimize", "starter", "pro", "enterprise", "included"]
+    "category": "Auto-Optimize & Rollback",
+    "q": "What is Auto-Optimize and how does it work?",
+    "a": "It automatically optimizes new content (like products or blogs) as soon as you publish them in Shopify. You can turn it on/off for each content type.",
+    "keywords": ["auto-optimize", "how", "works", "automatically", "optimizes", "new", "content", "products", "blogs", "shopify"]
   },
   {
     "id": 15,
-    "category": "Auto-Optimization",
-    "q": "What exactly does Auto-Optimization do?",
-    "a": "It enhances your new content with smart keywords, summaries, FAQs, and special formatting that AI tools like ChatGPT and Gemini can understand better.",
-    "keywords": ["auto", "optimization", "enhances", "keywords", "summaries", "faqs", "formatting", "chatgpt", "gemini"]
+    "category": "Auto-Optimize & Rollback",
+    "q": "How do I turn on Auto-Optimize?",
+    "a": "Go to your dashboard and toggle Auto-Optimize for Products, Blogs, Pages, or Collections in their respective tabs.",
+    "keywords": ["turn on", "auto-optimize", "dashboard", "toggle", "products", "blogs", "pages", "collections", "tabs"]
   },
   {
     "id": 16,
-    "category": "Auto-Optimization",
-    "q": "Can I turn off Auto-Optimize?",
-    "a": "Yes, there is a toggle inside the dashboard under each content type (Products, Blogs, etc).",
-    "keywords": ["turn off", "auto", "optimize", "toggle", "dashboard", "content type", "products", "blogs"]
+    "category": "Auto-Optimize & Rollback",
+    "q": "Will it change my original content?",
+    "a": "No. You can always preview content before publishing, and rollback to your original version at any time with one click.",
+    "keywords": ["change", "original", "content", "preview", "before", "publishing", "rollback", "version", "one click"]
   },
   {
     "id": 17,
-    "category": "Auto-Optimization",
-    "q": "Will Auto-Optimize change my published content without warning?",
-    "a": "No. You can choose whether to auto-publish or just auto-generate drafts.",
-    "keywords": ["auto", "optimize", "change", "published", "content", "warning", "auto-publish", "drafts"]
+    "category": "Auto-Optimize & Rollback",
+    "q": "Where do I find the rollback button?",
+    "a": "Inside each optimization tab, under the optimized item, you'll see a rollback button if an optimization has been published.",
+    "keywords": ["find", "rollback", "button", "optimization", "tab", "optimized", "item", "published"]
   },
-
-  // 💸 Billing & Plans
   {
     "id": 18,
-    "category": "Billing & Plans",
-    "q": "What's included in the Starter plan?",
-    "a": "$9/month gets you 250 content optimizations, automatic content improvement, and priority email support. It's perfect for small stores.",
-    "keywords": ["starter", "plan", "9", "250", "optimizations", "automatic", "email support", "small stores"]
+    "category": "Auto-Optimize & Rollback",
+    "q": "Can I rollback all my optimizations at once?",
+    "a": "Yes! Use the 'Rollback All' button at the top of each tab (Products, Blogs, Pages, Collections) to undo all optimizations for that content type.",
+    "keywords": ["rollback", "all", "optimizations", "once", "button", "top", "tab", "products", "blogs", "pages", "collections"]
   },
+
+  // 📊 Usage Tracking & Behavior
   {
     "id": 19,
-    "category": "Billing & Plans",
-    "q": "What's included in the Pro plan?",
-    "a": "$29/month includes 1,000 optimizations per month and full automation—great for growing brands.",
-    "keywords": ["pro", "plan", "29", "1000", "optimizations", "month", "automation", "growing brands"]
+    "category": "Usage Tracking",
+    "q": "Do previews count against my monthly usage?",
+    "a": "Nope! Only published optimizations count. You can preview as much as you want.",
+    "keywords": ["previews", "count", "monthly", "usage", "published", "optimizations", "much", "want"]
   },
   {
     "id": 20,
-    "category": "Billing & Plans",
-    "q": "What's the Enterprise plan?",
-    "a": "Enterprise offers unlimited optimizations, custom features, and a dedicated support manager for large-scale businesses.",
-    "keywords": ["enterprise", "plan", "unlimited", "optimizations", "custom", "dedicated", "support", "large-scale"]
+    "category": "Usage Tracking",
+    "q": "How do I track how many optimizations I've used?",
+    "a": "Check the usage tracker at the top of each optimization tab. It shows how many you've used this month.",
+    "keywords": ["track", "optimizations", "used", "usage", "tracker", "top", "tab", "shows", "month"]
   },
   {
     "id": 21,
-    "category": "Billing & Plans",
-    "q": "How do optimizations get counted?",
-    "a": "Each time you publish optimized content, it counts as one. You can preview for free.",
-    "keywords": ["optimizations", "counted", "publish", "counts", "preview", "free"]
+    "category": "Usage Tracking",
+    "q": "Do blogs and collections count the same as products?",
+    "a": "Yes. Every published optimization counts as one, regardless of content type.",
+    "keywords": ["blogs", "collections", "count", "same", "products", "published", "optimization", "regardless", "content type"]
   },
   {
     "id": 22,
-    "category": "Billing & Plans",
-    "q": "Can I preview content without using an optimization?",
-    "a": "Yes! Previewing is always free. Only publishing uses your quota.",
-    "keywords": ["preview", "content", "optimization", "free", "publishing", "quota", "uses"]
+    "category": "Usage Tracking",
+    "q": "Where can I see my monthly usage stats?",
+    "a": "Look for the 'Monthly Optimization Usage' box at the top of your dashboard. It shows your current usage vs. your monthly limit.",
+    "keywords": ["see", "monthly", "usage", "stats", "optimization", "box", "top", "dashboard", "current", "limit"]
   },
+
+  // 🧼 Troubleshooting
   {
     "id": 23,
-    "category": "Billing & Plans",
-    "q": "What happens when I run out of monthly optimizations?",
-    "a": "You can upgrade your plan or wait until your limit resets next month.",
-    "keywords": ["run out", "monthly", "optimizations", "upgrade", "plan", "limit", "resets", "next month"]
+    "category": "Troubleshooting",
+    "q": "Why did my billing fail?",
+    "a": "Make sure you approved the subscription in the Shopify billing popup. If the window was closed early, try again.",
+    "keywords": ["billing", "fail", "failed", "approved", "subscription", "shopify", "popup", "window", "closed", "try again"]
   },
   {
     "id": 24,
-    "category": "Billing & Plans",
-    "q": "Can I switch plans later?",
-    "a": "Absolutely. You can upgrade or downgrade anytime inside the dashboard.",
-    "keywords": ["switch", "plans", "upgrade", "downgrade", "anytime", "dashboard"]
+    "category": "Troubleshooting",
+    "q": "Why isn't anything loading in the app?",
+    "a": "Try refreshing the page or checking your Shopify connection. If nothing appears, contact support and we'll help.",
+    "keywords": ["nothing", "loading", "app", "refreshing", "page", "shopify", "connection", "appears", "contact", "support"]
   },
   {
     "id": 25,
-    "category": "Billing & Plans",
-    "q": "Is this priced per user or per store?",
-    "a": "It's priced per Shopify store.",
-    "keywords": ["priced", "per user", "per store", "shopify", "store"]
+    "category": "Troubleshooting",
+    "q": "Why is the optimize button greyed out?",
+    "a": "Make sure you have content selected and haven't used up your monthly limit. Still stuck? Reach out to us.",
+    "keywords": ["optimize", "button", "greyed", "out", "content", "selected", "monthly", "limit", "stuck", "reach out"]
   },
   {
     "id": 26,
-    "category": "Billing & Plans",
-    "q": "Is there a free trial?",
-    "a": "We may offer a free trial depending on your store activity. Reach out to us to check availability.",
-    "keywords": ["free", "trial", "offer", "store", "activity", "reach out", "availability"]
+    "category": "Troubleshooting",
+    "q": "I clicked rollback but nothing changed. What now?",
+    "a": "Try refreshing your browser. Rollback works instantly, but changes may take a second to reflect.",
+    "keywords": ["clicked", "rollback", "nothing", "changed", "refreshing", "browser", "instantly", "second", "reflect"]
   },
   {
     "id": 27,
-    "category": "Billing & Plans",
-    "q": "Can I cancel my subscription anytime?",
-    "a": "Yes! There are no cancellation fees or long-term contracts.",
-    "keywords": ["cancel", "subscription", "anytime", "fees", "contracts", "cancellation"]
+    "category": "Troubleshooting",
+    "q": "Why can't I see my products in the dashboard?",
+    "a": "Make sure your products are published in Shopify and try refreshing the page. If still empty, check your Shopify app permissions.",
+    "keywords": ["can't see", "products", "dashboard", "published", "shopify", "refreshing", "empty", "app", "permissions"]
   },
 
-  // 🛠️ Troubleshooting & Edge Cases
+  // 🚀 AI Discovery Tips (from Boost Tab)
   {
     "id": 28,
-    "category": "Troubleshooting",
-    "q": "Why does it say Billing failed when I pick a plan?",
-    "a": "This happens if you didn't approve the subscription inside Shopify. Just try again and make sure to click 'Approve' in the Shopify billing window.",
-    "keywords": ["billing", "failed", "plan", "approve", "subscription", "shopify", "window"]
+    "category": "AI Discovery Tips",
+    "q": "What else can I do to get noticed by AI tools?",
+    "a": "Submit your store to Bing Merchant Center, include timestamps in your content, and write clear, specific product titles. We cover this in the Boost AI Discovery tab.",
+    "keywords": ["else", "noticed", "ai tools", "bing", "merchant center", "timestamps", "content", "clear", "specific", "boost ai discovery"]
   },
   {
     "id": 29,
-    "category": "Troubleshooting",
-    "q": "Why isn't the optimization button working?",
-    "a": "Make sure your Shopify store is connected and you haven't used up your monthly quota. Still stuck? Contact us!",
-    "keywords": ["optimization", "button", "working", "shopify", "connected", "monthly quota", "contact"]
+    "category": "AI Discovery Tips",
+    "q": "Do I need Bing for ChatGPT to find me?",
+    "a": "Sometimes. ChatGPT uses Bing to search the web, so getting listed in Bing Merchant Center increases your chances.",
+    "keywords": ["need", "bing", "chatgpt", "find", "uses", "search", "web", "listed", "merchant center", "increases", "chances"]
   },
   {
     "id": 30,
-    "category": "Troubleshooting",
-    "q": "I clicked rollback but nothing changed?",
-    "a": "Try refreshing the page. The rollback happens instantly but may take a second to show.",
-    "keywords": ["rollback", "nothing changed", "refreshing", "page", "instantly", "second"]
+    "category": "AI Discovery Tips",
+    "q": "What are timestamps and why do they help?",
+    "a": "Timestamps show AI tools that your content is fresh and relevant. That makes it more likely to be included in up-to-date answers.",
+    "keywords": ["timestamps", "why", "help", "ai tools", "content", "fresh", "relevant", "likely", "included", "up-to-date"]
   },
   {
     "id": 31,
-    "category": "Troubleshooting",
-    "q": "Do I need to reinstall the app if I change Shopify themes?",
-    "a": "Nope! Our app is built to work with all Online Store 2.0 themes and automatically reattaches itself.",
-    "keywords": ["reinstall", "app", "change", "shopify", "themes", "online store", "reattaches"]
+    "category": "AI Discovery Tips",
+    "q": "What's in the Boost AI Discovery tab?",
+    "a": "It's a collection of 7 expert strategies to help your store appear more often in ChatGPT, Claude, and other AI-generated answers. Each has step-by-step guidance.",
+    "keywords": ["boost ai discovery", "tab", "collection", "7", "expert", "strategies", "store", "appear", "chatgpt", "claude", "step-by-step"]
   },
+
+  // 📱 Dashboard & Navigation
   {
     "id": 32,
-    "category": "Troubleshooting",
-    "q": "My optimized content looks broken or off. What should I do?",
-    "a": "You can click Rollback anytime, or contact support for help. We'll review it quickly.",
-    "keywords": ["optimized", "content", "broken", "rollback", "contact", "support", "review"]
+    "category": "Dashboard & Navigation",
+    "q": "How do I navigate between different content types?",
+    "a": "Use the sidebar on the left. Click on Products, Blog Articles, Pages, Collections, or Boost AI Discovery to switch between different content types.",
+    "keywords": ["navigate", "different", "content types", "sidebar", "left", "click", "products", "blog articles", "pages", "collections"]
   },
   {
     "id": 33,
-    "category": "Troubleshooting",
-    "q": "Why can't I see products or blogs in the dashboard?",
-    "a": "Check your Shopify connection and make sure you have published items. Try refreshing the app.",
-    "keywords": ["see", "products", "blogs", "dashboard", "shopify", "connection", "published", "refreshing"]
+    "category": "Dashboard & Navigation",
+    "q": "What do the numbers next to each tab mean?",
+    "a": "Those show how many items you have in each category. For example, 'Products 15' means you have 15 products in your store.",
+    "keywords": ["numbers", "next", "tab", "mean", "show", "items", "category", "products", "15", "store"]
   },
-
-  // 📊 Boost AI Discovery Tab
   {
     "id": 34,
-    "category": "Boost AI Discovery",
-    "q": "What's the Boost AI Discovery tab?",
-    "a": "It's a collection of tips to help your store appear more often in answers from ChatGPT, Claude, and other AI tools.",
-    "keywords": ["boost", "ai discovery", "tab", "tips", "appear", "chatgpt", "claude", "ai tools"]
+    "category": "Dashboard & Navigation",
+    "q": "How do I select multiple items to optimize?",
+    "a": "Click the checkbox next to each item you want to optimize, or use 'Select All' at the top to choose everything at once.",
+    "keywords": ["select", "multiple", "items", "optimize", "checkbox", "next", "select all", "top", "choose", "everything"]
   },
   {
     "id": 35,
-    "category": "Boost AI Discovery",
-    "q": "What else can I do to improve AI visibility?",
-    "a": "You can submit your store to Bing Merchant Center, use clear product titles, and make sure content includes timestamps. All of this helps AI tools recognize your site.",
-    "keywords": ["improve", "ai visibility", "bing", "merchant center", "clear", "product titles", "timestamps", "recognize"]
+    "category": "Dashboard & Navigation",
+    "q": "What's the difference between Optimize Selected and Optimize All?",
+    "a": "Optimize Selected only processes items you've checked. Optimize All processes everything in that category (products, blogs, etc.).",
+    "keywords": ["difference", "optimize selected", "optimize all", "processes", "items", "checked", "everything", "category"]
   },
   {
     "id": 36,
-    "category": "Boost AI Discovery",
-    "q": "Do I need Bing to show up in ChatGPT?",
-    "a": "Sometimes. ChatGPT uses Bing for web results, so being listed in Bing Merchant Center can help your store appear more often.",
-    "keywords": ["bing", "show up", "chatgpt", "web results", "listed", "merchant center", "appear"]
+    "category": "Dashboard & Navigation",
+    "q": "Where do I find my account settings?",
+    "a": "Click the Settings icon at the bottom of the sidebar to access your account settings, billing info, and app preferences.",
+    "keywords": ["find", "account", "settings", "click", "icon", "bottom", "sidebar", "access", "billing", "preferences"]
   },
+
+  // 🔍 Preview & Publishing
   {
     "id": 37,
-    "category": "Boost AI Discovery",
-    "q": "What are timestamps and why do they help?",
-    "a": "Timestamps show AI tools that your content is fresh and relevant, which increases your chances of being included in up-to-date answers.",
-    "keywords": ["timestamps", "help", "ai tools", "fresh", "relevant", "increases", "chances", "up-to-date"]
+    "category": "Preview & Publishing",
+    "q": "How do I preview optimized content before publishing?",
+    "a": "Click the 'Preview' button next to any item. This shows you the original vs. optimized content side-by-side for free.",
+    "keywords": ["preview", "optimized", "content", "before", "publishing", "click", "button", "next", "original", "side-by-side"]
   },
   {
     "id": 38,
-    "category": "Boost AI Discovery",
-    "q": "Where can I learn more about AI visibility?",
-    "a": "Inside the Boost AI Discovery tab, we'll keep adding tips, links, and optional tools that go beyond content optimization.",
-    "keywords": ["learn more", "ai visibility", "boost ai discovery", "tips", "links", "tools", "optimization"]
+    "category": "Preview & Publishing",
+    "q": "What's the difference between a draft and published optimization?",
+    "a": "A draft is optimized content you can preview and edit. Published means it's live on your store and visible to AI tools.",
+    "keywords": ["difference", "draft", "published", "optimization", "preview", "edit", "live", "store", "visible", "ai tools"]
   },
-
-  // Additional common questions
   {
     "id": 39,
-    "category": "General",
-    "q": "How long does optimization take?",
-    "a": "Most optimizations complete within 30-60 seconds. Large catalogs may take a few minutes.",
-    "keywords": ["how long", "optimization", "take", "seconds", "minutes", "catalogs"]
+    "category": "Preview & Publishing",
+    "q": "Can I edit the optimized content before publishing?",
+    "a": "Currently, you can preview and choose to publish or rollback. Custom editing features are coming in future updates.",
+    "keywords": ["edit", "optimized", "content", "before", "publishing", "preview", "choose", "publish", "rollback", "custom", "future"]
   },
   {
     "id": 40,
-    "category": "General",
-    "q": "Is my data secure?",
-    "a": "Yes. We use industry-standard encryption and never store your product content permanently. All data is processed securely through Shopify's API.",
-    "keywords": ["data", "secure", "encryption", "privacy", "safe", "shopify", "api"]
+    "category": "Preview & Publishing",
+    "q": "How do I publish all my drafts at once?",
+    "a": "Use the 'Publish Drafts' button at the top of each tab. This publishes all draft optimizations for that content type.",
+    "keywords": ["publish", "all", "drafts", "once", "button", "top", "tab", "publishes", "optimizations", "content type"]
   },
+
+  // 🔧 Technical & Safety
   {
     "id": 41,
-    "category": "General", 
-    "q": "Will this slow down my store?",
-    "a": "No. All optimizations are injected as lightweight structured data that doesn't affect your store's loading speed.",
-    "keywords": ["slow", "store", "speed", "loading", "performance", "lightweight", "structured data"]
+    "category": "Technical & Safety",
+    "q": "Is this safe for my Shopify theme?",
+    "a": "Yes! AI Search Booster is designed to work with any Online Store 2.0 theme without affecting your store's appearance.",
+    "keywords": ["safe", "shopify", "theme", "designed", "work", "online store", "2.0", "affecting", "appearance"]
   },
   {
     "id": 42,
-    "category": "Support",
-    "q": "How do I contact support?",
-    "a": "Email us at AskMaxEvo@gmail.com for any questions or issues. Pro and Enterprise customers get priority support.",
-    "keywords": ["contact", "support", "email", "askmaxevo", "questions", "issues", "priority"]
+    "category": "Technical & Safety",
+    "q": "Will this app slow down my store?",
+    "a": "No. We use lightweight, invisible code that doesn't impact performance or loading times.",
+    "keywords": ["app", "slow down", "store", "lightweight", "invisible", "code", "impact", "performance", "loading", "times"]
+  },
+  {
+    "id": 43,
+    "category": "Technical & Safety",
+    "q": "Do I need to reinstall if I change themes?",
+    "a": "No! Our Theme App Extension automatically works with all compatible themes. No reinstallation needed.",
+    "keywords": ["reinstall", "change", "themes", "theme app extension", "automatically", "works", "compatible", "reinstallation"]
+  },
+  {
+    "id": 44,
+    "category": "Technical & Safety",
+    "q": "Is my store data secure?",
+    "a": "Absolutely. We use industry-standard encryption and only access your content through Shopify's secure API. We never store your data permanently.",
+    "keywords": ["store", "data", "secure", "industry-standard", "encryption", "access", "content", "shopify", "api", "never", "permanently"]
+  },
+
+  // 📞 Support & Contact
+  {
+    "id": 45,
+    "category": "Support & Contact",
+    "q": "Can I contact support if I need help?",
+    "a": "Yes! You can email us anytime at AskMaxEvo@gmail.com or use the FAQ and Instructions tabs for common questions.",
+    "keywords": ["contact", "support", "need", "help", "email", "askmaxevo", "gmail", "faq", "instructions", "common", "questions"]
+  },
+  {
+    "id": 46,
+    "category": "Support & Contact",
+    "q": "How quickly does support respond?",
+    "a": "Pro and Enterprise customers get priority support within 24 hours. All customers receive responses within 2-3 business days.",
+    "keywords": ["quickly", "support", "respond", "pro", "enterprise", "priority", "24 hours", "customers", "2-3", "business days"]
+  },
+  {
+    "id": 47,
+    "category": "Support & Contact",
+    "q": "Where can I find help documentation?",
+    "a": "Click on 'Instructions' in the sidebar for step-by-step guides, or 'FAQ' for common questions and troubleshooting tips.",
+    "keywords": ["find", "help", "documentation", "click", "instructions", "sidebar", "step-by-step", "guides", "faq", "troubleshooting"]
+  },
+
+  // 🎯 Getting Started
+  {
+    "id": 48,
+    "category": "Getting Started",
+    "q": "How do I get started optimizing my store?",
+    "a": "1) Click on Products in the sidebar, 2) Select items you want to optimize, 3) Click 'Optimize Selected', 4) Preview and publish when ready!",
+    "keywords": ["get started", "optimizing", "store", "click", "products", "sidebar", "select", "items", "optimize selected", "preview", "publish"]
+  },
+  {
+    "id": 49,
+    "category": "Getting Started",
+    "q": "What should I optimize first?",
+    "a": "Start with your best-selling products, then move to your most popular blog posts and key pages. These get the most visibility benefit.",
+    "keywords": ["should", "optimize", "first", "start", "best-selling", "products", "popular", "blog posts", "key", "pages", "visibility", "benefit"]
+  },
+  {
+    "id": 50,
+    "category": "Getting Started",
+    "q": "Do I need to do anything after installing the app?",
+    "a": "Just accept the consent agreement, then start optimizing! The app automatically connects to your Shopify store and loads your content.",
+    "keywords": ["need", "anything", "after", "installing", "app", "accept", "consent", "agreement", "start", "optimizing", "automatically", "connects"]
+  },
+
+  // 🔄 Workflow & Process
+  {
+    "id": 51,
+    "category": "Workflow & Process",
+    "q": "What's the typical optimization workflow?",
+    "a": "Select content → Click Optimize → Preview results → Publish if satisfied → Monitor usage. You can rollback anytime if needed.",
+    "keywords": ["typical", "optimization", "workflow", "select", "content", "click", "optimize", "preview", "results", "publish", "monitor", "rollback"]
+  },
+  {
+    "id": 52,
+    "category": "Workflow & Process",
+    "q": "How long does an optimization take?",
+    "a": "Most optimizations complete in 30-60 seconds. Large batches or complex content might take 2-3 minutes.",
+    "keywords": ["how long", "optimization", "take", "complete", "30-60", "seconds", "large", "batches", "complex", "2-3", "minutes"]
+  },
+  {
+    "id": 53,
+    "category": "Workflow & Process",
+    "q": "Can I optimize the same item multiple times?",
+    "a": "Yes! Re-optimizing can be helpful when you update your content or want to try different approaches. Each re-optimization counts toward your quota.",
+    "keywords": ["optimize", "same", "item", "multiple", "times", "re-optimizing", "helpful", "update", "content", "different", "approaches", "quota"]
+  },
+
+  // 📈 Results & Performance
+  {
+    "id": 54,
+    "category": "Results & Performance",
+    "q": "How will I know if the optimization is working?",
+    "a": "AI visibility takes time to improve. Look for mentions of your products in AI tool responses, and track any increases in organic traffic over 4-8 weeks.",
+    "keywords": ["know", "optimization", "working", "ai visibility", "time", "improve", "mentions", "products", "ai tool", "responses", "organic", "traffic"]
+  },
+  {
+    "id": 55,
+    "category": "Results & Performance",
+    "q": "When will I see results from AI optimization?",
+    "a": "Results vary, but most stores start seeing improved AI visibility within 2-6 weeks as AI tools index the enhanced content.",
+    "keywords": ["when", "see", "results", "ai optimization", "vary", "stores", "improved", "visibility", "2-6", "weeks", "index", "enhanced"]
+  },
+
+  // 🔔 Notifications & Status
+  {
+    "id": 56,
+    "category": "Notifications & Status",
+    "q": "What do the different status badges mean?",
+    "a": "Green 'Optimized' means published and live. 'Draft' means ready to preview. 'Processing' means optimization is in progress.",
+    "keywords": ["different", "status", "badges", "mean", "green", "optimized", "published", "live", "draft", "ready", "preview", "processing", "progress"]
+  },
+  {
+    "id": 57,
+    "category": "Notifications & Status",
+    "q": "Why am I getting quota exceeded notifications?",
+    "a": "You've reached your monthly optimization limit. Upgrade your plan to continue optimizing, or wait until next month when your quota resets.",
+    "keywords": ["quota", "exceeded", "notifications", "reached", "monthly", "optimization", "limit", "upgrade", "plan", "continue", "wait", "resets"]
+  },
+
+  // 🏪 Store Types & Compatibility
+  {
+    "id": 58,
+    "category": "Store Compatibility",
+    "q": "Does this work with all Shopify stores?",
+    "a": "Yes! AI Search Booster works with all Shopify stores using Online Store 2.0 themes (most modern themes).",
+    "keywords": ["work", "all", "shopify", "stores", "ai search booster", "online store", "2.0", "themes", "modern"]
+  },
+  {
+    "id": 59,
+    "category": "Store Compatibility",
+    "q": "What if I have a custom theme?",
+    "a": "Our Theme App Extension is designed to work with custom themes too. If you have issues, contact support for theme-specific help.",
+    "keywords": ["custom", "theme", "theme app extension", "designed", "work", "issues", "contact", "support", "theme-specific", "help"]
+  },
+
+  // 💡 Advanced Tips
+  {
+    "id": 60,
+    "category": "Advanced Tips",
+    "q": "Should I optimize all my content at once?",
+    "a": "It's better to start with your most important products and pages, then gradually optimize the rest. This helps you monitor results and manage your quota.",
+    "keywords": ["should", "optimize", "all", "content", "once", "better", "start", "important", "products", "pages", "gradually", "monitor", "manage", "quota"]
+  },
+  {
+    "id": 61,
+    "category": "Advanced Tips",
+    "q": "Can I see what specific changes were made to my content?",
+    "a": "Yes! Use the Preview feature to see a side-by-side comparison of your original content vs. the AI-optimized version.",
+    "keywords": ["see", "specific", "changes", "made", "content", "preview", "feature", "side-by-side", "comparison", "original", "ai-optimized"]
   }
 ];
 
