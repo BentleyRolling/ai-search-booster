@@ -2471,16 +2471,25 @@ const Dashboard = () => {
                     )}
                   </p>
                   
-                  {/* Tier Badge */}
-                  <span className={`inline-block text-xs px-2 py-1 rounded-full ${
-                    tierUsage?.currentTier === 'Enterprise' ? 'bg-purple-900/30 text-purple-300' :
-                    tierUsage?.currentTier === 'Scale' ? 'bg-green-900/30 text-green-300' :
-                    tierUsage?.currentTier === 'Pro' ? 'bg-blue-900/30 text-blue-300' :
-                    tierUsage?.currentTier === 'Starter' ? 'bg-yellow-900/30 text-yellow-300' :
-                    'bg-gray-700 text-gray-300'
-                  }`}>
-                    {tierUsage?.currentTier || 'Free'}
-                  </span>
+                  {/* Tier Badge or Upgrade Button */}
+                  {(tierUsage?.currentTier === 'Free' || !tierUsage?.currentTier) ? (
+                    <button
+                      onClick={() => setShowUpgradeModal(true)}
+                      className="px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500 mx-auto"
+                    >
+                      <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
+                    </button>
+                  ) : (
+                    <span className={`inline-block text-xs px-2 py-1 rounded-full ${
+                      tierUsage?.currentTier === 'Enterprise' ? 'bg-purple-900/30 text-purple-300' :
+                      tierUsage?.currentTier === 'Scale' ? 'bg-green-900/30 text-green-300' :
+                      tierUsage?.currentTier === 'Pro' ? 'bg-blue-900/30 text-blue-300' :
+                      tierUsage?.currentTier === 'Starter' ? 'bg-yellow-900/30 text-yellow-300' :
+                      'bg-gray-700 text-gray-300'
+                    }`}>
+                      {tierUsage?.currentTier}
+                    </span>
+                  )}
                 </div>
               </div>
               
@@ -2514,13 +2523,6 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-text-primary">Select Products</h3>
                   <div className="flex space-x-2">
-                    {/* Upgrade Plan Button */}
-                    <button
-                      onClick={() => setShowUpgradeModal(true)}
-                      className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
-                    >
-                      <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
-                    </button>
                     <button
                       onClick={() => {
                         if (selectedProducts.length === products.length) {
@@ -2634,13 +2636,6 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-text-primary">Select Blog Articles</h3>
                   <div className="flex space-x-2">
-                    {/* Upgrade Plan Button */}
-                    <button
-                      onClick={() => setShowUpgradeModal(true)}
-                      className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
-                    >
-                      <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
-                    </button>
                       <button
                         onClick={() => {
                           if (selectedArticles.length === articles.length) {
@@ -2754,13 +2749,6 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-text-primary">Select Pages</h3>
                   <div className="flex space-x-2">
-                    {/* Upgrade Plan Button */}
-                    <button
-                      onClick={() => setShowUpgradeModal(true)}
-                      className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
-                    >
-                      <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
-                    </button>
                       <button
                         onClick={() => {
                           if (selectedPages.length === pages.length) {
@@ -2880,13 +2868,6 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-text-primary">Select Collections</h3>
                   <div className="flex space-x-2">
-                    {/* Upgrade Plan Button */}
-                    <button
-                      onClick={() => setShowUpgradeModal(true)}
-                      className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ease-out flex items-center space-x-1 bg-transparent text-white border border-white/20 hover:border-blue-500"
-                    >
-                      <span>{tierUsage && !tierUsage.hasQuota ? 'Upgrade Plan Now' : 'Upgrade Plan'}</span>
-                    </button>
                       <button
                         onClick={() => {
                           if (selectedCollections.length === collections.length) {
