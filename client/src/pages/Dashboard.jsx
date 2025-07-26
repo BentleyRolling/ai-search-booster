@@ -3925,19 +3925,7 @@ const Dashboard = () => {
                             <TrendingUp className="w-5 h-5 mr-2 text-gray-300" />
                             Quality Assessment
                           </h4>
-                          <div className={`grid gap-6 ${
-                            // Calculate grid columns based on what's visible
-                            (() => {
-                              const hasRiskScore = showAdvancedDebugUI && selectedDraft.data.draft.content?.riskScore !== undefined;
-                              const hasVisibilityScore = selectedDraft.data.draft.content?.visibilityScore !== undefined;
-                              const hasRolledBack = selectedDraft.data.draft.content?.rolledBack;
-                              const visibleItems = [hasRiskScore, hasVisibilityScore, hasRolledBack].filter(Boolean).length;
-                              
-                              if (visibleItems === 1) return 'grid-cols-1 place-items-center';
-                              if (visibleItems === 2) return 'grid-cols-1 sm:grid-cols-2';
-                              return 'grid-cols-1 sm:grid-cols-3';
-                            })()
-                          }`}>
+                          <div className="flex justify-center gap-6">
                             {showAdvancedDebugUI && selectedDraft.data.draft.content?.riskScore !== undefined && (
                               <div className="text-center">
                                 <span className="text-gray-300 text-xs font-medium block mb-2">Risk Score</span>
