@@ -3921,7 +3921,7 @@ const Dashboard = () => {
                         selectedDraft.data.draft.content?.rolledBack || 
                         (showAdvancedDebugUI && selectedDraft.data.draft.content?.riskScore !== undefined)) && (
                         <div className="bg-[#2a2a2a] rounded-lg shadow p-6 border border-gray-700">
-                          <h4 className="text-md font-medium text-white mb-4 flex items-center">
+                          <h4 className="text-md font-medium text-white mb-6 flex items-center justify-center">
                             <TrendingUp className="w-5 h-5 mr-2 text-gray-300" />
                             Quality Assessment
                           </h4>
