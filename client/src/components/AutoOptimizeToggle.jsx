@@ -44,12 +44,7 @@ const AutoOptimizeToggle = ({
         onClick={handleClick}
         disabled={loading}
         className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ease-out flex items-center space-x-2 
-          ${isFree 
-            ? 'bg-gray-700/50 text-gray-400 border border-gray-600 hover:border-gray-500' 
-            : enabled
-              ? 'bg-green-600/20 text-green-300 border border-green-500 hover:bg-green-600/30'
-              : 'bg-transparent text-white border border-white/20 hover:border-gray-400'
-          }
+          bg-transparent border-2 border-[#e2b53e] text-[#e2b53e] hover:bg-[#e2b53e]/10
           ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
         onMouseEnter={() => setTooltipVisible(true)}
