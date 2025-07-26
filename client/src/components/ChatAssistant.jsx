@@ -152,7 +152,10 @@ const ChatAssistant = () => {
       <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={toggleChat}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105 group"
+          className="text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-105 group"
+          style={{ backgroundColor: '#1e1e1e' }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = '#2a2a2a'}
+          onMouseLeave={(e) => e.target.style.backgroundColor = '#1e1e1e'}
           title="Chat with AI Search Booster Assistant"
         >
           {isOpen ? (
@@ -161,30 +164,23 @@ const ChatAssistant = () => {
             <MessageSquare className="w-6 h-6 group-hover:animate-pulse" />
           )}
         </button>
-        
-        {/* Unread indicator (optional - you can show this conditionally) */}
-        {!isOpen && (
-          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-            ?
-          </div>
-        )}
       </div>
 
       {/* Chat Modal */}
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-40 w-96 max-w-[calc(100vw-3rem)] h-[500px] bg-dark-card border border-dark-border rounded-xl shadow-2xl flex flex-col">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-xl flex items-center justify-between">
+          <div className="text-white p-4 rounded-t-xl flex items-center justify-between" style={{ backgroundColor: '#1e1e1e' }}>
             <div className="flex items-center space-x-2">
               <Bot className="w-5 h-5" />
               <div>
                 <h3 className="font-semibold text-sm">AI Search Booster Assistant</h3>
-                <p className="text-xs text-blue-100">Ask me anything!</p>
+                <p className="text-xs text-gray-300">Ask me anything!</p>
               </div>
             </div>
             <button
               onClick={toggleChat}
-              className="text-blue-100 hover:text-white transition-colors"
+              className="text-gray-300 hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
