@@ -2473,7 +2473,7 @@ const Dashboard = () => {
           )}
           
           {/* Hide usage and enterprise status on support tabs */}
-          {activeTab !== 'instructions' && activeTab !== 'support' && activeTab !== 'terms' && activeTab !== 'settings' && (
+          {activeTab !== 'instructions' && activeTab !== 'support' && activeTab !== 'terms' && activeTab !== 'settings' && activeTab !== 'boost-ai' && (
             <>
               {/* Monthly Optimization Usage - Hidden on support tabs */}
               <div className="bg-dark-card rounded-xl border border-dark-border p-6 hover:ring-1 hover:ring-gray-500/30 transition-all duration-200 ease-out">
@@ -3135,81 +3135,7 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* 3. Check Your Site Coverage */}
-                  <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-green-500/30 transition-all duration-200">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                          boostAiCompletions['site-coverage'] 
-                            ? 'bg-green-500 border-green-500' 
-                            : 'border-gray-400'
-                        }`}>
-                          {boostAiCompletions['site-coverage'] && <CheckCircle2 className="w-4 h-4 text-white" />}
-                        </div>
-                        <div>
-                          <h4 className="text-lg font-semibold text-white">3. Check Your Site Coverage</h4>
-                          <p className="text-sm text-gray-400">Verify AI platform indexing status</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="ml-9 space-y-4">
-                      <p className="text-gray-300 text-sm">
-                        Test how well your store appears in AI search results. Try searching for your brand, products, 
-                        and industry keywords across different AI platforms.
-                      </p>
-                      
-                      <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                        <p className="text-sm text-gray-300 mb-2"><strong>Test these queries:</strong></p>
-                        <ul className="text-sm text-gray-400 space-y-1 ml-4 list-disc">
-                          <li>"[Your brand name] products"</li>
-                          <li>"Best [your product category] stores"</li>
-                          <li>"Where to buy [your main product]"</li>
-                        </ul>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-3">
-                        <a
-                          href="https://perplexity.ai"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded transition-colors"
-                        >
-                          Test on Perplexity
-                        </a>
-                        <a
-                          href="https://chatgpt.com"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors"
-                        >
-                          Test on ChatGPT
-                        </a>
-                        <a
-                          href="https://claude.ai"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-medium rounded transition-colors"
-                        >
-                          Test on Claude
-                        </a>
-                        
-                        <button
-                          onClick={() => handleBoostAiToggle('site-coverage')}
-                          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                            boostAiCompletions['site-coverage']
-                              ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
-                              : 'bg-green-600 hover:bg-green-700 text-white'
-                          }`}
-                        >
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          {boostAiCompletions['site-coverage'] ? 'Completed' : 'Mark as Done'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 4. Fix JSON-LD Conflicts */}
+                  {/* 3. Fix JSON-LD Conflicts */}
                   <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-yellow-500/30 transition-all duration-200">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
@@ -3221,7 +3147,7 @@ const Dashboard = () => {
                           {boostAiCompletions['jsonld-conflicts'] && <CheckCircle2 className="w-4 h-4 text-white" />}
                         </div>
                         <div>
-                          <h4 className="text-lg font-semibold text-white">4. Fix JSON-LD Conflicts</h4>
+                          <h4 className="text-lg font-semibold text-white">3. Fix JSON-LD Conflicts</h4>
                           <p className="text-sm text-gray-400">Resolve schema markup issues</p>
                         </div>
                       </div>
@@ -3259,7 +3185,7 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* 5. Create Fresh Content Strategy */}
+                  {/* 4. Create Fresh Content Strategy */}
                   <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-indigo-500/30 transition-all duration-200">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
@@ -3271,7 +3197,7 @@ const Dashboard = () => {
                           {boostAiCompletions['fresh-content'] && <CheckCircle2 className="w-4 h-4 text-white" />}
                         </div>
                         <div>
-                          <h4 className="text-lg font-semibold text-white">5. Create Fresh Content Strategy</h4>
+                          <h4 className="text-lg font-semibold text-white">4. Create Fresh Content Strategy</h4>
                           <p className="text-sm text-gray-400">Regular updates for AI relevance</p>
                         </div>
                       </div>
@@ -3309,7 +3235,7 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* 6. Build Comprehensive FAQ Page */}
+                  {/* 5. Build Comprehensive FAQ Page */}
                   <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-pink-500/30 transition-all duration-200">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
@@ -3321,7 +3247,7 @@ const Dashboard = () => {
                           {boostAiCompletions['faq-page'] && <CheckCircle2 className="w-4 h-4 text-white" />}
                         </div>
                         <div>
-                          <h4 className="text-lg font-semibold text-white">6. Build Comprehensive FAQ Page</h4>
+                          <h4 className="text-lg font-semibold text-white">5. Build Comprehensive FAQ Page</h4>
                           <p className="text-sm text-gray-400">AI platforms love Q&A format</p>
                         </div>
                       </div>
@@ -3360,7 +3286,7 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* 7. Optimize Descriptive Titles */}
+                  {/* 6. Optimize Descriptive Titles */}
                   <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-teal-500/30 transition-all duration-200">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
@@ -3372,7 +3298,7 @@ const Dashboard = () => {
                           {boostAiCompletions['descriptive-titles'] && <CheckCircle2 className="w-4 h-4 text-white" />}
                         </div>
                         <div>
-                          <h4 className="text-lg font-semibold text-white">7. Optimize Descriptive Titles</h4>
+                          <h4 className="text-lg font-semibold text-white">6. Optimize Descriptive Titles</h4>
                           <p className="text-sm text-gray-400">Clear, semantic naming for AI understanding</p>
                         </div>
                       </div>
@@ -3421,7 +3347,7 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* 8. Advanced Pro Tips */}
+                  {/* 7. Advanced Pro Tips */}
                   <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/50 rounded-xl p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
@@ -3433,7 +3359,7 @@ const Dashboard = () => {
                           {boostAiCompletions['pro-tips'] && <CheckCircle2 className="w-4 h-4 text-white" />}
                         </div>
                         <div>
-                          <h4 className="text-lg font-semibold text-white">8. 🚀 Advanced Pro Tips</h4>
+                          <h4 className="text-lg font-semibold text-white">7. 🚀 Advanced Pro Tips</h4>
                           <p className="text-sm text-gray-400">Expert-level AI visibility strategies</p>
                         </div>
                       </div>
@@ -3499,18 +3425,18 @@ const Dashboard = () => {
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-gray-400 mb-1">
-                        {8 - Object.values(boostAiCompletions).filter(Boolean).length}
+                        {7 - Object.values(boostAiCompletions).filter(Boolean).length}
                       </div>
                       <div className="text-sm text-gray-400">Remaining</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-400 mb-1">
-                        {Math.round((Object.values(boostAiCompletions).filter(Boolean).length / 8) * 100)}%
+                        {Math.round((Object.values(boostAiCompletions).filter(Boolean).length / 7) * 100)}%
                       </div>
                       <div className="text-sm text-gray-400">Progress</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-400 mb-1">8</div>
+                      <div className="text-2xl font-bold text-purple-400 mb-1">7</div>
                       <div className="text-sm text-gray-400">Total Strategies</div>
                     </div>
                   </div>
@@ -3519,7 +3445,7 @@ const Dashboard = () => {
                     <div className="w-full bg-gray-700 rounded-full h-2">
                       <div 
                         className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${(Object.values(boostAiCompletions).filter(Boolean).length / 8) * 100}%` }}
+                        style={{ width: `${(Object.values(boostAiCompletions).filter(Boolean).length / 7) * 100}%` }}
                       ></div>
                     </div>
                   </div>
