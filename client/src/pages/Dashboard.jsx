@@ -4,7 +4,7 @@ import AppBridgeActivation from '../components/AppBridgeActivation';
 import AutoOptimizeToggle from '../components/AutoOptimizeToggle';
 import UpgradeModal from '../components/UpgradeModal';
 import SecureAdminDebug from './SecureAdminDebug';
-import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft, Loader, Play, Square } from 'lucide-react';
+import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft, Loader, Play, Square, Target, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
 import { Redirect } from '@shopify/app-bridge/actions';
 import { useCitations } from '../hooks/useCitations';
@@ -66,6 +66,22 @@ const Dashboard = () => {
   const [selectedDraft, setSelectedDraft] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState(null);
+  
+  // Boost AI Discovery state
+  const [boostAiCompletions, setBoostAiCompletions] = useState(() => {
+    const saved = localStorage.getItem('boostAiCompletions');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  // Handle Boost AI checkbox changes
+  const handleBoostAiToggle = (sectionId) => {
+    const newCompletions = {
+      ...boostAiCompletions,
+      [sectionId]: !boostAiCompletions[sectionId]
+    };
+    setBoostAiCompletions(newCompletions);
+    localStorage.setItem('boostAiCompletions', JSON.stringify(newCompletions));
+  };
   
   // Global error handler to prevent error boundary
   useEffect(() => {
@@ -2028,6 +2044,7 @@ const Dashboard = () => {
             { id: 'blogs', label: 'Blog Articles', icon: BookOpen, count: articles?.length || 0 },
             { id: 'pages', label: 'Pages', icon: FileText, count: pages?.length || 0 },
             { id: 'collections', label: 'Collections', icon: Globe, count: collections?.length || 0 },
+            { id: 'boost-ai', label: 'Boost AI Discovery', icon: Target, count: null },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -2043,7 +2060,7 @@ const Dashboard = () => {
                 <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-white' : ''}`} />
                 {!sidebarCollapsed && <span className="text-sm">{tab.label}</span>}
               </div>
-              {!sidebarCollapsed && (
+              {!sidebarCollapsed && tab.count !== null && (
                 <span className={`text-xs px-2 py-1 rounded-full ${
                   activeTab === tab.id 
                     ? 'bg-gray-800 text-white' 
@@ -2988,6 +3005,525 @@ const Dashboard = () => {
                       ))}
                     </div>
                   )}
+              </div>
+            )}
+
+            {/* Boost AI Discovery Tab */}
+            {activeTab === 'boost-ai' && (
+              <div className="space-y-6">
+                {/* Intro Section */}
+                <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-xl p-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <Target className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-white mb-3">🧭 Boost AI Discovery</h3>
+                      <p className="text-gray-300 mb-4">
+                        Advanced strategies to maximize your store's visibility across AI platforms like ChatGPT, Claude, Gemini, and Perplexity. 
+                        These expert-level techniques go beyond basic optimization.
+                      </p>
+                      <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4">
+                        <p className="text-sm text-blue-200 flex items-center">
+                          <Info className="w-4 h-4 mr-2 flex-shrink-0" />
+                          <span><strong>Pro Tip:</strong> Complete these strategies in order for maximum impact on AI search results.</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Content - Accordion/Card UI */}
+                <div className="grid gap-4">
+                  {/* 1. Submit to Bing Merchant Center */}
+                  <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-blue-500/30 transition-all duration-200">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          boostAiCompletions['bing-merchant'] 
+                            ? 'bg-green-500 border-green-500' 
+                            : 'border-gray-400'
+                        }`}>
+                          {boostAiCompletions['bing-merchant'] && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white">1. Submit to Bing Merchant Center</h4>
+                          <p className="text-sm text-gray-400">Essential for Copilot and Edge AI integration</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-9 space-y-4">
+                      <p className="text-gray-300 text-sm">
+                        Bing Merchant Center feeds directly into Microsoft's AI ecosystem, including Copilot. This ensures your products 
+                        appear in AI-powered shopping recommendations and searches.
+                      </p>
+                      
+                      <div className="flex flex-wrap gap-3">
+                        <a
+                          href="https://www.bingplaces.com/merchantcenter"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Open Bing Merchant Center
+                        </a>
+                        
+                        <button
+                          onClick={() => handleBoostAiToggle('bing-merchant')}
+                          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            boostAiCompletions['bing-merchant']
+                              ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          {boostAiCompletions['bing-merchant'] ? 'Completed' : 'Mark as Done'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Submit Your Site to Perplexity AI */}
+                  <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-purple-500/30 transition-all duration-200">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          boostAiCompletions['perplexity-submit'] 
+                            ? 'bg-green-500 border-green-500' 
+                            : 'border-gray-400'
+                        }`}>
+                          {boostAiCompletions['perplexity-submit'] && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white">2. Submit Your Site to Perplexity AI</h4>
+                          <p className="text-sm text-gray-400">Direct indexing for AI search results</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-9 space-y-4">
+                      <p className="text-gray-300 text-sm">
+                        Perplexity allows direct site submission for faster AI indexing. This dramatically improves your chances 
+                        of appearing in Perplexity's search results and citations.
+                      </p>
+                      
+                      <div className="flex flex-wrap gap-3">
+                        <a
+                          href="https://perplexity.ai/hub/submit"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Submit to Perplexity
+                        </a>
+                        
+                        <button
+                          onClick={() => handleBoostAiToggle('perplexity-submit')}
+                          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            boostAiCompletions['perplexity-submit']
+                              ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          {boostAiCompletions['perplexity-submit'] ? 'Completed' : 'Mark as Done'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Check Your Site Coverage */}
+                  <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-green-500/30 transition-all duration-200">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          boostAiCompletions['site-coverage'] 
+                            ? 'bg-green-500 border-green-500' 
+                            : 'border-gray-400'
+                        }`}>
+                          {boostAiCompletions['site-coverage'] && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white">3. Check Your Site Coverage</h4>
+                          <p className="text-sm text-gray-400">Verify AI platform indexing status</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-9 space-y-4">
+                      <p className="text-gray-300 text-sm">
+                        Test how well your store appears in AI search results. Try searching for your brand, products, 
+                        and industry keywords across different AI platforms.
+                      </p>
+                      
+                      <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                        <p className="text-sm text-gray-300 mb-2"><strong>Test these queries:</strong></p>
+                        <ul className="text-sm text-gray-400 space-y-1 ml-4 list-disc">
+                          <li>"[Your brand name] products"</li>
+                          <li>"Best [your product category] stores"</li>
+                          <li>"Where to buy [your main product]"</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-3">
+                        <a
+                          href="https://perplexity.ai"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium rounded transition-colors"
+                        >
+                          Test on Perplexity
+                        </a>
+                        <a
+                          href="https://chatgpt.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded transition-colors"
+                        >
+                          Test on ChatGPT
+                        </a>
+                        <a
+                          href="https://claude.ai"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-medium rounded transition-colors"
+                        >
+                          Test on Claude
+                        </a>
+                        
+                        <button
+                          onClick={() => handleBoostAiToggle('site-coverage')}
+                          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            boostAiCompletions['site-coverage']
+                              ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          {boostAiCompletions['site-coverage'] ? 'Completed' : 'Mark as Done'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4. Fix JSON-LD Conflicts */}
+                  <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-yellow-500/30 transition-all duration-200">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          boostAiCompletions['jsonld-conflicts'] 
+                            ? 'bg-green-500 border-green-500' 
+                            : 'border-gray-400'
+                        }`}>
+                          {boostAiCompletions['jsonld-conflicts'] && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white">4. Fix JSON-LD Conflicts</h4>
+                          <p className="text-sm text-gray-400">Resolve schema markup issues</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-9 space-y-4">
+                      <p className="text-gray-300 text-sm">
+                        Multiple JSON-LD schemas can conflict and confuse AI platforms. Use Google's testing tool 
+                        to identify and resolve conflicts for cleaner data parsing by AI systems.
+                      </p>
+                      
+                      <div className="flex flex-wrap gap-3">
+                        <a
+                          href="https://developers.google.com/search/docs/appearance/structured-data"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Schema Testing Tool
+                        </a>
+                        
+                        <button
+                          onClick={() => handleBoostAiToggle('jsonld-conflicts')}
+                          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            boostAiCompletions['jsonld-conflicts']
+                              ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          {boostAiCompletions['jsonld-conflicts'] ? 'Completed' : 'Mark as Done'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5. Create Fresh Content Strategy */}
+                  <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-indigo-500/30 transition-all duration-200">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          boostAiCompletions['fresh-content'] 
+                            ? 'bg-green-500 border-green-500' 
+                            : 'border-gray-400'
+                        }`}>
+                          {boostAiCompletions['fresh-content'] && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white">5. Create Fresh Content Strategy</h4>
+                          <p className="text-sm text-gray-400">Regular updates for AI relevance</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-9 space-y-4">
+                      <p className="text-gray-300 text-sm">
+                        AI platforms favor recently updated content. Establish a content refresh schedule to maintain 
+                        high visibility in AI search results and recommendations.
+                      </p>
+                      
+                      <div className="bg-indigo-900/30 rounded-lg p-4 border border-indigo-500/30">
+                        <p className="text-sm text-indigo-200 mb-2"><strong>Recommended Schedule:</strong></p>
+                        <ul className="text-sm text-indigo-300 space-y-1 ml-4 list-disc">
+                          <li>Weekly: Add 1-2 new blog posts about your products</li>
+                          <li>Bi-weekly: Update product descriptions with seasonal content</li>
+                          <li>Monthly: Refresh your About page and policies</li>
+                          <li>Quarterly: Add new FAQ sections based on customer questions</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={() => handleBoostAiToggle('fresh-content')}
+                          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            boostAiCompletions['fresh-content']
+                              ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          {boostAiCompletions['fresh-content'] ? 'Completed' : 'Mark as Done'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 6. Build Comprehensive FAQ Page */}
+                  <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-pink-500/30 transition-all duration-200">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          boostAiCompletions['faq-page'] 
+                            ? 'bg-green-500 border-green-500' 
+                            : 'border-gray-400'
+                        }`}>
+                          {boostAiCompletions['faq-page'] && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white">6. Build Comprehensive FAQ Page</h4>
+                          <p className="text-sm text-gray-400">AI platforms love Q&A format</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-9 space-y-4">
+                      <p className="text-gray-300 text-sm">
+                        FAQ pages are AI gold mines. They directly answer user questions in the exact format AI 
+                        platforms use. Create detailed FAQs covering every aspect of your business and products.
+                      </p>
+                      
+                      <div className="bg-pink-900/30 rounded-lg p-4 border border-pink-500/30">
+                        <p className="text-sm text-pink-200 mb-2"><strong>Essential FAQ Categories:</strong></p>
+                        <ul className="text-sm text-pink-300 space-y-1 ml-4 list-disc">
+                          <li>Product specifications and compatibility</li>
+                          <li>Shipping, returns, and warranty policies</li>
+                          <li>Usage instructions and troubleshooting</li>
+                          <li>Comparison with competitors</li>
+                          <li>Pricing and payment options</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={() => handleBoostAiToggle('faq-page')}
+                          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            boostAiCompletions['faq-page']
+                              ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          {boostAiCompletions['faq-page'] ? 'Completed' : 'Mark as Done'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 7. Optimize Descriptive Titles */}
+                  <div className="bg-dark-card border border-dark-border rounded-xl p-6 hover:border-teal-500/30 transition-all duration-200">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          boostAiCompletions['descriptive-titles'] 
+                            ? 'bg-green-500 border-green-500' 
+                            : 'border-gray-400'
+                        }`}>
+                          {boostAiCompletions['descriptive-titles'] && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white">7. Optimize Descriptive Titles</h4>
+                          <p className="text-sm text-gray-400">Clear, semantic naming for AI understanding</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-9 space-y-4">
+                      <p className="text-gray-300 text-sm">
+                        AI platforms rely heavily on clear, descriptive titles to understand content context. 
+                        Avoid vague titles and focus on specific, benefit-focused descriptions.
+                      </p>
+                      
+                      <div className="bg-teal-900/30 rounded-lg p-4 border border-teal-500/30">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-red-300 mb-2"><strong>❌ Avoid:</strong></p>
+                            <ul className="text-sm text-red-400 space-y-1 ml-4 list-disc">
+                              <li>"Super Cool Product"</li>
+                              <li>"Best Item Ever"</li>
+                              <li>"Check This Out"</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <p className="text-sm text-green-300 mb-2"><strong>✅ Use Instead:</strong></p>
+                            <ul className="text-sm text-green-400 space-y-1 ml-4 list-disc">
+                              <li>"Wireless Bluetooth Headphones with 30H Battery"</li>
+                              <li>"Organic Cotton T-Shirt for Sensitive Skin"</li>
+                              <li>"Stainless Steel Kitchen Knife Set - 7 Pieces"</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={() => handleBoostAiToggle('descriptive-titles')}
+                          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            boostAiCompletions['descriptive-titles']
+                              ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          {boostAiCompletions['descriptive-titles'] ? 'Completed' : 'Mark as Done'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 8. Advanced Pro Tips */}
+                  <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/50 rounded-xl p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                          boostAiCompletions['pro-tips'] 
+                            ? 'bg-green-500 border-green-500' 
+                            : 'border-gray-400'
+                        }`}>
+                          {boostAiCompletions['pro-tips'] && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-white">8. 🚀 Advanced Pro Tips</h4>
+                          <p className="text-sm text-gray-400">Expert-level AI visibility strategies</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-9 space-y-4">
+                      <div className="grid gap-4">
+                        <div className="bg-purple-900/30 rounded-lg p-4 border border-purple-500/30">
+                          <h5 className="font-medium text-purple-200 mb-2">🎯 Semantic Clustering</h5>
+                          <p className="text-sm text-purple-300">
+                            Group related products with shared vocabulary. AI platforms recognize semantic relationships 
+                            and will suggest your entire product line when one item is mentioned.
+                          </p>
+                        </div>
+                        
+                        <div className="bg-pink-900/30 rounded-lg p-4 border border-pink-500/30">
+                          <h5 className="font-medium text-pink-200 mb-2">🔗 Cross-Platform Consistency</h5>
+                          <p className="text-sm text-pink-300">
+                            Use identical product names, descriptions, and key phrases across all platforms 
+                            (Shopify, social media, business listings) to reinforce AI recognition patterns.
+                          </p>
+                        </div>
+                        
+                        <div className="bg-indigo-900/30 rounded-lg p-4 border border-indigo-500/30">
+                          <h5 className="font-medium text-indigo-200 mb-2">📊 Monitor AI Mentions</h5>
+                          <p className="text-sm text-indigo-300">
+                            Set up Google Alerts for your brand name + "AI recommends" or "according to AI" 
+                            to track when AI platforms mention your products organically.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={() => handleBoostAiToggle('pro-tips')}
+                          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            boostAiCompletions['pro-tips']
+                              ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          {boostAiCompletions['pro-tips'] ? 'Completed' : 'Mark as Done'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress Summary */}
+                <div className="bg-dark-card border border-dark-border rounded-xl p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                    <Target className="w-5 h-5 mr-2 text-blue-400" />
+                    Progress Summary
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-400 mb-1">
+                        {Object.values(boostAiCompletions).filter(Boolean).length}
+                      </div>
+                      <div className="text-sm text-gray-400">Completed</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-400 mb-1">
+                        {8 - Object.values(boostAiCompletions).filter(Boolean).length}
+                      </div>
+                      <div className="text-sm text-gray-400">Remaining</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-400 mb-1">
+                        {Math.round((Object.values(boostAiCompletions).filter(Boolean).length / 8) * 100)}%
+                      </div>
+                      <div className="text-sm text-gray-400">Progress</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-400 mb-1">8</div>
+                      <div className="text-sm text-gray-400">Total Strategies</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${(Object.values(boostAiCompletions).filter(Boolean).length / 8) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
