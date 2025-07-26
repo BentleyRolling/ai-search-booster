@@ -45,6 +45,8 @@ const Dashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [expandedFaq, setExpandedFaq] = useState(null);
+  // Developer/admin toggle for Risk Score display (hidden from customers)
+  const [showAdvancedDebugUI, setShowAdvancedDebugUI] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [consentCheckbox, setConsentCheckbox] = useState(false);
   const [checkingConsent, setCheckingConsent] = useState(true);
@@ -337,6 +339,22 @@ const Dashboard = () => {
   useEffect(() => {
     setOptimizationProgress(null);
   }, [activeTab]);
+
+  // Make debug UI toggle available in console for developers
+  useEffect(() => {
+    window.enableDebugUI = () => {
+      setShowAdvancedDebugUI(true);
+      console.log('🔧 Advanced Debug UI enabled - Risk Score now visible in previews');
+    };
+    window.disableDebugUI = () => {
+      setShowAdvancedDebugUI(false);
+      console.log('🔧 Advanced Debug UI disabled - Risk Score hidden from customers');
+    };
+    return () => {
+      delete window.enableDebugUI;
+      delete window.disableDebugUI;
+    };
+  }, []);
 
   // Refresh auto-optimize status when enabled
   useEffect(() => {
@@ -900,7 +918,7 @@ const Dashboard = () => {
               // Show specific feedback for high-risk items
               if (result.rollbackTriggered) {
                 addNotification(`Product ID ${productId}: High-risk content detected, original preserved`, 'warning');
-              } else if (result.riskScore > 0.5) {
+              } else if (showAdvancedDebugUI && result.riskScore > 0.5) {
                 addNotification(`Product ID ${productId}: Optimized with medium risk score (${(result.riskScore * 100).toFixed(0)}%)`, 'info');
               }
             }
@@ -1090,7 +1108,7 @@ const Dashboard = () => {
               // Show specific feedback for high-risk items
               if (result.rollbackTriggered) {
                 addNotification(`Collection ID ${collectionId}: High-risk content detected, original preserved`, 'warning');
-              } else if (result.riskScore > 0.5) {
+              } else if (showAdvancedDebugUI && result.riskScore > 0.5) {
                 addNotification(`Collection ID ${collectionId}: Optimized with medium risk score (${(result.riskScore * 100).toFixed(0)}%)`, 'info');
               }
             }
@@ -1190,7 +1208,7 @@ const Dashboard = () => {
               // Show specific feedback for high-risk items
               if (result.rollbackTriggered) {
                 addNotification(`Blog ID ${blogId}: High-risk content detected, original preserved`, 'warning');
-              } else if (result.riskScore > 0.5) {
+              } else if (showAdvancedDebugUI && result.riskScore > 0.5) {
                 addNotification(`Blog ID ${blogId}: Optimized with medium risk score (${(result.riskScore * 100).toFixed(0)}%)`, 'info');
               }
             }
@@ -1298,7 +1316,7 @@ const Dashboard = () => {
               // Show specific feedback for high-risk items
               if (result.rollbackTriggered) {
                 addNotification(`Article "${result.title}": High-risk content detected, original preserved`, 'warning');
-              } else if (result.riskScore > 0.5) {
+              } else if (showAdvancedDebugUI && result.riskScore > 0.5) {
                 addNotification(`Article "${result.title}": Optimized with medium risk score (${(result.riskScore * 100).toFixed(0)}%)`, 'info');
               }
             }
@@ -3899,16 +3917,20 @@ const Dashboard = () => {
                   {selectedDraft.data.hasDraft ? (
                     <div className="space-y-4">
                       {/* Quality Assessment Card */}
-                      {(selectedDraft.data.draft.content?.riskScore !== undefined || 
-                        selectedDraft.data.draft.content?.visibilityScore !== undefined || 
-                        selectedDraft.data.draft.content?.rolledBack) && (
+                      {(selectedDraft.data.draft.content?.visibilityScore !== undefined || 
+                        selectedDraft.data.draft.content?.rolledBack || 
+                        (showAdvancedDebugUI && selectedDraft.data.draft.content?.riskScore !== undefined)) && (
                         <div className="bg-[#2a2a2a] rounded-lg shadow p-6 border border-gray-700">
                           <h4 className="text-md font-medium text-white mb-4 flex items-center">
                             <TrendingUp className="w-5 h-5 mr-2 text-gray-300" />
                             Quality Assessment
                           </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            {selectedDraft.data.draft.content?.riskScore !== undefined && (
+                          <div className={`grid gap-4 ${
+                            showAdvancedDebugUI && selectedDraft.data.draft.content?.riskScore !== undefined
+                              ? 'grid-cols-1 sm:grid-cols-3' 
+                              : 'grid-cols-1 sm:grid-cols-2'
+                          }`}>
+                            {showAdvancedDebugUI && selectedDraft.data.draft.content?.riskScore !== undefined && (
                               <div className="text-center">
                                 <span className="text-gray-300 text-xs font-medium block mb-2">Risk Score</span>
                                 <div className={`text-2xl font-bold mb-1 ${
