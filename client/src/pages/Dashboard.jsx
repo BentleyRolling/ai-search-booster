@@ -3,6 +3,7 @@ import QuotaToast from '../components/QuotaToast';
 import AppBridgeActivation from '../components/AppBridgeActivation';
 import AutoOptimizeToggle from '../components/AutoOptimizeToggle';
 import UpgradeModal from '../components/UpgradeModal';
+import ChatAssistant from '../components/ChatAssistant';
 import SecureAdminDebug from './SecureAdminDebug';
 import { AlertCircle, CheckCircle, RefreshCw, Eye, RotateCcw, Settings, Search, Sparkles, BookOpen, Package, X, Info, Monitor, Bell, TrendingUp, FileText, Globe, ChevronDown, HelpCircle, MessageSquare, Zap, Menu, ChevronLeft, ChevronRight, PanelLeft, Loader, Play, Square, Target, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { useAuthenticatedFetch } from '../contexts/AuthContext';
@@ -4374,6 +4375,9 @@ const Dashboard = () => {
         authFetch={authFetch}
         shop={shop}
       />
+
+      {/* Chat Assistant */}
+      <ChatAssistant />
 
         </div>
       </main>
